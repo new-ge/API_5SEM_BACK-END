@@ -4,17 +4,18 @@ import java.util.Map;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class AuthenticationServiceImpl {
-
     public String getTokenAuthentication(String password, String username) {
-
-        Map<String, Object> jsonMap = null;
         ObjectMapper objectMapper = new ObjectMapper();
         RestTemplate restTemplate = new RestTemplate();
                 
@@ -25,20 +26,21 @@ public class AuthenticationServiceImpl {
                         "\"type\": \"normal\"," +
                         "\"username\": \"" + username + "\"}";
                 
-        HttpEntity<String> request = new HttpEntity<>(json, headers);
+        HttpEntity<String> headersEntity = new HttpEntity<>(json, headers);
 
-        String response = restTemplate.postForObject("https://api.taiga.io/api/v1/auth", request, String.class);
+        ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/auth", HttpMethod.POST, headersEntity, String.class);
+        
         try {
-            jsonMap = objectMapper.convertValue(response, new TypeReference<Map<String, Object>>() {});
+            if (response.getBody().contains("auth_token")) {
+                JsonNode jsonNode = objectMapper.readTree(response.getBody());
+                JsonNode getAuthToken = jsonNode.get("auth_token");
+                String userId = new ObjectMapper().writeValueAsString(getAuthToken);
+                return userId.replace("\"", "");
+            } else {
+                throw new NullPointerException("Erro 404: Resposta não obtida.");
+            }
         } catch (Exception e) {
-            e.printStackTrace();
+            return e.getMessage();
         }
-
-        if (jsonMap != null && jsonMap.containsKey("auth_token")) {
-            return (String) jsonMap.get("auth_token");
-        } else {
-            throw new NullPointerException("Erro 404: Resposta não obtida.");
-        }
-
-    }   
+    }
 }
