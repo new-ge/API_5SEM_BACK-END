@@ -28,6 +28,7 @@ public class ProjectServiceImpl {
         try {
             if (response.getBody().contains("id")) {
                 JsonNode jsonNode = objectMapper.readTree(response.getBody());
+                System.err.println(jsonNode);
                 JsonNode getProjectId = jsonNode.get("id");
                 return new ObjectMapper().writeValueAsString(getProjectId).replace("\"", "");
             } else {
