@@ -1,9 +1,12 @@
 package com.vision_back.vision_back;
 
+import java.util.List;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.vision_back.vision_back.service.AuthenticationServiceImpl;
+import com.vision_back.vision_back.service.UserServiceImpl;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.annotation.PostConstruct;
@@ -19,5 +22,11 @@ public class VisionBackApplication {
 	public String functionGetToken() {
 		AuthenticationServiceImpl auth = new AuthenticationServiceImpl();
 		return auth.getTokenAuthentication(dotenv.get("PASSWORD_SECRET"), dotenv.get("USERNAME_SECRET"));
+	}
+
+	@PostConstruct
+	public List<String> run(){
+		UserServiceImpl usimpl = new UserServiceImpl();
+		return usimpl.getUserId();
 	}
 }
