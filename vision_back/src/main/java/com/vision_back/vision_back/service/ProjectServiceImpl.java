@@ -13,7 +13,7 @@ import com.vision_back.vision_back.VisionBackApplication;
 
 public class ProjectServiceImpl {
 
-    public String getProjectId() {
+    public String getProjectId(String slugProject) {
         ObjectMapper objectMapper = new ObjectMapper();
         RestTemplate restTemplate = new RestTemplate();
         VisionBackApplication vba = new VisionBackApplication();
@@ -23,12 +23,11 @@ public class ProjectServiceImpl {
         headers.setBearerAuth(vba.functionGetToken());
             
         HttpEntity<Void> headersEntity = new HttpEntity<>(headers);
-        ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects/by_slug?slug=newgeneration-git-teste", HttpMethod.GET, headersEntity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects/by_slug?slug="+slugProject, HttpMethod.GET, headersEntity, String.class);
             
         try {
             if (response.getBody().contains("id")) {
                 JsonNode jsonNode = objectMapper.readTree(response.getBody());
-                System.err.println(jsonNode);
                 JsonNode getProjectId = jsonNode.get("id");
                 return new ObjectMapper().writeValueAsString(getProjectId).replace("\"", "");
             } else {
