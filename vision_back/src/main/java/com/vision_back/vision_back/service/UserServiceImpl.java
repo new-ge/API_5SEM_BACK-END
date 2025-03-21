@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
 
 public class UserServiceImpl {
-    public List<String> getUserId() {
+    public List<String> getUserId(String projectId) {
 
         ObjectMapper objectMapper = new ObjectMapper();
         RestTemplate restTemplate = new RestTemplate();
@@ -25,14 +25,13 @@ public class UserServiceImpl {
         headers.setBearerAuth(vba.functionGetToken());
 
         HttpEntity<Void> headersEntity = new HttpEntity<>(headers);
-        ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/users?project=1641986", HttpMethod.GET, headersEntity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/users?project=" + projectId, HttpMethod.GET, headersEntity, String.class);
            
         try {
-            System.out.print("Retorno da API: " + response.getBody()); //Anotação apenas para verificação
+
 
             JsonNode JsonNode = objectMapper.readTree(response.getBody());
 
-            //Elaboração da lista para armazenar todos os id's
             List<String> userIds = new ArrayList<>();
 
             if(JsonNode.isArray()){
@@ -41,6 +40,7 @@ public class UserServiceImpl {
                     if (idNode != null){
                         String userId =idNode.asText();
                         System.out.println("ID extraída: " + userId);
+                        System.out.println("");
                         userIds.add(userId);
                     }
                     
@@ -57,6 +57,3 @@ public class UserServiceImpl {
     
     
 } 
-
-
-//interface

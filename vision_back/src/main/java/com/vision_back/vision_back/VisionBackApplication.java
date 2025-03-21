@@ -27,6 +27,6 @@ public class VisionBackApplication {
 	@PostConstruct
 	public List<String> run(){
 		UserServiceImpl usimpl = new UserServiceImpl();
-		return usimpl.getUserId();
+		return usimpl.getUserId("1641986");
 	}
 }
