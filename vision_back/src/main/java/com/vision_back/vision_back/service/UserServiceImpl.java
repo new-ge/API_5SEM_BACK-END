@@ -39,21 +39,16 @@ public class UserServiceImpl {
                     JsonNode idNode = user.get("id");
                     if (idNode != null){
                         String userId =idNode.asText();
-                        System.out.println("ID extraída: " + userId);
-                        System.out.println("");
+                        System.out.println(userId);
                         userIds.add(userId);
                     }
                     
                 }
-                return userIds;
-            } else{
-                System.out.println("Erro: Resposta não é uma Lista. ");
-                return new ArrayList<>();
+                
             } 
+            return userIds;
         }catch (Exception e) {
-                System.out.println("Erro ao processar a resposta da API: " + e.getMessage());
-                return new ArrayList<>();}
-        }
-    
-    
-} 
+            throw new IllegalStateException("Array não encontrado:" + e);
+        }    
+    } 
+}
