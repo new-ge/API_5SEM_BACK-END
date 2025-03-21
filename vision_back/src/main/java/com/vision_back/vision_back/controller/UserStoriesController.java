@@ -2,14 +2,12 @@ package com.vision_back.vision_back.controller;
 
 import java.util.Map;
 
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.vision_back.vision_back.service.AuthenticationServiceImpl;
 import com.vision_back.vision_back.service.UserStoriesServiceImpl;
 
 @RestController
@@ -17,9 +15,9 @@ import com.vision_back.vision_back.service.UserStoriesServiceImpl;
 @RequestMapping("/user-stories")
 public class UserStoriesController {
 
-    @GetMapping("/count-user-stories-by-status")
-    public Map<String, Integer> countUserStoriesByStatus() {
+    @GetMapping("/count-user-stories-by-status/{projectId}")
+    public Map<String, Integer> countUserStoriesByStatus(@PathVariable String projectId) {
         UserStoriesServiceImpl ussImpl = new UserStoriesServiceImpl();
-        return ussImpl.countUserStoriesById();
+        return ussImpl.countUserStoriesById(projectId);
     }
 }

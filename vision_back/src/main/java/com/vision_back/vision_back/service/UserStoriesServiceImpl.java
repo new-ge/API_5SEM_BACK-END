@@ -1,8 +1,6 @@
 package com.vision_back.vision_back.service;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpEntity;
@@ -24,18 +22,18 @@ public class UserStoriesServiceImpl {
     VisionBackApplication vba = new VisionBackApplication();
     HttpHeaders headers = new HttpHeaders();
 
-    public ResponseEntity<String> consumeUserStories() {
+    public ResponseEntity<String> consumeUserStories(String projectId) {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(vba.functionGetToken());
             
         HttpEntity<Void> headersEntity = new HttpEntity<>(headers);
-        response = restTemplate.exchange("https://api.taiga.io/api/v1/userstories?project=1641986", HttpMethod.GET, headersEntity, String.class);
+        response = restTemplate.exchange("https://api.taiga.io/api/v1/userstories?project="+projectId, HttpMethod.GET, headersEntity, String.class);
         return response;
     }
 
-    public Map<String, Integer> countUserStoriesById() {
+    public Map<String, Integer> countUserStoriesById(String projectId) {
         Map<String, Integer> statusCount = new HashMap<>();
-        consumeUserStories();
+        consumeUserStories(projectId);
 
         try {
             JsonNode rootNode = objectMapper.readTree(response.getBody());
@@ -45,10 +43,12 @@ public class UserStoriesServiceImpl {
                 statusCount.put(nameStatus, statusCount.getOrDefault(nameStatus, 0) + 1);
             }
 
+            return statusCount;
+
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new IllegalArgumentException("Erro ao processar User Stories", e);
         }
-        return statusCount;
+
     }
 
 }
