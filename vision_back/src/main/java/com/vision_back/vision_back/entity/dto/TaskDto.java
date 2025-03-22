@@ -1,6 +1,4 @@
-package com.vision_back.vision_back.entity;
-
-import javax.persistence.*;
+package com.vision_back.vision_back.entity.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,18 +9,9 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name="task")
 
 public class TaskDto {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "task_id")
     private Long taskId;
-
-    @Column(name = "task_code")
     private Long taskCode;
-
-    @Column(name = "task_description")
     private String taskDescription;  
 }

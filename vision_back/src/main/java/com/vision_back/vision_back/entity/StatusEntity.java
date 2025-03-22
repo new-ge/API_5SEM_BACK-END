@@ -2,6 +2,7 @@ package com.vision_back.vision_back.entity;
 
 import javax.persistence.*;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,17 +13,19 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name="status")
+@Table(name="stats")
 
-public class StatusDto {
+public class StatusEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "status_id")
+    @Column(name = "stats_id")
     private Long statusId;
 
-    @Column(name = "status_code")
+    @NotNull
+    @Column(name = "stats_code")
     private Long statusCode;
 
-    @Column(name = "status_description")
+    @NotNull
+    @Column(name = "stats_description")
     private String statusDescription;  
 }

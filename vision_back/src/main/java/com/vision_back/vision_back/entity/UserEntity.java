@@ -2,6 +2,7 @@ package com.vision_back.vision_back.entity;
 
 import javax.persistence.*;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,26 +13,27 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name="user")
+@Table(name="usr")
 
-public class UserDto {
+public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
+    @Column(name = "usr_id")
     private Long userId;
 
-    @Column(name = "user_code")
+    @NotNull
+    @Column(name = "usr_code")
     private Long userCode;
 
-    @Column(name = "user_name")
+    @NotNull
+    @Column(name = "usr_name")
     private String userName;  
 
-    @Column(name = "user_role")
-    private String userRole;
+    @NotNull
+    @Column(name = "usr_role")
+    private Long userRole;  
 
-    @Column(name = "user_email")
+    @NotNull
+    @Column(name = "usr_email")
     private String userEmail;  
-
-    @Column(name = "user_team")
-    private String userTeam;  
 }
