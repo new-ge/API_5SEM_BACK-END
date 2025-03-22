@@ -1,7 +1,5 @@
 package com.vision_back.vision_back.service;
 
-import java.util.Map;
-
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -9,8 +7,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -31,16 +27,12 @@ public class AuthenticationServiceImpl {
         ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/auth", HttpMethod.POST, headersEntity, String.class);
         
         try {
-            if (response.getBody().contains("auth_token")) {
-                JsonNode jsonNode = objectMapper.readTree(response.getBody());
-                JsonNode getAuthToken = jsonNode.get("auth_token");
-                String userId = new ObjectMapper().writeValueAsString(getAuthToken);
-                return userId.replace("\"", "");
-            } else {
-                throw new NullPointerException("Erro 404: Resposta não obtida.");
-            }
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            JsonNode getAuthToken = jsonNode.get("auth_token");
+            String userId = new ObjectMapper().writeValueAsString(getAuthToken);
+            return userId.replace("\"", "");
         } catch (Exception e) {
-            return e.getMessage();
+            throw new NullPointerException("A resposta não existe ou não é possivel obter nenhum dado!");
         }
     }
 }
