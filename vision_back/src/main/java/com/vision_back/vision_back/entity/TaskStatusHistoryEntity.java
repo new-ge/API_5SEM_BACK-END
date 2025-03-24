@@ -2,7 +2,7 @@ package com.vision_back.vision_back.entity;
 
 import java.time.LocalDateTime;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import jakarta.validation.constraints.NotNull;
 
