@@ -11,7 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 
 public class StatusDto {
-    private Long statusId;
-    private Long statusCode;
+    private Integer statusId;
+    private Integer statusCode;
     private String statusDescription; 
 }

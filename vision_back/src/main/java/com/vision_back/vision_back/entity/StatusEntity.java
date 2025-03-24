@@ -19,11 +19,11 @@ public class StatusEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "stats_id")
-    private Long statusId;
+    private Integer statusId;
 
     @NotNull
     @Column(name = "stats_code")
-    private Long statusCode;
+    private Integer statusCode;
 
     @NotNull
     @Column(name = "stats_description")

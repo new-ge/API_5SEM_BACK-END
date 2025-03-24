@@ -1,6 +1,6 @@
 package com.vision_back.vision_back.entity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -14,16 +14,15 @@ import lombok.Setter;
 @AllArgsConstructor
 @Entity
 @Table(name="task")
-
 public class TaskEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "task_id")
-    private Long taskId;
+    private Integer taskId;
 
     @NotNull
     @Column(name = "task_code")
-    private Long taskCode;
+    private Integer taskCode;
     
     @NotNull
     @Column(name = "task_description")

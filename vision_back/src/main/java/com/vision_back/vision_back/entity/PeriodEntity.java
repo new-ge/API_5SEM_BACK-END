@@ -19,25 +19,25 @@ public class PeriodEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "period_id")
-    private Long periodId;
+    private Integer periodId;
 
     @NotNull
     @Column(name = "period_code")
-    private Long periodCode;
+    private Integer periodCode;
 
     @NotNull
     @Column(name = "period_date")
-    private Long periodDate;  
+    private Integer periodDate;  
 
     @NotNull
     @Column(name = "period_month")
-    private Long periodMonth;
+    private Integer periodMonth;
 
     @NotNull
     @Column(name = "period_year")
-    private Long periodYear;
+    private Integer periodYear;
 
     @NotNull
     @Column(name = "period_hour")
-    private Long periodHour;  
+    private Integer periodHour;  
 }

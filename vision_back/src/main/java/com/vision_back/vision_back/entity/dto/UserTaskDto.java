@@ -13,15 +13,15 @@ import lombok.Setter;
 @AllArgsConstructor
 
 public class UserTaskDto {
-    private Long taskUserId;
-    private Long taskId;
-    private Long projectId;
-    private Long userId;
-    private Long periodId;
-    private Long statsId;
+    private Integer taskUserId;
+    private Integer taskId;
+    private Integer projectId;
+    private Integer userId;
+    private Integer periodId;
+    private Integer statsId;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
-    private Long quant;
-    private Long rework;
-    private Long averageTime;
+    private Integer quant;
+    private Integer rework;
+    private Integer averageTime;
 }

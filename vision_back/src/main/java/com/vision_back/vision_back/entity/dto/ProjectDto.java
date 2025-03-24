@@ -11,7 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 
 public class ProjectDto {
-    private Long projectId;
-    private Long projectCode;
+    private Integer projectId;
+    private Integer projectCode;
     private String projectName; 
 }

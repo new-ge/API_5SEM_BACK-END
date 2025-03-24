@@ -10,7 +10,7 @@ public class UserTagEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "usr_tag_id")
-    private Long taskUserId;
+    private Integer taskUserId;
 
     @NotNull
     @ManyToOne
@@ -28,5 +28,5 @@ public class UserTagEntity {
     private ProjectEntity projectId;
 
     @Column(name = "quant")
-    private Long quant;
+    private Integer quant;
 }

@@ -13,8 +13,8 @@ import lombok.Setter;
 @AllArgsConstructor
 
 public class TaskStatusHistoryDto {
-    private Long statusHistoryId;
-    private Long taskId;
-    private Long statsId;
+    private Integer statusHistoryId;
+    private Integer taskId;
+    private Integer statsId;
     private LocalDateTime changeDate;
 }

@@ -19,11 +19,11 @@ public class ProjectEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "project_id")
-    private Long projectId;
+    private Integer projectId;
 
     @NotNull
     @Column(name = "project_code")
-    private Long projectCode;
+    private Integer projectCode;
 
     @NotNull
     @Column(name = "project_name")

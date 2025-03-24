@@ -11,10 +11,10 @@ import lombok.Setter;
 @AllArgsConstructor
 
 public class PeriodDto {
-    private Long periodId;
-    private Long periodCode;
-    private Long periodDate;  
-    private Long periodMonth;
-    private Long periodYear;
-    private Long periodHour; 
+    private Integer periodId;
+    private Integer periodCode;
+    private Integer periodDate;  
+    private Integer periodMonth;
+    private Integer periodYear;
+    private Integer periodHour; 
 }

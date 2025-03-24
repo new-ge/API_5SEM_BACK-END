@@ -12,7 +12,7 @@ public class UserTaskEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "usr_task_id")
-    private Long taskUserId;
+    private Integer taskUserId;
 
     @NotNull
     @ManyToOne
@@ -46,11 +46,11 @@ public class UserTaskEntity {
     private LocalDateTime endDate;
 
     @Column(name = "quant")
-    private Long quant;
+    private Integer quant;
 
     @Column(name = "rework")
-    private Long rework;
+    private Integer rework;
 
     @Column(name = "average_time")
-    private Long averageTime;
+    private Integer averageTime;
 }

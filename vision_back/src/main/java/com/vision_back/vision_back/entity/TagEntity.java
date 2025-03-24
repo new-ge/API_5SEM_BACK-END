@@ -19,11 +19,11 @@ public class TagEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tag_id")
-    private Long tagId;
+    private Integer tagId;
     
     @NotNull
     @Column(name = "tag_code")
-    private Long tagCode;
+    private Integer tagCode;
 
     @NotNull
     @Column(name = "tag_description")

@@ -19,11 +19,11 @@ public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "usr_id")
-    private Long userId;
+    private Integer userId;
 
     @NotNull
     @Column(name = "usr_code")
-    private Long userCode;
+    private Integer userCode;
 
     @NotNull
     @Column(name = "usr_name")
@@ -31,7 +31,7 @@ public class UserEntity {
 
     @NotNull
     @Column(name = "usr_role")
-    private Long userRole;  
+    private Integer userRole;  
 
     @NotNull
     @Column(name = "usr_email")

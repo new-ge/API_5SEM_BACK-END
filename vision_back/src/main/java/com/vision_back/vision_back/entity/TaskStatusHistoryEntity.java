@@ -13,7 +13,7 @@ public class TaskStatusHistoryEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "status_history_id")
-    private Long statusHistoryId;
+    private Integer statusHistoryId;
 
     @ManyToOne
     @NotNull
