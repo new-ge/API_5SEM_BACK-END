@@ -1,6 +1,6 @@
 package com.vision_back.vision_back.entity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -14,7 +14,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @Entity
 @Table(name="tag")
-
 public class TagEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

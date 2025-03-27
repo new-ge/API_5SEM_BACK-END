@@ -1,14 +1,21 @@
 package com.vision_back.vision_back.entity;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name="task_status_history")
-
 public class TaskStatusHistoryEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,5 +34,5 @@ public class TaskStatusHistoryEntity {
 
     @NotNull
     @Column(name = "change_date")
-    private LocalDateTime changeDate;
+    private Timestamp changeDate;
 }

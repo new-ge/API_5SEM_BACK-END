@@ -1,5 +1,5 @@
 CREATE TABLE usr_tag (
-    usr_tag_id INT PRIMARY KEY AUTO_INCREMENT,
+    usr_tag_id SERIAL PRIMARY KEY,
     task_id INT NOT NULL,
     tag_id INT NOT NULL,
     project_id INT NOT NULL,

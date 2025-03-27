@@ -1,6 +1,6 @@
 package com.vision_back.vision_back.entity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import jakarta.validation.constraints.NotNull;
 
