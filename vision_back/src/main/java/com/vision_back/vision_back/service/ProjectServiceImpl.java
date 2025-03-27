@@ -18,7 +18,7 @@ public class ProjectServiceImpl implements ProjectService {
     VisionBackApplication vba = new VisionBackApplication();
     HttpEntity<Void> headersEntity;
 
-    public HttpEntity<Void> setHeadersProject(String slugProject) {
+    public HttpEntity<Void> setHeadersProject() {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(vba.functionGetToken());
             
@@ -26,10 +26,25 @@ public class ProjectServiceImpl implements ProjectService {
     }
         
     public String getProjectBySlug(String slugProject) {
-        setHeadersProject(slugProject);
+        setHeadersProject();
         
         try {
             ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects/by_slug?slug="+slugProject, HttpMethod.GET, headersEntity, String.class);
+
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            JsonNode getProjectId = jsonNode.get("id");
+            System.out.println(new ObjectMapper().writeValueAsString(getProjectId).replace("\"", ""));
+            return new ObjectMapper().writeValueAsString(getProjectId).replace("\"", "");
+        } catch (Exception e) {
+            throw new NullPointerException("Resposta não obtida ou resposta inválida.");
+        }
+    }
+
+    public String getProjectId(Integer memberId) {
+        setHeadersProject();
+        
+        try {
+            ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects/projects?member="+memberId, HttpMethod.GET, headersEntity, String.class);
 
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
             JsonNode getProjectId = jsonNode.get("id");

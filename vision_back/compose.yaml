@@ -1,10 +1,15 @@
 services:
   mysql:
-    image: 'mysql:latest'
+    image: 'mysql:8.0.41-debian'
+    container_name: vision-back-mysql
+    restart: always
     environment:
-      - 'MYSQL_DATABASE=mydatabase'
-      - 'MYSQL_PASSWORD=secret'
-      - 'MYSQL_ROOT_PASSWORD=verysecret'
-      - 'MYSQL_USER=myuser'
+      - 'MYSQL_DATABASE=${DB_DATABASE}'
+      - 'MYSQL_PASSWORD=${DB_PASSWORD}'
+      - 'MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}'
+      - 'MYSQL_USER=${DB_USER}'
+      - 'MYSQL_URL=${DB_URL}'
     ports:
-      - '3306'
+      - '3306:3306'
+    volumes:
+      - .mysql:/var/lib/mysql
