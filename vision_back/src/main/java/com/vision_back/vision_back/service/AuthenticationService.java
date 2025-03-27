@@ -1,6 +1,9 @@
 package com.vision_back.vision_back.service;
 
-public interface AuthenticationService {
+import org.springframework.http.ResponseEntity;
 
-    String getTokenAuthentication(String password, String username);
+public interface AuthenticationService {
+    public ResponseEntity<String> consumeAuthentication(String password, String username);
+
+    public String getTokenAuthentication(String password, String username);
 }
