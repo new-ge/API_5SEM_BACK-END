@@ -10,6 +10,6 @@ services:
       - 'MYSQL_USER=${DB_USER}'
       - 'MYSQL_URL=${DB_URL}'
     ports:
-      - '3306:3306'
+      - '3307:3306'
     volumes:
       - .mysql:/var/lib/mysql
