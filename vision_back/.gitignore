@@ -34,3 +34,6 @@ build/
 
 ## Secrets GitHub ##
 secrets.env
+
+.mysql_data/
+.mysql/
