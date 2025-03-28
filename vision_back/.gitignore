@@ -39,3 +39,4 @@ sonar-project.properties
 
 .mysql_data/
 .mysql/
+.scannerwork/
