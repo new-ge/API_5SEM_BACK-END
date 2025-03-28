@@ -5,7 +5,7 @@ import java.util.Map;
 import org.springframework.http.HttpEntity;
 
 public interface TaskService {
-    public HttpEntity<Void> setHeadersTasks(String projectId, String userId);
+    public HttpEntity<Void> setHeadersTasks(Integer projectId, Integer userId);
 
-    public Map<String, Integer> countTasksById(String projectId, String userId);
+    public Map<String, Integer> countTasksById(Integer projectId, Integer userId);
 }

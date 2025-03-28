@@ -1,6 +1,6 @@
 package com.vision_back.vision_back.entity.dto;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,5 +16,5 @@ public class TaskStatusHistoryDto {
     private Integer statusHistoryId;
     private Integer taskId;
     private Integer statsId;
-    private LocalDateTime changeDate;
+    private Timestamp changeDate;
 }

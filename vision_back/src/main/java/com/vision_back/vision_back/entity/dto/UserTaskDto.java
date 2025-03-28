@@ -1,6 +1,7 @@
 package com.vision_back.vision_back.entity.dto;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
+
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,8 +20,8 @@ public class UserTaskDto {
     private Integer userId;
     private Integer periodId;
     private Integer statsId;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
+    private Timestamp startDate;
+    private Timestamp endDate;
     private Integer quant;
     private Integer rework;
     private Integer averageTime;

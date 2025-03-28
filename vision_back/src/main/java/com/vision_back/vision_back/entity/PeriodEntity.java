@@ -13,7 +13,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @Entity
 @Table(name="period")
-
 public class PeriodEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
