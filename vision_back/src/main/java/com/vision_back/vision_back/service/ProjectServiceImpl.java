@@ -12,29 +12,31 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
 
 public class ProjectServiceImpl implements ProjectService {
+    ObjectMapper objectMapper = new ObjectMapper();
+    RestTemplate restTemplate = new RestTemplate();
+    HttpHeaders headers = new HttpHeaders();
+    VisionBackApplication vba = new VisionBackApplication();
+    HttpEntity<Void> headersEntity;
 
-    public String getProjectId(String projectSlug) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        RestTemplate restTemplate = new RestTemplate();
-        VisionBackApplication vba = new VisionBackApplication();
-        HttpHeaders headers = new HttpHeaders();
-
+    public HttpEntity<Void> setHeadersProject(String slugProject) {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(vba.functionGetToken());
             
-        HttpEntity<Void> headersEntity = new HttpEntity<>(headers);
-        ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects/by_slug?slug="+projectSlug, HttpMethod.GET, headersEntity, String.class);
-            
+        return headersEntity = new HttpEntity<>(headers);
+    }
+        
+    public String getProjectBySlug(String slugProject) {
+        setHeadersProject(slugProject);
+        
         try {
-            if (response.getBody().contains("id")) {
-                JsonNode jsonNode = objectMapper.readTree(response.getBody());
-                JsonNode getProjectId = jsonNode.get("id");
-                return new ObjectMapper().writeValueAsString(getProjectId).replace("\"", "");
-            } else {
-                throw new NullPointerException("Erro 404: Resposta não obtida.");
-            }
+            ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects/by_slug?slug="+slugProject, HttpMethod.GET, headersEntity, String.class);
+
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            JsonNode getProjectId = jsonNode.get("id");
+            System.out.println(new ObjectMapper().writeValueAsString(getProjectId).replace("\"", ""));
+            return new ObjectMapper().writeValueAsString(getProjectId).replace("\"", "");
         } catch (Exception e) {
-            return e.getMessage();
+            throw new NullPointerException("Resposta não obtida ou resposta inválida.");
         }
     }
 }
