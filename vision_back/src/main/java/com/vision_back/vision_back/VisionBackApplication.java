@@ -22,9 +22,9 @@ public class VisionBackApplication {
 		return auth.getTokenAuthentication(dotenv.get("PASSWORD_SECRET"), dotenv.get("USERNAME_SECRET"));
 	}
 
-	// @PostConstruct
-	// public void run() {
-	// 	UserServiceImpl usImpl = new UserServiceImpl();
-	// 	System.out.println(usImpl.getUserId(1641986));
-	// }
+	@PostConstruct
+	public void run() {
+		UserServiceImpl usImpl = new UserServiceImpl();
+		System.out.println(usImpl.getUserId(1641986));
+	}
 }

@@ -24,7 +24,7 @@ public class TaskServiceImpl implements TaskService {
     HttpEntity<Void> headersEntity;
 
     @Override
-    public HttpEntity<Void> setHeadersTasks(String projectId, String userId) {
+    public HttpEntity<Void> setHeadersTasks(Integer projectId, Integer userId) {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(vba.functionGetToken());
             
@@ -32,7 +32,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public Map<String, Integer> countTasksById(String projectId, String userId) {
+    public Map<String, Integer> countTasksById(Integer projectId, Integer userId) {
         setHeadersTasks(projectId, userId);
 
         ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/tasks?project="+projectId+"&assigned_to="+userId, HttpMethod.GET, headersEntity, String.class);

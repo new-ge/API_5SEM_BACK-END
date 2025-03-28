@@ -7,5 +7,5 @@ import org.springframework.http.HttpEntity;
 public interface UserService {
     public HttpEntity<Void> setHeadersProject();
 
-    // public List<Integer> getUserId(Integer projectId);
+    public List<Integer> getUserId(Integer projectId);
 }
