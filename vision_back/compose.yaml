@@ -2,9 +2,17 @@ services:
   mysql:
     image: 'mysql:latest'
     environment:
+<<<<<<< HEAD
       - 'MYSQL_DATABASE=mydatabase'
       - 'MYSQL_PASSWORD=secret'
       - 'MYSQL_ROOT_PASSWORD=verysecret'
       - 'MYSQL_USER=myuser'
+=======
+      - 'MYSQL_DATABASE=datawarehouse'
+      - 'MYSQL_PASSWORD=vision'
+      - 'MYSQL_ROOT_PASSWORD=vision'
+      - 'MYSQL_USER=vision'
+      - 'MYSQL_URL=jdbc:mysql://localhost:3306/datawarehouse?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true'
+>>>>>>> 9c8ea0e (VSN-17 - refactor: add DTO, repository, service and controller for TaskClosed)
     ports:
       - '3306'
