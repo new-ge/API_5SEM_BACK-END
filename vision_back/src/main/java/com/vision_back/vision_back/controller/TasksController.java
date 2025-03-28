@@ -17,7 +17,7 @@ public class TasksController {
     @GetMapping("/count-tasks-by-status/{projectId}/{userId}")
     public Map<String, Integer> countUserStoriesByStatus(@PathVariable Integer projectId, @PathVariable Integer userId) {
         TaskServiceImpl tsImpl = new TaskServiceImpl();
-        System.out.println(tsImpl.countTasksById(1641986, 758714));
+        System.out.println(tsImpl.countTasksById(projectId, userId));
         return tsImpl.countTasksById(projectId, userId);
     }
 }
