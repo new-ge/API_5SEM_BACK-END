@@ -52,6 +52,7 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException("Erro ao processar User Stories", e);
         }
     }
+  
     @Override
     public int countCardsCreatedByDateRange(Integer userId, Integer projectId, String startDate, String endDate) {
         HttpEntity<Void> headersEntity = setHeadersTasks(projectId, userId); 
@@ -72,7 +73,8 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException("Erro ao processar cards criados no período", e);
         }
     }
-
+  
+    @Override
     public Map<String, Integer> getTasksPerSprint(Integer userId, Integer projectId) {
         HttpEntity<Void> headersEntity = setHeadersTasks(projectId, userId); 
         Map<String, Integer> tasksPerSprint = new HashMap<>();
@@ -103,6 +105,36 @@ public class TaskServiceImpl implements TaskService {
 
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
+
+    @Override
+    public Integer countTasksByStatusClosed(Integer projectId, Integer userId, String startDate, String endDate) {
+        setHeadersTasks(projectId, userId);
+
+        ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/tasks?project="+projectId+"&assigned_to="+userId + "&created_date__gte=" + startDate + "&created_date__lte=" + endDate, HttpMethod.GET, headersEntity, String.class);
+        Integer sumClosed = 0;
+
+        try {
+            JsonNode rootNode = objectMapper.readTree(response.getBody());
+
+            for (JsonNode node : rootNode) {
+                System.out.println(node);
+                System.out.println(node.get("status_extra_info").get("name").asText());
+
+                if ((node.get("status_extra_info").get("name").asText()).equals("Closed")){
+                    sumClosed += 1;
+                
+                } else { 
+                    continue;
+
+                }
+            } 
+            System.out.println(sumClosed);
+            
+
+            return sumClosed;
+
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Erro ao processar User Stories", e);
         }
     }
 }
