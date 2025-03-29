@@ -1,7 +1,5 @@
 package com.vision_back.vision_back;
 
-import java.util.List;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
