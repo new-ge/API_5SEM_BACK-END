@@ -1,18 +1,45 @@
 services:
-  mysql:
-    image: 'mysql:latest'
+  postgresql:
+    image: postgres:17.4
+    container_name: vision-back-postgres
     environment:
-<<<<<<< HEAD
-      - 'MYSQL_DATABASE=mydatabase'
-      - 'MYSQL_PASSWORD=secret'
-      - 'MYSQL_ROOT_PASSWORD=verysecret'
-      - 'MYSQL_USER=myuser'
-=======
-      - 'MYSQL_DATABASE=datawarehouse'
-      - 'MYSQL_PASSWORD=vision'
-      - 'MYSQL_ROOT_PASSWORD=vision'
-      - 'MYSQL_USER=vision'
-      - 'MYSQL_URL=jdbc:mysql://localhost:3306/datawarehouse?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true'
->>>>>>> 9c8ea0e (VSN-17 - refactor: add DTO, repository, service and controller for TaskClosed)
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+      PGDATA: /data/postgres
     ports:
-      - '3306'
+      - '5433:5432'
+    volumes:
+      - postgresql:/var/lib/postgresql
+      - ./vision_back/src/main/java/com/vision_back/vision_back/resources:/docker-entrypoint-initdb.d
+    networks:
+      - qtsw-network
+      
+  sonarqube:
+    image: sonarqube:community
+    container_name: vision-back-sonarqube
+    depends_on:
+      - postgresql
+    environment:
+      SONAR_JDBC_URL: ${SONAR_URL}
+      SONAR_JDBC_USERNAME: ${SONAR_USER}
+      SONAR_JDBC_PASSWORD: ${SONAR_PASSWORD}
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    ports:
+      - "9001:9000"
+    networks:
+      - qtsw-network
+
+volumes:
+  postgresql:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+
+networks: 
+  qtsw-network:
+    driver: bridge
+

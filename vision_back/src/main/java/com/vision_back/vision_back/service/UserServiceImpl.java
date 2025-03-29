@@ -1,8 +1,8 @@
 package com.vision_back.vision_back.service;
 
-import java.util.HashMap;
+
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -31,28 +31,22 @@ public class UserServiceImpl implements UserService {
         return headersEntity = new HttpEntity<>(headers);
     }
 
-    // public List<Integer> getUserId(Integer projectId) {
-    //     setHeadersProject();
+    public List<Integer> getUserId(Integer projectId) {
+        setHeadersProject();
 
-    //     ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/users?project="+projectId, HttpMethod.GET, headersEntity, String.class);
-    //     List<Integer> listUserId = null;
+        ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/users?project="+projectId, HttpMethod.GET, headersEntity, String.class);
+        List<Integer> listUserId = new ArrayList<>();
 
-    //     try {
-    //         JsonNode jsonNode = objectMapper.readTree(response.getBody());
-    //         for (JsonNode ids : jsonNode) {
-    //             System.out.println(ids);
-    //             JsonNode getUserId = ids.get("id");
-    //             // System.out.println(ids.get("id"));
-    //             System.out.println(getUserId);
-    //             listUserId.add(getUserId);
-    //         }
-    //         // System.out.println(getUserId);
-    //         // System.out.println(new ObjectMapper().writeValueAsString(getUserId).replace("\"", ""));
-    //         // return new ObjectMapper().writeValueAsString(getUserId).replace("\"", "");
-    //         return listUserId;
+        try {
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            for (JsonNode ids : jsonNode) {
+                Integer getUserId = ids.get("id").asInt();
+                listUserId.add(getUserId);
+            }
+            return listUserId;
 
-    //     } catch (Exception e) {
-    //         throw new IllegalArgumentException("Erro ao processar o Usuário", e);
-    //     }
-    // }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Erro ao processar o Usuário", e);
+        }
+    }
 }
