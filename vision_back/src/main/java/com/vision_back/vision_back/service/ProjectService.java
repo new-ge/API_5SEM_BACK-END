@@ -4,7 +4,7 @@ import org.springframework.http.HttpEntity;
 
 public interface ProjectService {
     
-    public HttpEntity<Void> setHeadersProject(String slugProject);
+    public HttpEntity<Void> setHeadersProject();
     
     public String getProjectBySlug(String slugProject);
 }

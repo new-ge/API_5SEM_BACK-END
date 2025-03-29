@@ -13,7 +13,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @Entity
 @Table(name="tag")
-
 public class TagEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

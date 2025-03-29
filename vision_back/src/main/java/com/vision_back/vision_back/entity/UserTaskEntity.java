@@ -1,6 +1,6 @@
 package com.vision_back.vision_back.entity;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -39,10 +39,10 @@ public class UserTaskEntity {
     private StatusEntity statsId;
 
     @Column(name = "start_date")
-    private LocalDateTime startDate;
+    private Timestamp startDate;
 
     @Column(name = "end_date")
-    private LocalDateTime endDate;
+    private Timestamp endDate;
 
     @Column(name = "quant")
     private Integer quant;
