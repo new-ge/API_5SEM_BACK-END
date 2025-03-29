@@ -14,5 +14,4 @@ public class StatusDto {
     private Integer statusId;
     private Integer statusCode;
     private String statusDescription; 
-    private String statusName;
 }
