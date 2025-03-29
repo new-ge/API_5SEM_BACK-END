@@ -32,4 +32,10 @@ public class TasksController {
         TaskServiceImpl taskService = new TaskServiceImpl();
         return taskService.countCardsCreatedByDateRange(userId, projectId, startDate, endDate);
     }
+    
+    @GetMapping("/tasks-per-sprint/{userId}/{projectId}")
+    public Map<String, Integer> getTasksPerSprint(@PathVariable Integer projectId, @PathVariable Integer userId) {
+        TaskServiceImpl taskService = new TaskServiceImpl();
+        return taskService.getTasksPerSprint(userId,projectId);
+    }
 }

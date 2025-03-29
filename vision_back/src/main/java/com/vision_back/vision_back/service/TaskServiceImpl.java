@@ -72,4 +72,37 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException("Erro ao processar cards criados no período", e);
         }
     }
+
+    public Map<String, Integer> getTasksPerSprint(Integer userId, Integer projectId) {
+        HttpEntity<Void> headersEntity = setHeadersTasks(projectId, userId); 
+        Map<String, Integer> tasksPerSprint = new HashMap<>();
+
+        String sprintUrl = "https://api.taiga.io/api/v1/milestones?project=" + projectId;
+        ResponseEntity<String> sprintResponse = restTemplate.exchange(sprintUrl, HttpMethod.GET, headersEntity, String.class);
+
+        try {
+            JsonNode sprints = objectMapper.readTree(sprintResponse.getBody());
+
+            for (JsonNode sprint : sprints) {
+                String sprintName = sprint.get("name").asText();
+                String startDate = sprint.get("estimated_start").asText();
+                String endDate = sprint.get("estimated_finish").asText();
+
+                String taskUrl = "https://api.taiga.io/api/v1/tasks?"
+                        + "project=" + projectId + "&"
+                        + "created_date__gte=" + startDate + "&"
+                        + "created_date__lte=" + endDate;
+
+                ResponseEntity<String> taskResponse = restTemplate.exchange(taskUrl, HttpMethod.GET, headersEntity, String.class);
+                JsonNode tasks = objectMapper.readTree(taskResponse.getBody());
+
+                tasksPerSprint.put(sprintName, tasks.size());
+            }
+
+            return tasksPerSprint;
+
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
+        }
+    }
 }
