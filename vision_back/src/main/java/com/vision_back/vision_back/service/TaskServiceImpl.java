@@ -52,4 +52,24 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException("Erro ao processar User Stories", e);
         }
     }
+    @Override
+    public int countCardsCreatedByDateRange(Integer userId, Integer projectId, String startDate, String endDate) {
+        HttpEntity<Void> headersEntity = setHeadersTasks(projectId, userId); 
+        
+        String url = "https://api.taiga.io/api/v1/tasks?"
+                   + "project=" + projectId + "&"
+                   + "created_date__gte=" + startDate + "&"
+                   + "created_date__lte=" + endDate;
+    
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, headersEntity, String.class);
+    
+        try {
+            JsonNode rootNode = objectMapper.readTree(response.getBody());
+    
+            return rootNode.size(); 
+    
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Erro ao processar cards criados no período", e);
+        }
+    }
 }

@@ -8,4 +8,6 @@ public interface TaskService {
     public HttpEntity<Void> setHeadersTasks(Integer projectId, Integer userId);
 
     public Map<String, Integer> countTasksById(Integer projectId, Integer userId);
+
+    public int countCardsCreatedByDateRange(Integer userId, Integer projectId, String startDate, String endDate);
 }
