@@ -11,14 +11,14 @@ import com.vision_back.vision_back.repository.UserTagRepository;
 @Service
 public class TagService {
 
-    private final UserTagRepository userTagRepository;
+    private final UserTagRepository UserTagRepository;
 
     public TagService(UserTagRepository userTagRepository) {
-        this.userTagRepository = userTagRepository;
+        this.UserTagRepository = userTagRepository;
     }
 
     public Map<Long, Integer> getCardCountByTag() {
-        List<Object[]> results = userTagRepository.countCardsByTag();
+        List<Object[]> results = UserTagRepository.countCardsByTag();
         Map<Long, Integer> tagCounts = new HashMap<>();
         
         for (Object[] result : results) {
