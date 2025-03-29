@@ -10,4 +10,6 @@ public interface TaskService {
     public Map<String, Integer> countTasksById(Integer projectId, Integer userId);
 
     public int countCardsCreatedByDateRange(Integer userId, Integer projectId, String startDate, String endDate);
+
+    public Integer countTasksByStatusClosed(Integer projectId, Integer userId, String startDate, String endDate); 
 }

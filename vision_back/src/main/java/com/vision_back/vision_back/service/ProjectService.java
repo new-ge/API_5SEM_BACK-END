@@ -7,4 +7,6 @@ public interface ProjectService {
     public HttpEntity<Void> setHeadersProject();
     
     public String getProjectBySlug(String slugProject);
+
+    public String getProjectId(Integer memberId);
 }

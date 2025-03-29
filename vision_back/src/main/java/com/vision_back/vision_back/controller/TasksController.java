@@ -32,4 +32,16 @@ public class TasksController {
         TaskServiceImpl taskService = new TaskServiceImpl();
         return taskService.countCardsCreatedByDateRange(userId, projectId, startDate, endDate);
     }
+
+    @GetMapping("/count-cards-by-status-closed/{userId}/{projectId}/{startDate}/{endDate}")
+    public Integer countTasksByStatusClosed(
+        @PathVariable Integer projectId, 
+        @PathVariable Integer userId, 
+        @PathVariable String startDate, 
+        @PathVariable String endDate) {
+            
+        TaskServiceImpl taskService = new TaskServiceImpl();
+        return taskService.countTasksByStatusClosed(userId, projectId, startDate, endDate);
+    }
+
 }
