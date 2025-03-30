@@ -37,6 +37,7 @@ public class TasksController {
         return taskService.getTasksPerSprint(userId,projectId);
     }
 
+
     @GetMapping("/count-tasks-by-tag/{projectId}/{userId}")
     public Map<String, Integer> countTasksByTag(
         @PathVariable Integer projectId, 
@@ -56,4 +57,3 @@ public class TasksController {
         TaskServiceImpl taskService = new TaskServiceImpl();
         return taskService.countTasksByStatusClosedBySprint(userId, projectId);
     }
-}
