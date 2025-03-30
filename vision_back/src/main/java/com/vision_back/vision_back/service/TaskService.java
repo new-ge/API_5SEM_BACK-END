@@ -11,13 +11,11 @@ public interface TaskService {
 
     public int countCardsCreatedByDateRange(Integer userId, Integer projectId, String startDate, String endDate);
 
-    public Integer countTasksByStatusClosed(Integer projectId, Integer userId, String startDate, String endDate); 
+    public Integer countTasksByStatusClosed(Integer projectId, Integer userId, String startDate, String endDate);
 
-<<<<<<< HEAD
-    public Map<String, Integer> countTasksByTag(Integer TaskId, Integer TagId);
-=======
     public Map<String, Integer> getTasksPerSprint(Integer userId, Integer projectId);
 
     public Map<String, Integer> countTasksByStatusClosedBySprint(Integer userId, Integer projectId);
->>>>>>> 876e2e11dc81d79cea5a84b6448771d26a1677c1
+
+    public Map<String, Integer> countTasksByTag(Integer projectId, Integer userId);
 }

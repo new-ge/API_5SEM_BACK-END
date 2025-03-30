@@ -2,12 +2,16 @@ package com.vision_back.vision_back.controller;
 
 import java.util.Map;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.vision_back.vision_back.entity.dto.TagRequestDto;
 import com.vision_back.vision_back.service.TaskServiceImpl;
 
 @RestController
@@ -36,16 +40,20 @@ public class TasksController {
         TaskServiceImpl taskService = new TaskServiceImpl();
         return taskService.getTasksPerSprint(userId,projectId);
     }
+<<<<<<< Updated upstream
 <<<<<<< HEAD
     @GetMapping("/count-tasks-by-tag/{projectId}/{userId}/{tagId}")
+=======
+    @GetMapping("/count-tasks-by-tag/{projectId}/{userId}")
+>>>>>>> Stashed changes
     public Map<String, Integer> countTasksByTag(
-        @PathVariable Integer taskId, 
-        @PathVariable Integer tagId) 
+        @PathVariable Integer projectId, 
+        @PathVariable Integer userId) 
         {
         
         TaskServiceImpl tsImpl = new TaskServiceImpl();
-        System.out.println(tsImpl.countTasksByTag(taskId, tagId));
-        return tsImpl.countTasksByTag(taskId, tagId);
+        System.out.println(tsImpl.countTasksByTag(projectId, userId));
+        return tsImpl.countTasksByTag(projectId, userId);
     }
 }
 =======
