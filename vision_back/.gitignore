@@ -31,3 +31,12 @@ build/
 
 ### VS Code ###
 .vscode/
+
+## Secrets GitHub ##
+secrets.env
+
+sonar-project.properties
+
+.mysql_data/
+.mysql/
+.scannerwork/
