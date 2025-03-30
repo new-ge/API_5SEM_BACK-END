@@ -43,7 +43,7 @@ public class TasksController {
         TaskServiceImpl taskService = new TaskServiceImpl();
         return taskService.countTasksByStatusClosed(userId, projectId, startDate, endDate);
     }
-    @GetMapping("/count-tasks-by-tag/{projectId}/{userId}/{tagId}")
+    @GetMapping("/count-tasks-by-tag/{taskId}/{tagId}")
     public Map<String, Integer> countTasksByTag(
         @PathVariable Integer taskId, 
         @PathVariable Integer tagId) 
