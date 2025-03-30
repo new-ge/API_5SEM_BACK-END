@@ -105,6 +105,8 @@ public class TaskServiceImpl implements TaskService {
 
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
+        }
+    }
 
     @Override
     public Integer countTasksByStatusClosed(Integer projectId, Integer userId, String startDate, String endDate) {
@@ -117,20 +119,12 @@ public class TaskServiceImpl implements TaskService {
             JsonNode rootNode = objectMapper.readTree(response.getBody());
 
             for (JsonNode node : rootNode) {
-                System.out.println(node);
-                System.out.println(node.get("status_extra_info").get("name").asText());
-
                 if ((node.get("status_extra_info").get("name").asText()).equals("Closed")){
                     sumClosed += 1;
-                
                 } else { 
                     continue;
-
                 }
             } 
-            System.out.println(sumClosed);
-            
-
             return sumClosed;
 
         } catch (Exception e) {
