@@ -43,5 +43,14 @@ public class TasksController {
         TaskServiceImpl taskService = new TaskServiceImpl();
         return taskService.countTasksByStatusClosed(userId, projectId, startDate, endDate);
     }
-
+    @GetMapping("/count-tasks-by-tag/{projectId}/{userId}/{tagId}")
+    public Map<String, Integer> countTasksByTag(
+        @PathVariable Integer taskId, 
+        @PathVariable Integer tagId) 
+        {
+        
+        TaskServiceImpl tsImpl = new TaskServiceImpl();
+        System.out.println(tsImpl.countTasksByTag(taskId, tagId));
+        return tsImpl.countTasksByTag(taskId, tagId);
+    }
 }
