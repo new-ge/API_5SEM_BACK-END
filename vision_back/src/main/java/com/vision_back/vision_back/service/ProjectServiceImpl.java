@@ -33,7 +33,6 @@ public class ProjectServiceImpl implements ProjectService {
 
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
             JsonNode getProjectId = jsonNode.get("id");
-            System.out.println(new ObjectMapper().writeValueAsString(getProjectId).replace("\"", ""));
             return new ObjectMapper().writeValueAsString(getProjectId).replace("\"", "");
         } catch (Exception e) {
             throw new NullPointerException("Resposta não obtida ou resposta inválida.");
@@ -48,7 +47,6 @@ public class ProjectServiceImpl implements ProjectService {
 
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
             JsonNode getProjectId = jsonNode.get("id");
-            System.out.println(new ObjectMapper().writeValueAsString(getProjectId).replace("\"", ""));
             return new ObjectMapper().writeValueAsString(getProjectId).replace("\"", "");
         } catch (Exception e) {
             throw new NullPointerException("Resposta não obtida ou resposta inválida.");
