@@ -15,6 +15,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
 
+import jakarta.validation.constraints.Null;
+
 @Service
 public class TaskServiceImpl implements TaskService {
     ObjectMapper objectMapper = new ObjectMapper();
@@ -103,5 +105,48 @@ public class TaskServiceImpl implements TaskService {
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar User Stories", e);
         }
+    }    
+    @Override
+    public Map<String, Integer> countTasksByTag(Integer taskId, Integer tagId) {
+        setHeadersTasks(taskId, tagId);
+    
+        // Realizando a chamada à API Taiga
+        ResponseEntity<String> response = restTemplate.exchange(
+            "https://api.taiga.io/api/v1/tasks?project=" + taskId + "&assigned_to=" + tagId, 
+            HttpMethod.GET, 
+            headersEntity, 
+            String.class
+        );
+    
+        // Mapa para armazenar a contagem das tags
+        Map<String, Integer> tagCount = new HashMap<>();
+    
+        try {
+            // Processando a resposta da API
+            JsonNode rootNode = objectMapper.readTree(response.getBody());
+    
+            // Iterando sobre as tarefas retornadas pela API
+            for (JsonNode node : rootNode) {
+                // Verificando se a tarefa tem tags
+                if (node.get("tags") != null) {
+                    // Iterando sobre as tags da tarefa (caso seja um array de tags)
+                    for (JsonNode tagNode : node.get("tags")) {
+                        // Obter o nome da tag ou ID, dependendo da estrutura da API
+                        String tagName = tagNode.get("name").asText();  // Usando 'name' para o nome da tag
+    
+                        // Atualizando a contagem de tags no mapa
+                        tagCount.put(tagName, tagCount.getOrDefault(tagName, 0) + 1);
+                    }
+                }
+            }
+    
+            // Retornando o mapa de contagem das tags após processar todas as tarefas
+            return tagCount;
+    
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Erro ao processar as User Stories", e);
+        }
     }
 }
+
+    
