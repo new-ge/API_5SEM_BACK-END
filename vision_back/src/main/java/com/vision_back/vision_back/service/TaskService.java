@@ -12,4 +12,8 @@ public interface TaskService {
     public int countCardsCreatedByDateRange(Integer userId, Integer projectId, String startDate, String endDate);
 
     public Integer countTasksByStatusClosed(Integer projectId, Integer userId, String startDate, String endDate); 
+
+    public Map<String, Integer> getTasksPerSprint(Integer userId, Integer projectId);
+
+    public Map<String, Integer> countTasksByStatusClosedBySprint(Integer userId, Integer projectId);
 }

@@ -2,6 +2,7 @@ package com.vision_back.vision_back.service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -52,6 +53,7 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException("Erro ao processar User Stories", e);
         }
     }
+  
     @Override
     public int countCardsCreatedByDateRange(Integer userId, Integer projectId, String startDate, String endDate) {
         HttpEntity<Void> headersEntity = setHeadersTasks(projectId, userId); 
@@ -72,6 +74,85 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException("Erro ao processar cards criados no período", e);
         }
     }
+  
+    @Override
+    public Map<String, Integer> getTasksPerSprint(Integer userId, Integer projectId) {
+        HttpEntity<Void> headersEntity = setHeadersTasks(projectId, userId); 
+        Map<String, Integer> tasksPerSprint = new TreeMap<>();
+
+        String sprintUrl = "https://api.taiga.io/api/v1/milestones?project=" + projectId;
+        ResponseEntity<String> sprintResponse = restTemplate.exchange(sprintUrl, HttpMethod.GET, headersEntity, String.class);
+
+        try {
+            JsonNode sprints = objectMapper.readTree(sprintResponse.getBody());
+
+            for (JsonNode sprint : sprints) {
+                String sprintName = sprint.get("name").asText();
+                String startDate = sprint.get("estimated_start").asText();
+                String endDate = sprint.get("estimated_finish").asText();
+
+                String taskUrl = "https://api.taiga.io/api/v1/tasks?"
+                        + "project=" + projectId + "&"
+                        + "created_date__gte=" + startDate + "&"
+                        + "created_date__lte=" + endDate;
+
+                ResponseEntity<String> taskResponse = restTemplate.exchange(taskUrl, HttpMethod.GET, headersEntity, String.class);
+                JsonNode tasks = objectMapper.readTree(taskResponse.getBody());
+
+                tasksPerSprint.put(sprintName, tasks.size());
+            }
+
+            return tasksPerSprint;
+
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
+        }
+    }
+
+    @Override
+    public Map<String, Integer> countTasksByStatusClosedBySprint(Integer userId, Integer projectId) {
+        HttpEntity<Void> headersEntity = setHeadersTasks(projectId, userId); 
+        Map<String, Integer> tasksPerSprint = new TreeMap<>();
+        Integer sumClosed = 0;
+
+        String sprintUrl = "https://api.taiga.io/api/v1/milestones?project=" + projectId;
+        ResponseEntity<String> sprintResponse = restTemplate.exchange(sprintUrl, HttpMethod.GET, headersEntity, String.class);
+
+        try {
+            JsonNode sprints = objectMapper.readTree(sprintResponse.getBody());
+
+            for (JsonNode sprint : sprints) {
+                String sprintName = sprint.get("name").asText();
+                String startDate = sprint.get("estimated_start").asText();
+                String endDate = sprint.get("estimated_finish").asText();
+
+                String taskUrl = "https://api.taiga.io/api/v1/tasks?"
+                        + "project=" + projectId + "&"
+                        + "assigned_to=" + userId + "&"
+                        + "created_date__gte=" + startDate + "&"
+                        + "created_date__lte=" + endDate;
+
+                ResponseEntity<String> taskResponse = restTemplate.exchange(taskUrl, HttpMethod.GET, headersEntity, String.class);
+                JsonNode tasks = objectMapper.readTree(taskResponse.getBody());
+
+                for (JsonNode node : tasks) {
+                    if ((node.get("status_extra_info").get("name").asText()).equals("Closed")){
+                        sumClosed += 1;
+                    } else { 
+                        continue;
+                    }
+                } 
+
+                tasksPerSprint.put(sprintName, sumClosed);
+            }
+            System.out.println(tasksPerSprint);
+
+            return tasksPerSprint;
+
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
+        }
+    }
 
     @Override
     public Integer countTasksByStatusClosed(Integer projectId, Integer userId, String startDate, String endDate) {
@@ -84,20 +165,12 @@ public class TaskServiceImpl implements TaskService {
             JsonNode rootNode = objectMapper.readTree(response.getBody());
 
             for (JsonNode node : rootNode) {
-                System.out.println(node);
-                System.out.println(node.get("status_extra_info").get("name").asText());
-
                 if ((node.get("status_extra_info").get("name").asText()).equals("Closed")){
                     sumClosed += 1;
-                
                 } else { 
                     continue;
-
                 }
             } 
-            System.out.println(sumClosed);
-            
-
             return sumClosed;
 
         } catch (Exception e) {
