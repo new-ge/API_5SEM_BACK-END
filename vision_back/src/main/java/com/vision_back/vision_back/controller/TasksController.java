@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vision_back.vision_back.service.TaskServiceImpl;
@@ -38,14 +37,12 @@ public class TasksController {
         return taskService.getTasksPerSprint(userId,projectId);
     }
 
-    @GetMapping("/count-cards-by-status-closed/{userId}/{projectId}/{startDate}/{endDate}")
-    public Integer countTasksByStatusClosed(
+    @GetMapping("/count-cards-by-status-closed/{userId}/{projectId}")
+    public Map<String, Integer> countTasksByStatusClosed(
         @PathVariable Integer projectId, 
-        @PathVariable Integer userId, 
-        @PathVariable String startDate, 
-        @PathVariable String endDate) {
+        @PathVariable Integer userId) {
             
         TaskServiceImpl taskService = new TaskServiceImpl();
-        return taskService.countTasksByStatusClosed(userId, projectId, startDate, endDate);
+        return taskService.countTasksByStatusClosedBySprint(userId, projectId);
     }
 }
