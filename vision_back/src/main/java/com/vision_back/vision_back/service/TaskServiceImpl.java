@@ -176,5 +176,36 @@ public class TaskServiceImpl implements TaskService {
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar User Stories", e);
         }
+    }    
+    @Override
+    public Map<String, Integer> countTasksByTag(Integer projectId, Integer userId) {
+        setHeadersTasks(projectId, userId);
+    
+        ResponseEntity<String> response = restTemplate.exchange(
+            "https://api.taiga.io/api/v1/tasks?project=" + projectId + "&assigned_to=" + userId, 
+            HttpMethod.GET, 
+            headersEntity, 
+            String.class
+        );
+    
+        Map<String, Integer> tagCount = new HashMap<>();
+    
+        try {
+            JsonNode rootNode = objectMapper.readTree(response.getBody());
+    
+            for (JsonNode node : rootNode) {
+                for (JsonNode tagNode : node.get("tags")) {
+                    for (JsonNode tag : tagNode) {
+                        if (!tag.isNull()) {
+                            tagCount.put(tag.toString().replace("\"", ""), tagCount.getOrDefault(tag.toString().replace("\"", ""), 0) + 1);
+                        }
+                    }
+                }
+            }
+            return tagCount;
+    
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Erro ao processar as User Stories", e);
+        }
     }
 }
