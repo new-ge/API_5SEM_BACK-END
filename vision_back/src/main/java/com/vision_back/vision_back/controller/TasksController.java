@@ -57,3 +57,4 @@ public class TasksController {
         TaskServiceImpl taskService = new TaskServiceImpl();
         return taskService.countTasksByStatusClosedBySprint(userId, projectId);
     }
+}
