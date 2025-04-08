@@ -92,6 +92,7 @@ public class TaskServiceImpl implements TaskService {
                 String endDate = sprint.get("estimated_finish").asText();
 
                 String taskUrl = "https://api.taiga.io/api/v1/tasks?"
+                        + "assigned_to=" + userId + "&"
                         + "project=" + projectId + "&"
                         + "created_date__gte=" + startDate + "&"
                         + "created_date__lte=" + endDate;
