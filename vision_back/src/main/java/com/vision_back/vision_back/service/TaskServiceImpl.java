@@ -146,8 +146,6 @@ public class TaskServiceImpl implements TaskService {
 
                 tasksPerSprint.put(sprintName, sumClosed);
             }
-            System.out.println(tasksPerSprint);
-
             return tasksPerSprint;
 
         } catch (Exception e) {

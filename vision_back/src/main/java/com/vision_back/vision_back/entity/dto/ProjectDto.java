@@ -7,11 +7,13 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-
 public class ProjectDto {
     private Integer projectId;
     private Integer projectCode;
     private String projectName; 
+
+    public ProjectDto(Integer projectCode, String projectName) {
+        this.projectCode = projectCode;
+        this.projectName = projectName;
+    }
 }

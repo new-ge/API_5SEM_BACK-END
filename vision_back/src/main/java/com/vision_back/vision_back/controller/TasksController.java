@@ -2,12 +2,16 @@ package com.vision_back.vision_back.controller;
 
 import java.util.Map;
 
+import org.apache.catalina.connector.Response;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.vision_back.vision_back.service.ProjectServiceImpl;
 import com.vision_back.vision_back.service.TaskServiceImpl;
 
 @RestController
@@ -19,7 +23,14 @@ public class TasksController {
         TaskServiceImpl tsImpl = new TaskServiceImpl();
         return tsImpl.countTasksById(projectId, userId);
     }
-    
+
+    @PostMapping("/{projectId}/{projectName}")
+    public ResponseEntity<String> saveOnDatabaseProject(@PathVariable Integer projectCode, @PathVariable String projectName) {
+        ProjectServiceImpl psImpl = new ProjectServiceImpl();
+        psImpl.saveOnDatabase(projectCode, projectName);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/count-cards-by-period/{userId}/{projectId}/{startDate}/{endDate}")
     public int countCardsByPeriod(
         @PathVariable Integer projectId, 
@@ -45,7 +56,6 @@ public class TasksController {
         {
         
         TaskServiceImpl tsImpl = new TaskServiceImpl();
-        System.out.println(tsImpl.countTasksByTag(projectId, userId));
         return tsImpl.countTasksByTag(projectId, userId);
     }
 
