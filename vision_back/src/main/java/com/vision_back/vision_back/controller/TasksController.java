@@ -50,7 +50,7 @@ public class TasksController {
     }
 
     @GetMapping("/count-cards-by-status-closed/{userId}/{projectId}")
-    public Map<String, Integer> countTasksByStatusClosed(
+    public Map<String, Object> countTasksByStatusClosed(
         @PathVariable Integer projectId, 
         @PathVariable Integer userId) {
             

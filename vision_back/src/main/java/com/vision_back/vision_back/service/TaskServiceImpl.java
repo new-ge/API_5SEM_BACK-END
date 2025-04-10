@@ -1,6 +1,7 @@
 package com.vision_back.vision_back.service;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -109,51 +110,59 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
-    @Override
-    public Map<String, Integer> countTasksByStatusClosedBySprint(Integer userId, Integer projectId) {
-        HttpEntity<Void> headersEntity = setHeadersTasks(projectId, userId); 
-        Map<String, Integer> tasksPerSprint = new TreeMap<>();
-        Integer sumClosed = 0;
+@Override
+public Map<String, Object> countTasksByStatusClosedBySprint(Integer userId, Integer projectId) {
+    HttpEntity<Void> headersEntity = setHeadersTasks(projectId, userId); 
+    Map<String, Integer> tasksPerSprint = new TreeMap<>();
+    Map<String, Object> finalResult = new LinkedHashMap<>();
 
+    try {
+        // 1. Buscar nome do usuário
+        String userUrl = "https://api.taiga.io/api/v1/users/" + userId;
+        ResponseEntity<String> userResponse = restTemplate.exchange(userUrl, HttpMethod.GET, headersEntity, String.class);
+        JsonNode userData = objectMapper.readTree(userResponse.getBody());
+        String assignedTo = userData.get("full_name_display").asText();
+
+        // 2. Buscar sprints
         String sprintUrl = "https://api.taiga.io/api/v1/milestones?project=" + projectId;
         ResponseEntity<String> sprintResponse = restTemplate.exchange(sprintUrl, HttpMethod.GET, headersEntity, String.class);
+        JsonNode sprints = objectMapper.readTree(sprintResponse.getBody());
 
-        try {
-            JsonNode sprints = objectMapper.readTree(sprintResponse.getBody());
+        for (JsonNode sprint : sprints) {
+            int sumClosed = 0;
 
-            for (JsonNode sprint : sprints) {
-                String sprintName = sprint.get("name").asText();
-                String startDate = sprint.get("estimated_start").asText();
-                String endDate = sprint.get("estimated_finish").asText();
+            String sprintName = sprint.get("name").asText();
+            String startDate = sprint.get("estimated_start").asText();
+            String endDate = sprint.get("estimated_finish").asText();
 
-                String taskUrl = "https://api.taiga.io/api/v1/tasks?"
-                        + "project=" + projectId + "&"
-                        + "assigned_to=" + userId + "&"
-                        + "created_date__gte=" + startDate + "&"
-                        + "created_date__lte=" + endDate;
+            String taskUrl = "https://api.taiga.io/api/v1/tasks?"
+                    + "project=" + projectId + "&"
+                    + "assigned_to=" + userId + "&"
+                    + "created_date__gte=" + startDate + "&"
+                    + "created_date__lte=" + endDate;
 
-                ResponseEntity<String> taskResponse = restTemplate.exchange(taskUrl, HttpMethod.GET, headersEntity, String.class);
-                JsonNode tasks = objectMapper.readTree(taskResponse.getBody());
+            ResponseEntity<String> taskResponse = restTemplate.exchange(taskUrl, HttpMethod.GET, headersEntity, String.class);
+            JsonNode tasks = objectMapper.readTree(taskResponse.getBody());
 
-                for (JsonNode node : tasks) {
-                    if ((node.get("status_extra_info").get("name").asText()).equals("Closed")){
-                        sumClosed += 1;
-                    } else { 
-                        continue;
-                    }
-                } 
-
-                tasksPerSprint.put(sprintName, sumClosed);
+            for (JsonNode node : tasks) {
+                if ("Closed".equals(node.get("status_extra_info").get("name").asText())) {
+                    sumClosed++;
+                }
             }
-            System.out.println(tasksPerSprint);
 
-            return tasksPerSprint;
-
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
+            tasksPerSprint.put(sprintName, sumClosed);
         }
-    }
 
+        finalResult.put("assigned_to", assignedTo);
+        finalResult.put("sprints", tasksPerSprint);
+
+        System.out.println(finalResult);
+        return finalResult;
+
+    } catch (Exception e) {
+        throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
+    }
+}
     @Override
     public Integer countTasksByStatusClosed(Integer projectId, Integer userId, String startDate, String endDate) {
         setHeadersTasks(projectId, userId);
