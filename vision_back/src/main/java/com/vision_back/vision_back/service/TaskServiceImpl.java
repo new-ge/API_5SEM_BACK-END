@@ -1,9 +1,12 @@
 package com.vision_back.vision_back.service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -15,9 +18,24 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
+import com.vision_back.vision_back.entity.dto.TokenDto;
+import com.vision_back.vision_back.repository.ProjectRepository;
 
 @Service
 public class TaskServiceImpl implements TaskService {
+    @Autowired
+    private ProjectServiceImpl projectServiceImpl;
+
+    @Autowired
+    private TokenDto tokenDto;
+
+    @Autowired
+    private UserServiceImpl userServiceImpl;
+
+    @Autowired
+    private ProjectRepository projectRepository; 
+
+
     ObjectMapper objectMapper = new ObjectMapper();
     RestTemplate restTemplate = new RestTemplate();
     HttpHeaders headers = new HttpHeaders();
@@ -25,16 +43,19 @@ public class TaskServiceImpl implements TaskService {
     HttpEntity<Void> headersEntity;
 
     @Override
-    public HttpEntity<Void> setHeadersTasks(Integer projectId, Integer userId) {
+    public HttpEntity<Void> setHeadersTasks() {
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(vba.functionGetToken());
+        headers.setBearerAuth(tokenDto.getAuthToken());
             
         return new HttpEntity<>(headers);
     }
 
     @Override
-    public Map<String, Integer> countTasksById(Integer projectId, Integer userId) {
-        setHeadersTasks(projectId, userId);
+    public Map<String, Integer> countTasksById() {
+        setHeadersTasks();
+
+        Integer userId = userServiceImpl.getUserId();
+        Integer projectId = projectServiceImpl.getProjectId();
 
         ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/tasks?project="+projectId+"&assigned_to="+userId, HttpMethod.GET, headersEntity, String.class);
         Map<String, Integer> statusCount = new HashMap<>();
@@ -56,7 +77,7 @@ public class TaskServiceImpl implements TaskService {
   
     @Override
     public int countCardsCreatedByDateRange(Integer userId, Integer projectId, String startDate, String endDate) {
-        HttpEntity<Void> headersEntity = setHeadersTasks(projectId, userId); 
+        HttpEntity<Void> headersEntity = setHeadersTasks(); 
         
         String url = "https://api.taiga.io/api/v1/tasks?"
                    + "project=" + projectId + "&"
@@ -77,7 +98,7 @@ public class TaskServiceImpl implements TaskService {
   
     @Override
     public Map<String, Integer> getTasksPerSprint(Integer userId, Integer projectId) {
-        HttpEntity<Void> headersEntity = setHeadersTasks(projectId, userId); 
+        HttpEntity<Void> headersEntity = setHeadersTasks(); 
         Map<String, Integer> tasksPerSprint = new TreeMap<>();
 
         String sprintUrl = "https://api.taiga.io/api/v1/milestones?project=" + projectId;
@@ -112,7 +133,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public Map<String, Integer> countTasksByStatusClosedBySprint(Integer userId, Integer projectId) {
-        HttpEntity<Void> headersEntity = setHeadersTasks(projectId, userId); 
+        HttpEntity<Void> headersEntity = setHeadersTasks(); 
         Map<String, Integer> tasksPerSprint = new TreeMap<>();
         Integer sumClosed = 0;
 
@@ -155,7 +176,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public Integer countTasksByStatusClosed(Integer projectId, Integer userId, String startDate, String endDate) {
-        setHeadersTasks(projectId, userId);
+        setHeadersTasks();
 
         ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/tasks?project="+projectId+"&assigned_to="+userId + "&created_date__gte=" + startDate + "&created_date__lte=" + endDate, HttpMethod.GET, headersEntity, String.class);
         Integer sumClosed = 0;
@@ -178,7 +199,7 @@ public class TaskServiceImpl implements TaskService {
     }    
     @Override
     public Map<String, Integer> countTasksByTag(Integer projectId, Integer userId) {
-        setHeadersTasks(projectId, userId);
+        setHeadersTasks();
     
         ResponseEntity<String> response = restTemplate.exchange(
             "https://api.taiga.io/api/v1/tasks?project=" + projectId + "&assigned_to=" + userId, 

@@ -1,5 +1,6 @@
 package com.vision_back.vision_back;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -10,14 +11,18 @@ import jakarta.annotation.PostConstruct;
 
 @SpringBootApplication
 public class VisionBackApplication {
+	
+	@Autowired
+	private AuthenticationServiceImpl auth;
+
 	Dotenv dotenv = Dotenv.configure().filename("secrets.env").load();
 	public static void main(String[] args) {
 		SpringApplication.run(VisionBackApplication.class, args);
 	}
 
 	@PostConstruct
-	public String functionGetToken() {
-		AuthenticationServiceImpl auth = new AuthenticationServiceImpl();
-		return auth.getTokenAuthentication(dotenv.get("PASSWORD_SECRET"), dotenv.get("USERNAME_SECRET"));
+	public void functionGetToken() {
+		// AuthenticationServiceImpl auth = new AuthenticationServiceImpl();
+		auth.getTokenAuthentication(dotenv.get("PASSWORD_SECRET"), dotenv.get("USERNAME_SECRET"));
 	}
 }

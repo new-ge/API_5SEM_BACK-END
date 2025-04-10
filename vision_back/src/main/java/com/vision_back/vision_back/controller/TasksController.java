@@ -3,6 +3,7 @@ package com.vision_back.vision_back.controller;
 import java.util.Map;
 
 import org.apache.catalina.connector.Response;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,24 +12,30 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.vision_back.vision_back.service.AuthenticationService;
+import com.vision_back.vision_back.service.AuthenticationServiceImpl;
 import com.vision_back.vision_back.service.ProjectServiceImpl;
 import com.vision_back.vision_back.service.TaskServiceImpl;
+
+import io.github.cdimascio.dotenv.Dotenv;
 
 @RestController
 @CrossOrigin
 @RequestMapping("/tasks")
 public class TasksController {
-    @GetMapping("/count-tasks-by-status/{projectId}/{userId}")
-    public Map<String, Integer> countUserStoriesByStatus(@PathVariable Integer projectId, @PathVariable Integer userId) {
-        TaskServiceImpl tsImpl = new TaskServiceImpl();
-        return tsImpl.countTasksById(projectId, userId);
-    }
 
-    @PostMapping("/{projectId}/{projectName}")
-    public ResponseEntity<String> saveOnDatabaseProject(@PathVariable Integer projectCode, @PathVariable String projectName) {
-        ProjectServiceImpl psImpl = new ProjectServiceImpl();
-        psImpl.saveOnDatabase(projectCode, projectName);
-        return ResponseEntity.ok().build();
+	Dotenv dotenv = Dotenv.configure().filename("secrets.env").load();
+
+    @Autowired
+    private AuthenticationServiceImpl auth;
+
+    @Autowired
+    private TaskServiceImpl tsImpl;
+
+    @GetMapping("/count-tasks-by-status")
+    public Map<String, Integer> countUserStoriesByStatus() {
+        auth.getTokenAuthentication(dotenv.get("PASSWORD_SECRET"), dotenv.get("USERNAME_SECRET"));
+        return tsImpl.countTasksById();
     }
 
     @GetMapping("/count-cards-by-period/{userId}/{projectId}/{startDate}/{endDate}")
