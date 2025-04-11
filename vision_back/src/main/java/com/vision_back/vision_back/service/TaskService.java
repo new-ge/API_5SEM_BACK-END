@@ -5,11 +5,13 @@ import java.util.Map;
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Service;
 
+import com.vision_back.vision_back.entity.TaskEntity;
+
 @Service
 public interface TaskService {
     public HttpEntity<Void> setHeadersTasks();
 
-    // public Map<String, Integer> countTasksById(Integer projectId, Integer userId);
+    public TaskEntity saveOnDatabaseTask(Integer taskCode, String taskDescription);
 
     public int countCardsCreatedByDateRange(Integer userId, Integer projectId, String startDate, String endDate);
 

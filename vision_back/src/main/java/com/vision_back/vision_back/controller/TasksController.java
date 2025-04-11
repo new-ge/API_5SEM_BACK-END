@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.vision_back.vision_back.entity.dto.TokenDto;
 import com.vision_back.vision_back.service.AuthenticationService;
 import com.vision_back.vision_back.service.AuthenticationServiceImpl;
 import com.vision_back.vision_back.service.ProjectServiceImpl;
@@ -24,17 +25,15 @@ import io.github.cdimascio.dotenv.Dotenv;
 @RequestMapping("/tasks")
 public class TasksController {
 
-	Dotenv dotenv = Dotenv.configure().filename("secrets.env").load();
-
     @Autowired
-    private AuthenticationServiceImpl auth;
+    private TokenDto tokenDto;
 
     @Autowired
     private TaskServiceImpl tsImpl;
 
     @GetMapping("/count-tasks-by-status")
-    public Map<String, Integer> countUserStoriesByStatus() {
-        auth.getTokenAuthentication(dotenv.get("PASSWORD_SECRET"), dotenv.get("USERNAME_SECRET"));
+    public Map<String, Integer> countUserStoriesByStatus(String token) {
+        token = tokenDto.getAuthToken();
         return tsImpl.countTasksById();
     }
 

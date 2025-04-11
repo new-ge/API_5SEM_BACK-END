@@ -45,7 +45,6 @@ public class ProjectServiceImpl implements ProjectService {
     private TokenDto tokenDto;
 
     public HttpEntity<Void> setHeadersProject() {
-        System.out.println(tokenDto.getAuthToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(tokenDto.getAuthToken());
             
@@ -57,7 +56,6 @@ public class ProjectServiceImpl implements ProjectService {
         
         try {
             ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects/by_slug?slug="+slugProject, HttpMethod.GET, headersEntity, String.class);
-
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
             JsonNode getProjectId = jsonNode.get("id");
             return new ObjectMapper().writeValueAsString(getProjectId).replace("\"", "");
@@ -72,29 +70,15 @@ public class ProjectServiceImpl implements ProjectService {
         
         try {
             ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects?member="+memberId, HttpMethod.GET, headersEntity, String.class);
-            JsonNode jsonNode = objectMapper.readTree(response.getBody());
-            saveOnDatabase(jsonNode.get("id").asInt(), jsonNode.get("name").asText());
+            JsonNode jsonNode = objectMapper.readTree(response.getBody()).get(0);
+            saveOnDatabaseProject(jsonNode.get("id").asInt(), jsonNode.get("name").asText());
             return jsonNode.get("id").asInt();
         } catch (Exception e) {
             throw new NullPointerException("Resposta não obtida ou resposta inválida.");
         }
     }
 
-    public String getProjectName(Integer memberId) {
-        setHeadersProject();
-        
-        try {
-            ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects?member="+memberId, HttpMethod.GET, headersEntity, String.class);
-
-            JsonNode jsonNode = objectMapper.readTree(response.getBody());
-            JsonNode getProjectName = jsonNode.get("name");
-            return new ObjectMapper().writeValueAsString(getProjectName).replace("\"", "");
-        } catch (Exception e) {
-            throw new NullPointerException("Resposta não obtida ou resposta inválida.");
-        }
-    }
-
-    public ProjectEntity saveOnDatabase(Integer projectCode, String projectName) {
+    public ProjectEntity saveOnDatabaseProject(Integer projectCode, String projectName) {
         try {
             ProjectEntity projectEntity = new ProjectEntity(projectCode, projectName);
             return projectRepository.save(projectEntity);

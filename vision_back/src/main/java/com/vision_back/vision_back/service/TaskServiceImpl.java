@@ -10,16 +10,21 @@ import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
+import com.vision_back.vision_back.entity.ProjectEntity;
+import com.vision_back.vision_back.entity.TaskEntity;
 import com.vision_back.vision_back.entity.dto.TokenDto;
 import com.vision_back.vision_back.repository.ProjectRepository;
+import com.vision_back.vision_back.repository.TaskRepository;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -33,7 +38,7 @@ public class TaskServiceImpl implements TaskService {
     private UserServiceImpl userServiceImpl;
 
     @Autowired
-    private ProjectRepository projectRepository; 
+    private TaskRepository taskRepository; 
 
 
     ObjectMapper objectMapper = new ObjectMapper();
@@ -226,6 +231,15 @@ public class TaskServiceImpl implements TaskService {
     
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar as User Stories", e);
+        }
+    }
+
+    public TaskEntity saveOnDatabaseTask(Integer taskCode, String taskDescription) {
+        try {
+            TaskEntity taskEntity = new TaskEntity(taskCode, taskDescription);
+            return taskRepository.save(taskEntity);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
         }
     }
 }

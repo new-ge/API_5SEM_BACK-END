@@ -15,8 +15,6 @@ public interface ProjectService {
     public String getProjectBySlug(String slugProject);
 
     public Integer getProjectId();
-    
-    public String getProjectName(Integer memberId);
 
-    public ProjectEntity saveOnDatabase(Integer projectCode, String projectName);
+    public ProjectEntity saveOnDatabaseProject(Integer projectCode, String projectName);
 }

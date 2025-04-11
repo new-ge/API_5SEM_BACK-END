@@ -2,7 +2,6 @@ package com.vision_back.vision_back.entity.dto;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Service;
 
 @Configuration
 public class TokenDto {
