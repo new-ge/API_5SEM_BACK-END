@@ -1,6 +1,7 @@
 package com.vision_back.vision_back.service;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -177,35 +178,48 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException("Erro ao processar User Stories", e);
         }
     }    
-    @Override
-    public Map<String, Integer> countTasksByTag(Integer projectId, Integer userId) {
-        setHeadersTasks(projectId, userId);
-    
-        ResponseEntity<String> response = restTemplate.exchange(
-            "https://api.taiga.io/api/v1/tasks?project=" + projectId + "&assigned_to=" + userId, 
-            HttpMethod.GET, 
-            headersEntity, 
-            String.class
-        );
-    
-        Map<String, Integer> tagCount = new HashMap<>();
-    
-        try {
-            JsonNode rootNode = objectMapper.readTree(response.getBody());
-    
-            for (JsonNode node : rootNode) {
-                for (JsonNode tagNode : node.get("tags")) {
-                    for (JsonNode tag : tagNode) {
-                        if (!tag.isNull()) {
-                            tagCount.put(tag.toString().replace("\"", ""), tagCount.getOrDefault(tag.toString().replace("\"", ""), 0) + 1);
-                        }
+@Override
+public Map<String, Object> countTasksByTag(Integer projectId, Integer userId) {
+    setHeadersTasks(projectId, userId); // mantido conforme você fez
+
+    ResponseEntity<String> response = restTemplate.exchange(
+        "https://api.taiga.io/api/v1/tasks?project=" + projectId + "&assigned_to=" + userId, 
+        HttpMethod.GET, 
+        headersEntity, // usa a variável global (presumida no seu código original)
+        String.class
+    );
+
+    Map<String, Integer> tagCount = new HashMap<>();
+    Map<String, Object> finalResult = new LinkedHashMap<>();
+
+    try {
+        // Buscar nome do usuário
+        String userUrl = "https://api.taiga.io/api/v1/users/" + userId;
+        ResponseEntity<String> userResponse = restTemplate.exchange(userUrl, HttpMethod.GET, headersEntity, String.class);
+        JsonNode userData = objectMapper.readTree(userResponse.getBody());
+        String assignedTo = userData.get("full_name_display").asText();
+
+        JsonNode rootNode = objectMapper.readTree(response.getBody());
+
+        for (JsonNode node : rootNode) {
+            JsonNode tagsArray = node.get("tags");
+            if (tagsArray != null && tagsArray.isArray()) {
+                for (JsonNode tag : tagsArray) {
+                    if (!tag.isNull()) {
+                        String tagName = tag.asText();
+                        tagCount.put(tagName, tagCount.getOrDefault(tagName, 0) + 1);
                     }
                 }
             }
-            return tagCount;
-    
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Erro ao processar as User Stories", e);
         }
+
+        finalResult.put("assigned_to", assignedTo);
+        finalResult.put("tags", tagCount);
+
+        return finalResult;
+
+    } catch (Exception e) {
+        throw new IllegalArgumentException("Erro ao processar as tags das tarefas", e);
     }
+}
 }
