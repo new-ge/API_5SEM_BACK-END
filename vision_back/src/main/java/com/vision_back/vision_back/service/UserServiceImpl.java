@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
+import com.vision_back.vision_back.entity.ProjectEntity;
 import com.vision_back.vision_back.entity.TaskEntity;
 import com.vision_back.vision_back.entity.UserEntity;
 import com.vision_back.vision_back.entity.dto.TokenDto;
@@ -53,7 +54,6 @@ public class UserServiceImpl implements UserService {
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
             saveOnDatabaseUser(jsonNode.get("id").asInt(), jsonNode.get("username").asText(), objectMapper.convertValue(jsonNode.get("roles"), String[].class), jsonNode.get("email").asText());
             return jsonNode.get("id").asInt();
-
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar o Usuário", e);
         }
@@ -61,8 +61,11 @@ public class UserServiceImpl implements UserService {
 
     public UserEntity saveOnDatabaseUser(Integer userCode, String userDescription, String[] userRole, String userEmail) {
         try {
-            UserEntity userEntity = new UserEntity(userCode, userDescription, userRole, userEmail);
-            return userRepository.save(userEntity);
+            return userRepository.findByUserCode(userCode)
+            .orElseGet(() -> {
+                UserEntity userEntity = new UserEntity(userCode, userDescription, userRole, userEmail);
+                return userRepository.save(userEntity);
+            });
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
         }

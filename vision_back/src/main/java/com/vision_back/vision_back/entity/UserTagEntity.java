@@ -19,14 +19,20 @@ public class UserTagEntity {
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "tag_id")
-    private TagEntity tagId;
-
-    @NotNull
-    @ManyToOne
     @JoinColumn(name = "project_id")
     private ProjectEntity projectId;
 
+    @NotNull
+    @Column(name = "tag_name")
+    private String tagName;
+
     @Column(name = "quant")
     private Integer quant;
+
+    public UserTagEntity(TaskEntity taskId, ProjectEntity projectId, String tagName, Integer quant) {
+        this.taskId = taskId;
+        this.projectId = projectId;
+        this.tagName = tagName;
+        this.quant = quant;
+    }
 }

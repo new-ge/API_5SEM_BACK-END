@@ -18,12 +18,18 @@ public class TagEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tag_id")
     private Integer tagId;
-    
-    @NotNull
-    @Column(name = "tag_code")
-    private Integer tagCode;
 
     @NotNull
-    @Column(name = "tag_description")
-    private String tagDescription;
+    @ManyToOne
+    @JoinColumn(name = "task_code")
+    private TaskEntity taskCode;
+
+    @NotNull
+    @Column(name = "tag_name")
+    private String tagName;
+
+    public TagEntity(TaskEntity taskCode, String tagName) {
+        this.taskCode = taskCode;
+        this.tagName = tagName;
+    }
 }

@@ -55,14 +55,12 @@ public class TasksController {
     }
 
 
-    @GetMapping("/count-tasks-by-tag/{projectId}/{userId}")
-    public Map<String, Integer> countTasksByTag(
-        @PathVariable Integer projectId, 
-        @PathVariable Integer userId) 
+    @GetMapping("/count-tasks-by-tag")
+    public Map<Integer, Map<String, Integer>> countTasksByTag(
+        String token) 
         {
-        
-        TaskServiceImpl tsImpl = new TaskServiceImpl();
-        return tsImpl.countTasksByTag(projectId, userId);
+        token = tokenDto.getAuthToken();
+        return tsImpl.countTasksByTag();
     }
 
     @GetMapping("/count-cards-by-status-closed/{userId}/{projectId}")

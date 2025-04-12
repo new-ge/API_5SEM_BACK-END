@@ -23,5 +23,5 @@ public interface TaskService {
 
     public Map<String, Integer> countTasksByStatusClosedBySprint(Integer userId, Integer projectId);
 
-    public Map<String, Integer> countTasksByTag(Integer projectId, Integer userId);
+    public Map<Integer, Map<String, Integer>> countTasksByTag();
 }

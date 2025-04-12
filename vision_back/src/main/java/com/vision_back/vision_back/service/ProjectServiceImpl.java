@@ -2,6 +2,7 @@ package com.vision_back.vision_back.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.catalina.connector.Response;
 import org.apache.catalina.startup.ClassLoaderFactory.Repository;
@@ -80,8 +81,11 @@ public class ProjectServiceImpl implements ProjectService {
 
     public ProjectEntity saveOnDatabaseProject(Integer projectCode, String projectName) {
         try {
-            ProjectEntity projectEntity = new ProjectEntity(projectCode, projectName);
-            return projectRepository.save(projectEntity);
+            return projectRepository.findByProjectCode(projectCode)
+            .orElseGet(() -> {
+                ProjectEntity newProject = new ProjectEntity(projectCode, projectName);
+                return projectRepository.save(newProject);
+            });
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
         }

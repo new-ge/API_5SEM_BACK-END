@@ -12,6 +12,6 @@ import lombok.Setter;
 
 public class TagDto {
     private Integer tagId;
-    private Integer tagCode;
-    private String tagDescription;
+    private Integer taskCode;
+    private String tagName;
 }

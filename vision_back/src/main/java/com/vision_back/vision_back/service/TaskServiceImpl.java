@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import javax.swing.text.html.HTML.Tag;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.http.HttpEntity;
@@ -21,10 +23,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
 import com.vision_back.vision_back.entity.ProjectEntity;
+import com.vision_back.vision_back.entity.TagEntity;
 import com.vision_back.vision_back.entity.TaskEntity;
+import com.vision_back.vision_back.entity.UserEntity;
+import com.vision_back.vision_back.entity.UserTagEntity;
+import com.vision_back.vision_back.entity.UserTaskEntity;
 import com.vision_back.vision_back.entity.dto.TokenDto;
 import com.vision_back.vision_back.repository.ProjectRepository;
+import com.vision_back.vision_back.repository.TagRepository;
 import com.vision_back.vision_back.repository.TaskRepository;
+import com.vision_back.vision_back.repository.UserTagRepository;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -38,7 +46,13 @@ public class TaskServiceImpl implements TaskService {
     private UserServiceImpl userServiceImpl;
 
     @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
     private TaskRepository taskRepository; 
+    
+    @Autowired
+    private UserTagRepository userTagRepository; 
 
 
     ObjectMapper objectMapper = new ObjectMapper();
@@ -201,10 +215,15 @@ public class TaskServiceImpl implements TaskService {
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar User Stories", e);
         }
-    }    
+    } 
+
     @Override
-    public Map<String, Integer> countTasksByTag(Integer projectId, Integer userId) {
+    public Map<Integer, Map<String, Integer>> countTasksByTag() {
         setHeadersTasks();
+
+        Integer userId = userServiceImpl.getUserId();
+        Integer projectId = projectServiceImpl.getProjectId();
+        System.out.println(projectId);
     
         ResponseEntity<String> response = restTemplate.exchange(
             "https://api.taiga.io/api/v1/tasks?project=" + projectId + "&assigned_to=" + userId, 
@@ -212,22 +231,36 @@ public class TaskServiceImpl implements TaskService {
             headersEntity, 
             String.class
         );
-    
-        Map<String, Integer> tagCount = new HashMap<>();
+
+        Map<Integer, Map<String, Integer>> responseMap = new HashMap<>();
     
         try {
             JsonNode rootNode = objectMapper.readTree(response.getBody());
-    
-            for (JsonNode node : rootNode) {
-                for (JsonNode tagNode : node.get("tags")) {
-                    for (JsonNode tag : tagNode) {
+
+            ProjectEntity projectEntity = projectRepository.findById(projectId)
+            .orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado"));
+
+            for (JsonNode taskNode : rootNode) {
+                Integer taskCode = taskNode.get("id").asInt();
+                Map<String, Integer> tagCount = new HashMap<>();
+                JsonNode tagsArray = taskNode.get("tags");
+
+                TaskEntity taskEntity = taskRepository.findByTaskCode(taskCode)
+                .orElseThrow(() -> new IllegalArgumentException("Tarefa não encontrada"));
+
+                if (tagsArray != null && tagsArray.isArray()) {
+                    for (JsonNode tag : tagsArray) {
                         if (!tag.isNull()) {
-                            tagCount.put(tag.toString().replace("\"", ""), tagCount.getOrDefault(tag.toString().replace("\"", ""), 0) + 1);
+                            String tagName = tag.asText();
+                            tagCount.put(tagName, tagCount.getOrDefault(tagName, 0) + 1);
+                            saveOnDatabaseTags(taskEntity, projectEntity, tagName, Integer.valueOf(tagCount.getOrDefault(tagName, 0) + 1));
                         }
                     }
                 }
+    
+                responseMap.put(taskCode, tagCount);
             }
-            return tagCount;
+            return responseMap;
     
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar as User Stories", e);
@@ -236,10 +269,27 @@ public class TaskServiceImpl implements TaskService {
 
     public TaskEntity saveOnDatabaseTask(Integer taskCode, String taskDescription) {
         try {
-            TaskEntity taskEntity = new TaskEntity(taskCode, taskDescription);
-            return taskRepository.save(taskEntity);
+            return taskRepository.findByTaskCode(taskCode)
+            .orElseGet(() -> {
+                TaskEntity taskEntity = new TaskEntity(taskCode, taskDescription);
+                return taskRepository.save(taskEntity);
+            });
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
         }
     }
+
+    public UserTagEntity saveOnDatabaseTags(TaskEntity taskId, ProjectEntity projectId, String tagName, Integer quant) {
+        try {
+            return userTagRepository.findByTaskIdAndProjectId(taskId, projectId)
+            .orElseGet(() -> {
+                UserTagEntity userTagEntity = new UserTagEntity(taskId, projectId, tagName, quant);
+                return userTagRepository.save(userTagEntity);
+            });
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
+        }
+    }
+
+
 }
