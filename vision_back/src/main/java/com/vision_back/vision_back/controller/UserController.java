@@ -15,7 +15,7 @@ public class UserController {
     @Autowired
     private UserServiceImpl userService;
 
-    @GetMapping("/project/{projectId}")
+    @GetMapping("users-and-tasks/project/{projectId}")
     public List<Map<String, Object>> getUsersAndTasks(@PathVariable Integer projectId) {
         return userService.getUsersAndTasks(projectId);
     }
