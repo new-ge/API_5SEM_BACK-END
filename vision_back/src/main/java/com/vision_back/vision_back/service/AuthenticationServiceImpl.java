@@ -25,7 +25,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Autowired
     private TokenDto tokenDto;
-
+    
+    @Override
     public void getTokenAuthentication(String password, String username) {
 
         headers.setContentType(MediaType.APPLICATION_JSON);

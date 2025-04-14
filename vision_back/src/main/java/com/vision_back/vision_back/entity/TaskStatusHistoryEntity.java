@@ -24,15 +24,21 @@ public class TaskStatusHistoryEntity {
 
     @ManyToOne
     @NotNull
-    @JoinColumn(name = "task_id")
-    private TaskEntity taskId;
+    @JoinColumn(name = "task_code", referencedColumnName = "task_code")
+    private TaskEntity taskCode;
 
     @ManyToOne
     @NotNull
-    @JoinColumn(name = "stats_id")
-    private StatusEntity statsId;
+    @JoinColumn(name = "stats_code", referencedColumnName = "stats_code")
+    private StatusEntity statsCode;
 
     @NotNull
     @Column(name = "change_date")
     private Timestamp changeDate;
+
+    public TaskStatusHistoryEntity(TaskEntity taskCode, StatusEntity statsCode, Timestamp changeDate) {
+        this.taskCode = taskCode;
+        this.statsCode = statsCode;
+        this.changeDate = changeDate;
+    }
 }

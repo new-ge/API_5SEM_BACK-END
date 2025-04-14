@@ -1,9 +1,5 @@
 package com.vision_back.vision_back.service;
 
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -15,15 +11,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
 import com.vision_back.vision_back.entity.ProjectEntity;
-import com.vision_back.vision_back.entity.TaskEntity;
 import com.vision_back.vision_back.entity.UserEntity;
 import com.vision_back.vision_back.entity.dto.TokenDto;
+import com.vision_back.vision_back.repository.RoleRepository;
 import com.vision_back.vision_back.repository.UserRepository;
+
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -32,6 +28,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RoleRepository userRoleRepository;
     
     ObjectMapper objectMapper = new ObjectMapper();
     RestTemplate restTemplate = new RestTemplate();
@@ -39,6 +38,7 @@ public class UserServiceImpl implements UserService {
     VisionBackApplication vba = new VisionBackApplication();
     HttpEntity<Void> headersEntity;
 
+    @Override
     public HttpEntity<Void> setHeadersProject() {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(tokenDto.getAuthToken());
@@ -46,6 +46,7 @@ public class UserServiceImpl implements UserService {
         return headersEntity = new HttpEntity<>(headers);
     }
 
+    @Override
     public Integer getUserId() {
         setHeadersProject();
 
@@ -69,5 +70,5 @@ public class UserServiceImpl implements UserService {
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
         }
-    } 
+    }
 }

@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.vision_back.vision_back.entity.dto.TokenDto;
 import com.vision_back.vision_back.service.AuthenticationService;
 import com.vision_back.vision_back.service.AuthenticationServiceImpl;
@@ -31,8 +33,11 @@ public class TasksController {
     @Autowired
     private TaskServiceImpl tsImpl;
 
+    @Autowired
+    private ProjectServiceImpl psImpl;
+
     @GetMapping("/count-tasks-by-status")
-    public Map<String, Integer> countUserStoriesByStatus(String token) {
+    public Map<String, Integer> countUserStoriesByStatus(String token) throws JsonMappingException, JsonProcessingException {
         token = tokenDto.getAuthToken();
         return tsImpl.countTasksById();
     }
@@ -56,7 +61,7 @@ public class TasksController {
 
 
     @GetMapping("/count-tasks-by-tag")
-    public Map<Integer, Map<String, Integer>> countTasksByTag(
+    public Map<String, Integer> countTasksByTag(
         String token) 
         {
         token = tokenDto.getAuthToken();

@@ -11,7 +11,9 @@ import lombok.Setter;
 @AllArgsConstructor
 
 public class TagDto {
+    private Integer taskUserId;
+    private Integer taskId;
     private Integer tagId;
-    private Integer taskCode;
-    private String tagName;
+    private Integer projectId;
+    private Integer quant;
 }

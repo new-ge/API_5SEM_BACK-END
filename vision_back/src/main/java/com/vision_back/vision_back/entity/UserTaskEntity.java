@@ -15,13 +15,13 @@ public class UserTaskEntity {
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "task_id")
+    @JoinColumn(name = "project_id")
     private ProjectEntity projectId;
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "project_id")
-    private TagEntity tagId;
+    @JoinColumn(name = "task_id")
+    private TagEntity tagCode;
 
     @NotNull
     @ManyToOne
@@ -37,6 +37,11 @@ public class UserTaskEntity {
     @ManyToOne
     @JoinColumn(name = "stats_id")
     private StatusEntity statsId;
+
+    @NotNull
+    @ManyToOne
+    @JoinColumn(name = "role_id")
+    private RoleEntity roleId;
 
     @Column(name = "start_date")
     private Timestamp startDate;
