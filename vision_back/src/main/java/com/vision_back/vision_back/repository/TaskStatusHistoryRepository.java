@@ -12,13 +12,14 @@ import org.springframework.stereotype.Repository;
 import com.vision_back.vision_back.entity.StatusEntity;
 import com.vision_back.vision_back.entity.TaskEntity;
 import com.vision_back.vision_back.entity.TaskStatusHistoryEntity;
+import com.vision_back.vision_back.entity.dto.TaskStatusHistoryDto;
 
 @Repository
 public interface TaskStatusHistoryRepository extends JpaRepository<TaskStatusHistoryEntity,Integer>{
 
-    Optional<TaskStatusHistoryEntity> findByTaskCodeAndStatsCodeAndChangeDate(TaskEntity taskCode, StatusEntity statsCode,
+    Optional<TaskStatusHistoryEntity> findByTaskCodeAndLastStatusAndActualStatusAndChangeDate(TaskEntity taskCode, String lastStatus, String actualStatus,
             Timestamp changeDate);
 
-    @Query(value = "SELECT subquery.* FROM (SELECT tsh.*, s.stats_name AS status_atual, CASE WHEN s.stats_name = 'Closed' AND LEAD(s.stats_name) OVER (PARTITION BY tsh.task_code ORDER BY tsh.change_date) <> 'Closed' THEN 1 ELSE 0 END AS rework_flag FROM task_status_history tsh LEFT JOIN stats s ON tsh.stats_code = s.stats_code) AS subquery WHERE subquery.rework_flag <> 0", nativeQuery = true)
-    List<Object[]> findTaskStatusHistoryWithReworkFlagNative();
+    @Query(value = "SELECT tsh.*, CASE WHEN last_status = 'Closed' AND actual_status <> 'Closed' THEN 1 ELSE 0 END AS rework FROM task_status_history tsh WHERE last_status = 'Closed' AND actual_status <> 'Closed'", nativeQuery = true)
+    List<TaskStatusHistoryDto> findTaskStatusHistoryWithReworkFlagNative();
 }

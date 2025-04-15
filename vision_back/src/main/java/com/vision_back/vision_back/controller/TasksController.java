@@ -1,5 +1,6 @@
 package com.vision_back.vision_back.controller;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -47,9 +48,9 @@ public class TasksController {
         return tsImpl.countTasksById();
     }
 
-    @GetMapping("/att")
-    public List<Object[]> tarefas() {
-        return tshImpl.findTaskStatusHistoryWithReworkFlagNative();
+    @GetMapping("/app")
+    public void get() {
+        System.out.println(tshImpl.findTaskStatusHistoryWithReworkFlagNative().toString());
     }
 
     @GetMapping("/count-cards-by-period/{userId}/{projectId}/{startDate}/{endDate}")

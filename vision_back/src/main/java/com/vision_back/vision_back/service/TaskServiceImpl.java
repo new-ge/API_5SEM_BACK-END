@@ -2,6 +2,7 @@ package com.vision_back.vision_back.service;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +82,35 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public void  processTaskHistory(Integer taskCode) {
+        System.out.println(taskCode);
+        System.out.println("https://api.taiga.io/api/v1/history/task/"+taskCode);
+        setHeadersTasks();
+
+        ResponseEntity<String> responseTaskHistory = restTemplate.exchange("https://api.taiga.io/api/v1/history/task/"+taskCode, HttpMethod.GET, headersEntity, String.class);
+
+        try {
+            JsonNode rootNodeTaskHistory = objectMapper.readTree(responseTaskHistory.getBody());
+            for (int i = rootNodeTaskHistory.size() - 1; i >= 0; i-- ) {
+                JsonNode current = rootNodeTaskHistory.get(i);
+
+                if (current.has("values_diff") && current.get("values_diff").has("status") && !current.get("values_diff").get("status").isNull()) {
+                    String statusAtual = current.get("values_diff").get("status").get(1).asText();
+                    String ultimoStatus = current.get("values_diff").get("status").get(0).asText();
+
+                    TaskEntity taskEntity = taskRepository.findByTaskCode(taskCode).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
+
+                    saveOnDatabaseTaskStatusHistory(taskEntity, ultimoStatus, statusAtual, Timestamp.from(Instant.parse(current.get("created_at").asText())));
+                } else {
+                    continue;
+                }
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Erro ao processar User Stories", e);
+        }
+    }
+
+    @Override
     public Map<String, Integer> countTasksById() {
         setHeadersTasks();
 
@@ -96,16 +126,14 @@ public class TaskServiceImpl implements TaskService {
             for (JsonNode node : rootNode) {
                 saveOnDatabaseTask(Integer.valueOf(node.get("id").asText()), node.get("subject").asText());
                 saveOnDatabaseStats(Integer.valueOf(node.get("status").asInt()), node.get("status_extra_info").get("name").asText());
+                processTaskHistory(node.get("id").asInt());
 
                 TaskEntity taskEntity = taskRepository.findByTaskCode(node.get("id").asInt()).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
                 StatusEntity statusEntity = statusRepository.findByStatusCodeAndStatusName(node.get("status").asInt(), node.get("status_extra_info").get("name").asText()).orElseThrow(() -> new IllegalArgumentException("Status não encontrado"));
 
-                saveOnDatabaseTaskStatusHistory(taskEntity, statusEntity, Timestamp.from(Instant.parse(node.get("modified_date").asText())));
-
                 String nameStatus = node.get("status_extra_info").get("name").asText();
                 statusCount.put(nameStatus, statusCount.getOrDefault(nameStatus, 0) + 1);
             }
-
             return statusCount;
 
         } catch (Exception e) {
@@ -130,11 +158,7 @@ public class TaskServiceImpl implements TaskService {
             for (JsonNode task : rootNode) {
                 saveOnDatabaseTask(Integer.valueOf(task.get("id").asText()), task.get("subject").asText());
                 saveOnDatabaseStats(Integer.valueOf(task.get("status").asInt()), task.get("status_extra_info").get("name").asText());
-
-                TaskEntity taskEntity = taskRepository.findByTaskCode(task.get("id").asInt()).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
-                StatusEntity statusEntity = statusRepository.findByStatusCodeAndStatusName(task.get("status").asInt(), task.get("status_extra_info").get("name").asText()).orElseThrow(() -> new IllegalArgumentException("Status não encontrado"));
-
-                saveOnDatabaseTaskStatusHistory(taskEntity, statusEntity, Timestamp.from(Instant.parse(task.get("modified_date").asText())));
+                processTaskHistory(task.get("id").asInt());
             }
     
             return rootNode.size(); 
@@ -172,11 +196,7 @@ public class TaskServiceImpl implements TaskService {
                 for (JsonNode task : tasks) {
                     saveOnDatabaseTask(Integer.valueOf(task.get("id").asText()), task.get("subject").asText());
                     saveOnDatabaseStats(Integer.valueOf(task.get("status").asInt()), task.get("status_extra_info").get("name").asText());
-
-                    TaskEntity taskEntity = taskRepository.findByTaskCode(task.get("id").asInt()).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
-                    StatusEntity statusEntity = statusRepository.findByStatusCodeAndStatusName(task.get("status").asInt(), task.get("status_extra_info").get("name").asText()).orElseThrow(() -> new IllegalArgumentException("Status não encontrado"));
-
-                    saveOnDatabaseTaskStatusHistory(taskEntity, statusEntity, Timestamp.from(Instant.parse(task.get("modified_date").asText())));
+                    processTaskHistory(task.get("id").asInt());
                 }
 
                 tasksPerSprint.put(sprintName, tasks.size());
@@ -216,10 +236,9 @@ public class TaskServiceImpl implements TaskService {
                 JsonNode tasks = objectMapper.readTree(taskResponse.getBody());
 
                 for (JsonNode node : tasks) {
-                    TaskEntity taskEntity = saveOnDatabaseTask(Integer.valueOf(node.get("id").asText()), node.get("subject").asText());
-                    StatusEntity statusEntity = saveOnDatabaseStats(Integer.valueOf(node.get("status").asInt()), node.get("status_extra_info").get("name").asText());
-    
-                    saveOnDatabaseTaskStatusHistory(taskEntity, statusEntity, Timestamp.from(Instant.parse(node.get("modified_date").asText())));
+                    saveOnDatabaseTask(Integer.valueOf(node.get("id").asText()), node.get("subject").asText());
+                    saveOnDatabaseStats(Integer.valueOf(node.get("status").asInt()), node.get("status_extra_info").get("name").asText());
+                    processTaskHistory(node.get("id").asInt());
 
                     if ((node.get("status_extra_info").get("name").asText()).equals("Closed")){
                         sumClosed += 1;
@@ -248,10 +267,9 @@ public class TaskServiceImpl implements TaskService {
             JsonNode rootNode = objectMapper.readTree(response.getBody());
 
             for (JsonNode node : rootNode) {
-                TaskEntity taskEntity = saveOnDatabaseTask(Integer.valueOf(node.get("id").asText()), node.get("subject").asText());
-                StatusEntity statusEntity = saveOnDatabaseStats(Integer.valueOf(node.get("status").asInt()), node.get("status_extra_info").get("name").asText());
-
-                saveOnDatabaseTaskStatusHistory(taskEntity, statusEntity, Timestamp.from(Instant.parse(node.get("modified_date").asText())));
+                saveOnDatabaseTask(Integer.valueOf(node.get("id").asText()), node.get("subject").asText());
+                saveOnDatabaseStats(Integer.valueOf(node.get("status").asInt()), node.get("status_extra_info").get("name").asText());
+                processTaskHistory(node.get("id").asInt());
 
                 if ((node.get("status_extra_info").get("name").asText()).equals("Closed")){
                     sumClosed += 1;
@@ -285,14 +303,14 @@ public class TaskServiceImpl implements TaskService {
         try {
             JsonNode rootNode = objectMapper.readTree(response.getBody());
     
-            for (JsonNode node : rootNode) {
-                Integer taskCode = node.get("id").asInt();
-                saveOnDatabaseTask(taskCode, node.get("subject").asText());
+            for (JsonNode node : rootNode) {                
+                saveOnDatabaseTask(node.get("id").asInt(), node.get("subject").asText());
+                processTaskHistory(node.get("id").asInt());
                 for (JsonNode tagNode : node.get("tags")) {
                     for (JsonNode tag : tagNode) {
                         if (!tag.isNull()) {
                             tagCount.put(tag.toString().replace("\"", ""), tagCount.getOrDefault(tag.toString().replace("\"", ""), 0) + 1);
-                            TaskEntity taskEntity = taskRepository.findByTaskCode(taskCode).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
+                            TaskEntity taskEntity = taskRepository.findByTaskCode(node.get("id").asInt()).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
                             ProjectEntity projectEntity = projectRepository.findByProjectCode(projectCode).orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado"));
                             saveOnDatabaseTags(taskEntity, projectEntity, tag.asText(), 1);
                         }
@@ -342,11 +360,11 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
-    public TaskStatusHistoryEntity saveOnDatabaseTaskStatusHistory(TaskEntity taskCode, StatusEntity statsCode, Timestamp changeDate) {
+    public TaskStatusHistoryEntity saveOnDatabaseTaskStatusHistory(TaskEntity taskCode, String lastStatus, String actualStatus, Timestamp changeDate) {
         try {
-            return taskStatusHistoryRepository.findByTaskCodeAndStatsCodeAndChangeDate(taskCode, statsCode, changeDate)
+            return taskStatusHistoryRepository.findByTaskCodeAndLastStatusAndActualStatusAndChangeDate(taskCode, lastStatus, actualStatus, changeDate)
             .orElseGet(() -> {
-                TaskStatusHistoryEntity taskStatusHistoryEntity = new TaskStatusHistoryEntity(taskCode, statsCode, changeDate);
+                TaskStatusHistoryEntity taskStatusHistoryEntity = new TaskStatusHistoryEntity(taskCode, lastStatus, actualStatus, changeDate);
                 return taskStatusHistoryRepository.save(taskStatusHistoryEntity);
             });
         } catch (Exception e) {
@@ -354,15 +372,15 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
-    public TaskStatusHistoryEntity saveOnDatabaseUserTask(TaskEntity taskCode, StatusEntity statsCode, Timestamp changeDate) {
-        try {
-            return taskStatusHistoryRepository.findByTaskCodeAndStatsCodeAndChangeDate(taskCode, statsCode, changeDate)
-            .orElseGet(() -> {
-                TaskStatusHistoryEntity taskStatusHistoryEntity = new TaskStatusHistoryEntity(taskCode, statsCode, changeDate);
-                return taskStatusHistoryRepository.save(taskStatusHistoryEntity);
-            });
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
-        }
-    }
+    // public TaskStatusHistoryEntity saveOnDatabaseUserTask(TaskEntity taskCode, StatusEntity statsCode, Timestamp changeDate) {
+    //     try {
+    //         return taskStatusHistoryRepository.findByTaskCodeAndStatsCodeAndChangeDate(taskCode, statsCode, changeDate)
+    //         .orElseGet(() -> {
+    //             TaskStatusHistoryEntity taskStatusHistoryEntity = new TaskStatusHistoryEntity(taskCode, statsCode, changeDate);
+    //             return taskStatusHistoryRepository.save(taskStatusHistoryEntity);
+    //         });
+    //     } catch (Exception e) {
+    //         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
+    //     }
+    // }
 }
