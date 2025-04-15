@@ -15,33 +15,33 @@ public class UserTaskEntity {
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "project_id")
-    private ProjectEntity projectId;
+    @JoinColumn(name = "task_code")
+    private TagEntity taskCode;
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "task_id")
-    private TagEntity tagCode;
+    @JoinColumn(name = "project_code")
+    private ProjectEntity projectCode;
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "usr_id")
-    private UserEntity userId;
+    @JoinColumn(name = "usr_code")
+    private UserEntity userCode;
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "period_id")
-    private PeriodEntity periodId;
+    @JoinColumn(name = "period_code")
+    private PeriodEntity periodCode;
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "stats_id")
-    private StatusEntity statsId;
+    @JoinColumn(name = "stats_code")
+    private StatusEntity statsCode;
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "role_id")
-    private RoleEntity roleId;
+    @JoinColumn(name = "role_code")
+    private RoleEntity roleCode;
 
     @Column(name = "start_date")
     private Timestamp startDate;
@@ -52,9 +52,19 @@ public class UserTaskEntity {
     @Column(name = "quant")
     private Integer quant;
 
-    @Column(name = "rework")
-    private Integer rework;
-
     @Column(name = "average_time")
     private Integer averageTime;
+
+    public UserTaskEntity(TagEntity taskCode, ProjectEntity projectCode, UserEntity userCode, PeriodEntity periodCode, StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate, Integer quant, Integer averageTime) {
+        this.taskCode = taskCode;
+        this.projectCode = projectCode;
+        this.userCode = userCode;
+        this.periodCode = periodCode;
+        this.statsCode = statsCode;
+        this.roleCode = roleCode;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.quant = quant;
+        this.averageTime = averageTime;
+    }
 }

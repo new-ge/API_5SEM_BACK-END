@@ -1,5 +1,6 @@
 package com.vision_back.vision_back.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import org.apache.catalina.connector.Response;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.vision_back.vision_back.entity.dto.TokenDto;
+import com.vision_back.vision_back.repository.TaskStatusHistoryRepository;
 import com.vision_back.vision_back.service.AuthenticationService;
 import com.vision_back.vision_back.service.AuthenticationServiceImpl;
 import com.vision_back.vision_back.service.ProjectServiceImpl;
@@ -35,11 +37,19 @@ public class TasksController {
 
     @Autowired
     private ProjectServiceImpl psImpl;
+    
+    @Autowired
+    private TaskStatusHistoryRepository tshImpl;
 
     @GetMapping("/count-tasks-by-status")
     public Map<String, Integer> countUserStoriesByStatus(String token) throws JsonMappingException, JsonProcessingException {
         token = tokenDto.getAuthToken();
         return tsImpl.countTasksById();
+    }
+
+    @GetMapping("/att")
+    public List<Object[]> tarefas() {
+        return tshImpl.findTaskStatusHistoryWithReworkFlagNative();
     }
 
     @GetMapping("/count-cards-by-period/{userId}/{projectId}/{startDate}/{endDate}")

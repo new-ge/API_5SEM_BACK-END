@@ -170,13 +170,13 @@ public class TaskServiceImpl implements TaskService {
                 JsonNode tasks = objectMapper.readTree(taskResponse.getBody());
 
                 for (JsonNode task : tasks) {
-                    saveOnDatabaseTask(Integer.valueOf(tasks.get("id").asText()), tasks.get("subject").asText());
-                    saveOnDatabaseStats(Integer.valueOf(tasks.get("status").asInt()), tasks.get("status_extra_info").get("name").asText());
+                    saveOnDatabaseTask(Integer.valueOf(task.get("id").asText()), task.get("subject").asText());
+                    saveOnDatabaseStats(Integer.valueOf(task.get("status").asInt()), task.get("status_extra_info").get("name").asText());
 
-                    TaskEntity taskEntity = taskRepository.findByTaskCode(tasks.get("id").asInt()).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
-                    StatusEntity statusEntity = statusRepository.findByStatusCodeAndStatusName(tasks.get("status").asInt(), tasks.get("status_extra_info").get("name").asText()).orElseThrow(() -> new IllegalArgumentException("Status não encontrado"));
+                    TaskEntity taskEntity = taskRepository.findByTaskCode(task.get("id").asInt()).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
+                    StatusEntity statusEntity = statusRepository.findByStatusCodeAndStatusName(task.get("status").asInt(), task.get("status_extra_info").get("name").asText()).orElseThrow(() -> new IllegalArgumentException("Status não encontrado"));
 
-                    saveOnDatabaseTaskStatusHistory(taskEntity, statusEntity, Timestamp.from(Instant.parse(node.get("modified_date").asText())));
+                    saveOnDatabaseTaskStatusHistory(taskEntity, statusEntity, Timestamp.from(Instant.parse(task.get("modified_date").asText())));
                 }
 
                 tasksPerSprint.put(sprintName, tasks.size());
@@ -284,7 +284,6 @@ public class TaskServiceImpl implements TaskService {
 
         try {
             JsonNode rootNode = objectMapper.readTree(response.getBody());
-
     
             for (JsonNode node : rootNode) {
                 Integer taskCode = node.get("id").asInt();
@@ -292,7 +291,6 @@ public class TaskServiceImpl implements TaskService {
                 for (JsonNode tagNode : node.get("tags")) {
                     for (JsonNode tag : tagNode) {
                         if (!tag.isNull()) {
-                            System.out.println(tag);
                             tagCount.put(tag.toString().replace("\"", ""), tagCount.getOrDefault(tag.toString().replace("\"", ""), 0) + 1);
                             TaskEntity taskEntity = taskRepository.findByTaskCode(taskCode).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
                             ProjectEntity projectEntity = projectRepository.findByProjectCode(projectCode).orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado"));
@@ -345,6 +343,18 @@ public class TaskServiceImpl implements TaskService {
     }
 
     public TaskStatusHistoryEntity saveOnDatabaseTaskStatusHistory(TaskEntity taskCode, StatusEntity statsCode, Timestamp changeDate) {
+        try {
+            return taskStatusHistoryRepository.findByTaskCodeAndStatsCodeAndChangeDate(taskCode, statsCode, changeDate)
+            .orElseGet(() -> {
+                TaskStatusHistoryEntity taskStatusHistoryEntity = new TaskStatusHistoryEntity(taskCode, statsCode, changeDate);
+                return taskStatusHistoryRepository.save(taskStatusHistoryEntity);
+            });
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
+        }
+    }
+
+    public TaskStatusHistoryEntity saveOnDatabaseUserTask(TaskEntity taskCode, StatusEntity statsCode, Timestamp changeDate) {
         try {
             return taskStatusHistoryRepository.findByTaskCodeAndStatsCodeAndChangeDate(taskCode, statsCode, changeDate)
             .orElseGet(() -> {
