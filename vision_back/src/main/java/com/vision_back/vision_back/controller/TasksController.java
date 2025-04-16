@@ -16,6 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.vision_back.vision_back.entity.PeriodEntity;
+import com.vision_back.vision_back.entity.ProjectEntity;
+import com.vision_back.vision_back.entity.RoleEntity;
+import com.vision_back.vision_back.entity.StatusEntity;
+import com.vision_back.vision_back.entity.TaskEntity;
+import com.vision_back.vision_back.entity.UserEntity;
 import com.vision_back.vision_back.entity.dto.TokenDto;
 import com.vision_back.vision_back.repository.TaskStatusHistoryRepository;
 import com.vision_back.vision_back.service.AuthenticationService;
@@ -50,7 +56,7 @@ public class TasksController {
 
     @GetMapping("/app")
     public void get() {
-        System.out.println(tshImpl.findTaskStatusHistoryWithReworkFlagNative().toString());
+        System.out.println(tsImpl.processTaskUser(1641986, 7667350, 758714, 1641986, 8187830, null));
     }
 
     @GetMapping("/count-cards-by-period/{userId}/{projectId}/{startDate}/{endDate}")

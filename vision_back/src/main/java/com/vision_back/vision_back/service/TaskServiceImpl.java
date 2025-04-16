@@ -2,16 +2,11 @@ package com.vision_back.vision_back.service;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import javax.swing.text.html.HTML.Tag;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -25,17 +20,17 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
+import com.vision_back.vision_back.entity.PeriodEntity;
 import com.vision_back.vision_back.entity.ProjectEntity;
+import com.vision_back.vision_back.entity.RoleEntity;
 import com.vision_back.vision_back.entity.StatusEntity;
 import com.vision_back.vision_back.entity.TaskEntity;
 import com.vision_back.vision_back.entity.TaskStatusHistoryEntity;
 import com.vision_back.vision_back.entity.UserEntity;
-import com.vision_back.vision_back.entity.TagEntity;
 import com.vision_back.vision_back.entity.UserTaskEntity;
+import com.vision_back.vision_back.entity.TagEntity;
 import com.vision_back.vision_back.entity.dto.TokenDto;
 import com.vision_back.vision_back.repository.*;
-
-import jakarta.transaction.Transactional;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -53,19 +48,28 @@ public class TaskServiceImpl implements TaskService {
     private ProjectRepository projectRepository;
 
     @Autowired
+    private UserRepository userRepository; 
+
+    @Autowired
     private TaskRepository taskRepository; 
+
+    @Autowired
+    private StatusRepository statsRepository;
+
+    @Autowired
+    private PeriodRepository periodRepository; 
+
+    @Autowired
+    private RoleRepository roleRepository; 
     
     @Autowired
     private TagRepository userTagRepository; 
 
     @Autowired
-    private StatusRepository statusRepository;
+    private UserTaskRepository userTaskRepository;
 
     @Autowired
     private TaskStatusHistoryRepository taskStatusHistoryRepository;
-
-    @Autowired
-    private RoleRepository userRoleRepository;
 
     ObjectMapper objectMapper = new ObjectMapper();
     RestTemplate restTemplate = new RestTemplate();
@@ -82,16 +86,43 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public void  processTaskHistory(Integer taskCode) {
-        System.out.println(taskCode);
-        System.out.println("https://api.taiga.io/api/v1/history/task/"+taskCode);
+    public UserTaskEntity processTaskUser(Integer projectCode, Integer taskCode, Integer userCode, Integer periodCode, Integer statsCode, Integer roleCode) {
+        setHeadersTasks();
+        UserTaskEntity userTaskEntity = null;
+
+        ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/tasks?project="+projectCode+"&assigned_to="+userCode, HttpMethod.GET, headersEntity, String.class);
+        try {
+            JsonNode rootNode = objectMapper.readTree(response.getBody());
+
+            ProjectEntity projectEntity = projectRepository.findByProjectCode(projectCode).orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado"));
+            TaskEntity taskEntity = taskRepository.findByTaskCode(taskCode).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
+            UserEntity userEntity = userRepository.findByUserCode(userCode).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+            PeriodEntity periodEntity = periodRepository.findByPeriodCode(periodCode).orElseThrow(() -> new IllegalArgumentException("Periodo não encontrado"));
+            StatusEntity statsEntity = statsRepository.findByStatusCode(statsCode).orElseThrow(() -> new IllegalArgumentException("Status não encontrado"));
+            RoleEntity roleEntity = roleRepository.findByRoleCode(roleCode).orElseThrow(() -> new IllegalArgumentException("Role não encontrada"));
+
+            for (JsonNode node : rootNode) {
+                Timestamp createdDate = Timestamp.from(Instant.parse(node.get("created_date").asText()));
+                Timestamp finishedDate = Timestamp.from(Instant.parse(node.get("finished_date").asText()));
+
+                userTaskEntity = saveOnDatabaseUserTask(taskEntity, projectEntity, userEntity, periodEntity, statsEntity, roleEntity, createdDate, finishedDate, 1);
+            }
+        return userTaskEntity;
+
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Erro ao processar User Stories", e);
+        }
+    }
+
+    @Override
+    public TaskStatusHistoryEntity processTaskHistory(Integer taskCode) {
         setHeadersTasks();
 
         ResponseEntity<String> responseTaskHistory = restTemplate.exchange("https://api.taiga.io/api/v1/history/task/"+taskCode, HttpMethod.GET, headersEntity, String.class);
 
         try {
             JsonNode rootNodeTaskHistory = objectMapper.readTree(responseTaskHistory.getBody());
-            for (int i = rootNodeTaskHistory.size() - 1; i >= 0; i-- ) {
+            for (int i = rootNodeTaskHistory.size() - 1; i >= 0; i--) {
                 JsonNode current = rootNodeTaskHistory.get(i);
 
                 if (current.has("values_diff") && current.get("values_diff").has("status") && !current.get("values_diff").get("status").isNull()) {
@@ -99,12 +130,13 @@ public class TaskServiceImpl implements TaskService {
                     String ultimoStatus = current.get("values_diff").get("status").get(0).asText();
 
                     TaskEntity taskEntity = taskRepository.findByTaskCode(taskCode).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
-
-                    saveOnDatabaseTaskStatusHistory(taskEntity, ultimoStatus, statusAtual, Timestamp.from(Instant.parse(current.get("created_at").asText())));
+                    
+                    return saveOnDatabaseTaskStatusHistory(taskEntity, ultimoStatus, statusAtual, Timestamp.from(Instant.parse(current.get("created_at").asText())));
                 } else {
                     continue;
                 }
             }
+        return null;
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar User Stories", e);
         }
@@ -129,7 +161,7 @@ public class TaskServiceImpl implements TaskService {
                 processTaskHistory(node.get("id").asInt());
 
                 TaskEntity taskEntity = taskRepository.findByTaskCode(node.get("id").asInt()).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
-                StatusEntity statusEntity = statusRepository.findByStatusCodeAndStatusName(node.get("status").asInt(), node.get("status_extra_info").get("name").asText()).orElseThrow(() -> new IllegalArgumentException("Status não encontrado"));
+                StatusEntity statusEntity = statsRepository.findByStatusCodeAndStatusName(node.get("status").asInt(), node.get("status_extra_info").get("name").asText()).orElseThrow(() -> new IllegalArgumentException("Status não encontrado"));
 
                 String nameStatus = node.get("status_extra_info").get("name").asText();
                 statusCount.put(nameStatus, statusCount.getOrDefault(nameStatus, 0) + 1);
@@ -350,10 +382,10 @@ public class TaskServiceImpl implements TaskService {
 
     public StatusEntity saveOnDatabaseStats(Integer statusCode, String statusName) {
         try {
-            return statusRepository.findByStatusCodeAndStatusName(statusCode, statusName)
+            return statsRepository.findByStatusCodeAndStatusName(statusCode, statusName)
             .orElseGet(() -> {
                 StatusEntity statusEntity = new StatusEntity(statusCode, statusName);
-                return statusRepository.save(statusEntity);
+                return statsRepository.save(statusEntity);
             });
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
@@ -372,15 +404,15 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
-    // public TaskStatusHistoryEntity saveOnDatabaseUserTask(TaskEntity taskCode, StatusEntity statsCode, Timestamp changeDate) {
-    //     try {
-    //         return taskStatusHistoryRepository.findByTaskCodeAndStatsCodeAndChangeDate(taskCode, statsCode, changeDate)
-    //         .orElseGet(() -> {
-    //             TaskStatusHistoryEntity taskStatusHistoryEntity = new TaskStatusHistoryEntity(taskCode, statsCode, changeDate);
-    //             return taskStatusHistoryRepository.save(taskStatusHistoryEntity);
-    //         });
-    //     } catch (Exception e) {
-    //         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
-    //     }
-    // }
+    public UserTaskEntity saveOnDatabaseUserTask(TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, PeriodEntity periodCode, StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate, Integer quant) {
+        try {
+            return userTaskRepository.findByTaskCodeAndProjectCodeAndUserCodeAndPeriodCodeAndStatsCodeAndRoleCode(taskCode, projectCode, userCode, periodCode, statsCode, roleCode)
+            .orElseGet(() -> {
+                UserTaskEntity userTaskEntity = new UserTaskEntity(taskCode, projectCode, userCode, periodCode, statsCode, roleCode, startDate, endDate, quant);
+                return userTaskRepository.save(userTaskEntity);
+            });
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
+        }
+    }
 }

@@ -1,7 +1,5 @@
 package com.vision_back.vision_back.entity;
 
-import java.util.List;
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

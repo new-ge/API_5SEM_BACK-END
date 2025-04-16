@@ -12,4 +12,6 @@ public interface StatusRepository extends JpaRepository<StatusEntity,Integer>{
     Optional<StatusEntity> findByStatusCodeAndStatusName(Integer statusCode, String statusName);
 
     Optional<StatusEntity> findByStatusName(String statusName);
+    
+    Optional<StatusEntity> findByStatusCode(Integer statusCode);
 }

@@ -2,6 +2,8 @@ package com.vision_back.vision_back.entity;
 
 import java.sql.Timestamp;
 
+import com.vision_back.vision_back.entity.dto.TaskDto;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
@@ -16,7 +18,7 @@ public class UserTaskEntity {
     @NotNull
     @ManyToOne
     @JoinColumn(name = "task_code")
-    private TagEntity taskCode;
+    private TaskEntity taskCode;
 
     @NotNull
     @ManyToOne
@@ -55,7 +57,7 @@ public class UserTaskEntity {
     @Column(name = "average_time")
     private Integer averageTime;
 
-    public UserTaskEntity(TagEntity taskCode, ProjectEntity projectCode, UserEntity userCode, PeriodEntity periodCode, StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate, Integer quant, Integer averageTime) {
+    public UserTaskEntity(TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, PeriodEntity periodCode, StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate, Integer quant) {
         this.taskCode = taskCode;
         this.projectCode = projectCode;
         this.userCode = userCode;
@@ -65,6 +67,5 @@ public class UserTaskEntity {
         this.startDate = startDate;
         this.endDate = endDate;
         this.quant = quant;
-        this.averageTime = averageTime;
     }
 }

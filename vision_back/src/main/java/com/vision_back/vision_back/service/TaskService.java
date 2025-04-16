@@ -6,6 +6,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Service;
 
 import com.vision_back.vision_back.entity.TaskEntity;
+import com.vision_back.vision_back.entity.TaskStatusHistoryEntity;
+import com.vision_back.vision_back.entity.UserTaskEntity;
 
 @Service
 public interface TaskService {
@@ -25,5 +27,7 @@ public interface TaskService {
 
     public Map<String, Integer> countTasksByTag();
 
-    public void processTaskHistory(Integer taskCode);
+    public TaskStatusHistoryEntity processTaskHistory(Integer taskCode);
+
+    public UserTaskEntity processTaskUser(Integer projectCode, Integer taskCode, Integer userCode, Integer periodCode, Integer statsCode, Integer roleCode);
 }

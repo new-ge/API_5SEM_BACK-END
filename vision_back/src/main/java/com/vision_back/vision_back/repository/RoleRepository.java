@@ -10,4 +10,6 @@ import com.vision_back.vision_back.entity.RoleEntity;
 @Repository
 public interface RoleRepository extends JpaRepository<RoleEntity,Integer> {
     Optional<RoleEntity> findByRoleCodeAndRoleName(Integer roleCode, String roleName);
+    
+    Optional<RoleEntity> findByRoleCode(Integer roleCode);
 }
