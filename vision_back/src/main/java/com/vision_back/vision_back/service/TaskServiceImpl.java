@@ -113,46 +113,48 @@ public class TaskServiceImpl implements TaskService {
     public Map<String, Integer> countTasksByStatusClosedBySprint(Integer userId, Integer projectId) {
         HttpEntity<Void> headersEntity = setHeadersTasks(projectId, userId); 
         Map<String, Integer> tasksPerSprint = new TreeMap<>();
-        Integer sumClosed = 0;
-
+    
         String sprintUrl = "https://api.taiga.io/api/v1/milestones?project=" + projectId;
         ResponseEntity<String> sprintResponse = restTemplate.exchange(sprintUrl, HttpMethod.GET, headersEntity, String.class);
-
+        String userNameString ="";
         try {
             JsonNode sprints = objectMapper.readTree(sprintResponse.getBody());
-
+    
             for (JsonNode sprint : sprints) {
+                int sumClosed = 0;
+    
                 String sprintName = sprint.get("name").asText();
                 String startDate = sprint.get("estimated_start").asText();
                 String endDate = sprint.get("estimated_finish").asText();
-
+    
                 String taskUrl = "https://api.taiga.io/api/v1/tasks?"
                         + "project=" + projectId + "&"
                         + "assigned_to=" + userId + "&"
                         + "created_date__gte=" + startDate + "&"
                         + "created_date__lte=" + endDate;
-
+    
                 ResponseEntity<String> taskResponse = restTemplate.exchange(taskUrl, HttpMethod.GET, headersEntity, String.class);
                 JsonNode tasks = objectMapper.readTree(taskResponse.getBody());
-
+                
                 for (JsonNode node : tasks) {
-                    if ((node.get("status_extra_info").get("name").asText()).equals("Closed")){
-                        sumClosed += 1;
-                    } else { 
-                        continue;
+                    userNameString = node.get("assigned_to_extra_info").get("username").asText();
+                    if (node.has("assigned_to") && node.get("assigned_to").asInt() == userId &&
+                        node.has("status_extra_info") && "Closed".equals(node.get("status_extra_info").get("name").asText())) {
+                        sumClosed++;
                     }
-                } 
-
+                }
+    
                 tasksPerSprint.put(sprintName, sumClosed);
             }
+            System.out.println(userNameString);
             System.out.println(tasksPerSprint);
-
             return tasksPerSprint;
-
+    
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
         }
     }
+    
 
     @Override
     public Integer countTasksByStatusClosed(Integer projectId, Integer userId, String startDate, String endDate) {
