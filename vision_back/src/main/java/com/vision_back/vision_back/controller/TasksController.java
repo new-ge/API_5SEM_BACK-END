@@ -40,7 +40,7 @@ public class TasksController {
 
     @GetMapping("/count-tasks-by-tag/{projectId}/{userId}")
     public Map<String, Integer> countTasksByTag(
-        @PathVariable Integer projectId, 
+        @PathVariable Integer projectId,
         @PathVariable Integer userId) 
         {
         
