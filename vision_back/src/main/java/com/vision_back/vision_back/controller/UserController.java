@@ -19,4 +19,12 @@ public class UserController {
     public List<Map<String, Object>> getUsersAndTasks(@PathVariable Integer projectId) {
         return userService.getUsersAndTasks(projectId);
     }
+
+    @GetMapping("users-and-tasks-per-sprint-name/project/{projectId}/sprint/{sprintName}")
+    public List<Map<String, Object>> getUsersAndTasksPerSprintName(
+        @PathVariable Integer projectId,
+        @PathVariable String sprintName) {
+        return userService.getUsersAndTasksPerSprintName(projectId, sprintName);
+    }
+    
 }
