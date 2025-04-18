@@ -1,19 +1,16 @@
 spring:
-    application:
-        name: vision
-    datasource:
-        url: ${DB_URL}
-        username: ${DB_USER}
-        password: ${DB_PASSWORD}
-        driver-class-name: org.postgresql.Driver
-    jpa:
-        hibernate:
-            ddl-auto: update
-        show-sql: true
-    flyway:
-        validate-on-migrate: true
-        enabled: true
-        baseline-on-migrate: true
+
+    springdoc:
+    api-docs:
+      enabled: true
+    swagger-ui:
+      enabled: true
+
+springdoc:
+  swagger-ui:
+    url: /v3/api-docs
+    operationsSorter: alpha
+    tagsSorter: alpha
 
 server:
   error:
