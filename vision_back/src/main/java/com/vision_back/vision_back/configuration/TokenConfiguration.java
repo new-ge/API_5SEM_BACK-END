@@ -1,10 +1,10 @@
-package com.vision_back.vision_back.entity.dto;
+package com.vision_back.vision_back.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class TokenDto {
+public class TokenConfiguration {
     private String authToken;
 
     public void setAuthToken(String token) {

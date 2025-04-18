@@ -20,9 +20,9 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
+import com.vision_back.vision_back.configuration.TokenConfiguration;
 import com.vision_back.vision_back.entity.PeriodEntity;
 import com.vision_back.vision_back.entity.UserEntity;
-import com.vision_back.vision_back.entity.dto.TokenDto;
 import com.vision_back.vision_back.repository.PeriodRepository;
 import com.vision_back.vision_back.repository.RoleRepository;
 import com.vision_back.vision_back.repository.UserRepository;
@@ -30,7 +30,7 @@ import com.vision_back.vision_back.repository.UserRepository;
 @Service
 public class UserServiceImpl implements UserService {
     @Autowired
-    private TokenDto tokenDto;
+    private TokenConfiguration tokenDto;
 
     @Autowired
     private UserRepository userRepository;
@@ -60,13 +60,13 @@ public class UserServiceImpl implements UserService {
         try {
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
             saveOnDatabaseUser(jsonNode.get("id").asInt(), jsonNode.get("username").asText(), objectMapper.convertValue(jsonNode.get("roles"), String[].class), jsonNode.get("email").asText());
-            saveOnDatabasePeriod(
-                                 jsonNode.get("id").asInt(), 
-                                 Integer.valueOf(Instant.parse(jsonNode.get("date_joined").asText()).atZone(ZoneId.systemDefault()).toLocalDate().format(DateTimeFormatter.ofPattern("yyyyMMdd"))), 
-                                 Integer.valueOf(Instant.parse(jsonNode.get("date_joined").asText()).atZone(ZoneId.systemDefault()).getMonthValue()), 
-                                 Integer.valueOf(Instant.parse(jsonNode.get("date_joined").asText()).atZone(ZoneId.systemDefault()).getYear()),
-                                 Integer.valueOf(Instant.parse(jsonNode.get("date_joined").asText()).atZone(ZoneId.systemDefault()).getHour())
-                                );
+            // saveOnDatabasePeriod(
+            //                      jsonNode.get("id").asInt(), 
+            //                      Integer.valueOf(Instant.parse(jsonNode.get("date_joined").asText()).atZone(ZoneId.systemDefault()).toLocalDate().format(DateTimeFormatter.ofPattern("yyyyMMdd"))), 
+            //                      Integer.valueOf(Instant.parse(jsonNode.get("date_joined").asText()).atZone(ZoneId.systemDefault()).getMonthValue()), 
+            //                      Integer.valueOf(Instant.parse(jsonNode.get("date_joined").asText()).atZone(ZoneId.systemDefault()).getYear()),
+            //                      Integer.valueOf(Instant.parse(jsonNode.get("date_joined").asText()).atZone(ZoneId.systemDefault()).getHour())
+            //                     );
             return jsonNode.get("id").asInt();
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar o Usuário", e);
@@ -85,15 +85,15 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    public PeriodEntity saveOnDatabasePeriod(Integer periodCode, Integer periodDate, Integer periodMonth, Integer periodYear, Integer periodHour) {
-        try {
-            return periodRepository.findByPeriodCode(periodCode)
-            .orElseGet(() -> {
-                PeriodEntity periodEntity = new PeriodEntity(periodCode, periodDate, periodMonth, periodYear, periodHour);
-                return periodRepository.save(periodEntity);
-            });
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
-        }
-    }
+    // public PeriodEntity saveOnDatabasePeriod(Integer periodCode, Integer periodDate, Integer periodMonth, Integer periodYear, Integer periodHour) {
+    //     try {
+    //         return periodRepository.findByPeriodCode(periodCode)
+    //         .orElseGet(() -> {
+    //             PeriodEntity periodEntity = new PeriodEntity(periodCode, periodDate, periodMonth, periodYear, periodHour);
+    //             return periodRepository.save(periodEntity);
+    //         });
+    //     } catch (Exception e) {
+    //         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
+    //     }
+    // }
 }

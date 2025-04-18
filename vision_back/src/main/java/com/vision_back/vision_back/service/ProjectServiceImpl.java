@@ -15,9 +15,9 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
+import com.vision_back.vision_back.configuration.TokenConfiguration;
 import com.vision_back.vision_back.entity.ProjectEntity;
 import com.vision_back.vision_back.entity.RoleEntity;
-import com.vision_back.vision_back.entity.dto.TokenDto;
 import com.vision_back.vision_back.repository.ProjectRepository;
 import com.vision_back.vision_back.repository.RoleRepository;
 import com.vision_back.vision_back.repository.UserRepository;
@@ -43,7 +43,7 @@ public class ProjectServiceImpl implements ProjectService {
     private ProjectRepository projectRepository; 
 
     @Autowired
-    private TokenDto tokenDto;
+    private TokenConfiguration tokenDto;
 
     @Override
     public HttpEntity<Void> setHeadersProject() {
@@ -83,28 +83,28 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public String getSpecificProjectUserRole() {
+    public Integer getSpecificProjectUserRoleId() {
         Integer projectCode = getProjectId();
         Integer memberId = userServiceImpl.getUserId();
-        String roleName = null;
+        Integer roleCode = null;
 
         setHeadersProject();
         
         try {
             ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects/"+projectCode, HttpMethod.GET, headersEntity, String.class);
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
-            saveOnDatabaseProject(projectCode, jsonNode.get("name").asText());
+            // saveOnDatabaseProject(projectCode, jsonNode.get("name").asText());
             ProjectEntity projectEntity = projectRepository.findByProjectCode(projectCode).orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado"));
 
             for (JsonNode members : jsonNode.get("members")) {
                 if (members.get("id").asInt() == memberId) {
-                    roleName = members.get("role_name").asText();
-                    saveOnDatabaseUsersRole(members.get("role").asInt(), roleName, projectEntity);
+                    saveOnDatabaseUsersRole(members.get("role").asInt(), members.get("role_name").asText(), projectEntity);
+                    roleCode = members.get("role").asInt();
                 } else {
                     continue;
                 }
             }
-        return roleName;
+        return roleCode;
         } catch (Exception e) {
             throw new NullPointerException("Resposta não obtida ou resposta inválida.");
         }

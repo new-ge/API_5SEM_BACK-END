@@ -19,7 +19,7 @@ public interface TaskService {
 
     public Integer countTasksByStatusClosed(Integer projectId, Integer userId, String startDate, String endDate);
 
-    public Map<String, Integer> countTasksById();
+    public void processTasksAndStats();
 
     public Map<String, Integer> getTasksPerSprint(Integer userId, Integer projectId);
 
@@ -27,7 +27,7 @@ public interface TaskService {
 
     public Map<String, Integer> countTasksByTag();
 
-    public TaskStatusHistoryEntity processTaskHistory(Integer taskCode);
+    public void processTaskHistory(Integer taskCode);
 
-    public UserTaskEntity processTaskUser(Integer projectCode, Integer taskCode, Integer userCode, Integer periodCode, Integer statsCode, Integer roleCode);
+    public void processTaskUser(Integer projectCode, Integer taskCode, Integer userCode, Integer statsCode, Integer roleCode);
 }

@@ -2,11 +2,17 @@ package com.vision_back.vision_back.entity;
 
 import java.sql.Timestamp;
 
-import com.vision_back.vision_back.entity.dto.TaskDto;
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name="usr_task")
 public class UserTaskEntity {
@@ -17,34 +23,35 @@ public class UserTaskEntity {
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "task_code")
+    @JoinColumn(name = "task_code", referencedColumnName = "task_code")
     private TaskEntity taskCode;
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "project_code")
+    @JoinColumn(name = "project_code", referencedColumnName = "project_code")
     private ProjectEntity projectCode;
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "usr_code")
+    @JoinColumn(name = "usr_code", referencedColumnName = "usr_code")
     private UserEntity userCode;
 
-    @NotNull
-    @ManyToOne
-    @JoinColumn(name = "period_code")
-    private PeriodEntity periodCode;
+    // @NotNull
+    // @ManyToOne
+    // @JoinColumn(name = "period_code", referencedColumnName = "period_code")
+    // private PeriodEntity periodCode;
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "stats_code")
+    @JoinColumn(name = "stats_code", referencedColumnName = "stats_code")
     private StatusEntity statsCode;
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "role_code")
+    @JoinColumn(name = "role_code", referencedColumnName = "role_code")
     private RoleEntity roleCode;
-
+    
+    @NotNull
     @Column(name = "start_date")
     private Timestamp startDate;
 
@@ -54,14 +61,14 @@ public class UserTaskEntity {
     @Column(name = "quant")
     private Integer quant;
 
-    @Column(name = "average_time")
+    @Column(name = "average_time", insertable = false, updatable = false)
     private Integer averageTime;
 
-    public UserTaskEntity(TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, PeriodEntity periodCode, StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate, Integer quant) {
+    public UserTaskEntity(TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate, Integer quant) {
         this.taskCode = taskCode;
         this.projectCode = projectCode;
         this.userCode = userCode;
-        this.periodCode = periodCode;
+        // this.periodCode = periodCode;
         this.statsCode = statsCode;
         this.roleCode = roleCode;
         this.startDate = startDate;

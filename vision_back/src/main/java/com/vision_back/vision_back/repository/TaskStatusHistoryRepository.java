@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import com.vision_back.vision_back.entity.ProjectEntity;
 import com.vision_back.vision_back.entity.TaskEntity;
 import com.vision_back.vision_back.entity.TaskStatusHistoryEntity;
 import com.vision_back.vision_back.entity.dto.TaskStatusHistoryDto;

@@ -3,6 +3,7 @@ package com.vision_back.vision_back.controller;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,13 +17,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.vision_back.vision_back.configuration.TokenConfiguration;
 import com.vision_back.vision_back.entity.PeriodEntity;
 import com.vision_back.vision_back.entity.ProjectEntity;
 import com.vision_back.vision_back.entity.RoleEntity;
 import com.vision_back.vision_back.entity.StatusEntity;
 import com.vision_back.vision_back.entity.TaskEntity;
 import com.vision_back.vision_back.entity.UserEntity;
-import com.vision_back.vision_back.entity.dto.TokenDto;
+import com.vision_back.vision_back.entity.dto.StatsDto;
+import com.vision_back.vision_back.entity.dto.TagDto;
+import com.vision_back.vision_back.repository.StatusRepository;
+import com.vision_back.vision_back.repository.TagRepository;
+import com.vision_back.vision_back.repository.TaskRepository;
 import com.vision_back.vision_back.repository.TaskStatusHistoryRepository;
 import com.vision_back.vision_back.service.AuthenticationService;
 import com.vision_back.vision_back.service.AuthenticationServiceImpl;
@@ -37,10 +43,16 @@ import io.github.cdimascio.dotenv.Dotenv;
 public class TasksController {
 
     @Autowired
-    private TokenDto tokenDto;
+    private TokenConfiguration tokenDto;
 
     @Autowired
     private TaskServiceImpl tsImpl;
+
+    @Autowired
+    private StatusRepository sRepo;
+
+    @Autowired
+    private TagRepository tRepo;
 
     @Autowired
     private ProjectServiceImpl psImpl;
@@ -49,14 +61,12 @@ public class TasksController {
     private TaskStatusHistoryRepository tshImpl;
 
     @GetMapping("/count-tasks-by-status")
-    public Map<String, Integer> countUserStoriesByStatus(String token) throws JsonMappingException, JsonProcessingException {
+    public ResponseEntity<Map<String, Long>> countUserStoriesByStatus(String token)  {
         token = tokenDto.getAuthToken();
-        return tsImpl.countTasksById();
-    }
-
-    @GetMapping("/app")
-    public void get() {
-        System.out.println(tsImpl.processTaskUser(1641986, 7667350, 758714, 1641986, 8187830, null));
+        tsImpl.processTasksAndStats();
+        List<StatsDto> statsList = sRepo.countUserStoriesByStatus();
+        Map<String, Long> tasksByStatus = statsList.stream().collect(Collectors.toMap(StatsDto::getStatusName, StatsDto::getQuant));
+        return ResponseEntity.ok(tasksByStatus);
     }
 
     @GetMapping("/count-cards-by-period/{userId}/{projectId}/{startDate}/{endDate}")
@@ -78,11 +88,12 @@ public class TasksController {
 
 
     @GetMapping("/count-tasks-by-tag")
-    public Map<String, Integer> countTasksByTag(
-        String token) 
-        {
+    public ResponseEntity<Map<String, Long>> countTasksByTag(String token) {
         token = tokenDto.getAuthToken();
-        return tsImpl.countTasksByTag();
+        tsImpl.countTasksByTag();
+        List<TagDto> statsList = tRepo.countTasksByTag();
+        Map<String, Long> tasksByTag = statsList.stream().collect(Collectors.toMap(TagDto::getTagName, TagDto::getQuant));
+        return ResponseEntity.ok(tasksByTag);
     }
 
     @GetMapping("/count-cards-by-status-closed/{userId}/{projectId}")

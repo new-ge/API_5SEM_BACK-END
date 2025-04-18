@@ -16,5 +16,5 @@ public interface ProjectService {
 
     public ProjectEntity saveOnDatabaseProject(Integer projectCode, String projectName);
 
-    public String getSpecificProjectUserRole();
+    public Integer getSpecificProjectUserRoleId();
 }

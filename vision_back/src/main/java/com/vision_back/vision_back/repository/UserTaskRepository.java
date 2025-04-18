@@ -13,12 +13,22 @@ import com.vision_back.vision_back.entity.StatusEntity;
 import com.vision_back.vision_back.entity.TaskEntity;
 import com.vision_back.vision_back.entity.UserEntity;
 import com.vision_back.vision_back.entity.UserTaskEntity;
+import com.vision_back.vision_back.entity.dto.UserTaskDto;
 
 @Repository
 public interface UserTaskRepository extends JpaRepository<UserTaskEntity,Integer>{
 
-    Optional<UserTaskEntity> findByTaskCodeAndProjectCodeAndUserCodeAndPeriodCodeAndStatsCodeAndRoleCode(
-            TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, PeriodEntity periodCode,
-            StatusEntity statsCode, RoleEntity roleCode);
+        Optional<UserTaskEntity> findByTaskCodeAndProjectCodeAndUserCodeAndStatsCodeAndRoleCode(
+            TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, StatusEntity statsCode, RoleEntity roleCode);
+
+        Optional<UserTaskEntity> findByTaskCodeAndProjectCodeAndUserCodeAndStatsCodeAndRoleCodeAndStartDateAndEndDate(
+            TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, StatusEntity statsCode,
+            RoleEntity roleCode, Timestamp startDate, Timestamp endDate);
+
+        Optional<UserTaskEntity> findByTaskCodeAndProjectCodeAndUserCodeAndStatsCodeAndRoleCodeAndStartDate(
+            TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, StatusEntity statsCode,
+            RoleEntity roleCode, Timestamp startDate);
+
+        Optional<UserTaskDto> findByStatsCode(StatusEntity statsCode);
     
 }

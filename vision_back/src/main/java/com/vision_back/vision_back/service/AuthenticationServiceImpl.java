@@ -11,7 +11,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vision_back.vision_back.entity.dto.TokenDto;
+import com.vision_back.vision_back.configuration.TokenConfiguration;
 
 @Service
 public class AuthenticationServiceImpl implements AuthenticationService {
@@ -21,7 +21,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     ResponseEntity<String> response;
 
     @Autowired
-    private TokenDto tokenDto;
+    private TokenConfiguration tokenDto;
     
     @Override
     public void getTokenAuthentication(String password, String username) {

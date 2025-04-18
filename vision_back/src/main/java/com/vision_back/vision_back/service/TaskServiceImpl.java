@@ -20,6 +20,8 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
+import com.vision_back.vision_back.configuration.TokenConfiguration;
+import com.vision_back.vision_back.entity.MilestoneEntity;
 import com.vision_back.vision_back.entity.PeriodEntity;
 import com.vision_back.vision_back.entity.ProjectEntity;
 import com.vision_back.vision_back.entity.RoleEntity;
@@ -29,7 +31,8 @@ import com.vision_back.vision_back.entity.TaskStatusHistoryEntity;
 import com.vision_back.vision_back.entity.UserEntity;
 import com.vision_back.vision_back.entity.UserTaskEntity;
 import com.vision_back.vision_back.entity.TagEntity;
-import com.vision_back.vision_back.entity.dto.TokenDto;
+import com.vision_back.vision_back.entity.dto.UserDto;
+import com.vision_back.vision_back.entity.dto.UserTaskDto;
 import com.vision_back.vision_back.repository.*;
 
 @Service
@@ -39,7 +42,7 @@ public class TaskServiceImpl implements TaskService {
     private ProjectServiceImpl projectServiceImpl;
 
     @Autowired
-    private TokenDto tokenDto;
+    private TokenConfiguration tokenDto;
 
     @Autowired
     private UserServiceImpl userServiceImpl;
@@ -55,6 +58,9 @@ public class TaskServiceImpl implements TaskService {
 
     @Autowired
     private StatusRepository statsRepository;
+
+    @Autowired
+    private MilestoneRepository milestoneRepository; 
 
     @Autowired
     private PeriodRepository periodRepository; 
@@ -86,9 +92,8 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public UserTaskEntity processTaskUser(Integer projectCode, Integer taskCode, Integer userCode, Integer periodCode, Integer statsCode, Integer roleCode) {
+    public void processTaskUser(Integer projectCode, Integer taskCode, Integer userCode, Integer statsCode, Integer roleCode) {
         setHeadersTasks();
-        UserTaskEntity userTaskEntity = null;
 
         ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/tasks?project="+projectCode+"&assigned_to="+userCode, HttpMethod.GET, headersEntity, String.class);
         try {
@@ -97,17 +102,20 @@ public class TaskServiceImpl implements TaskService {
             ProjectEntity projectEntity = projectRepository.findByProjectCode(projectCode).orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado"));
             TaskEntity taskEntity = taskRepository.findByTaskCode(taskCode).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
             UserEntity userEntity = userRepository.findByUserCode(userCode).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
-            PeriodEntity periodEntity = periodRepository.findByPeriodCode(periodCode).orElseThrow(() -> new IllegalArgumentException("Periodo não encontrado"));
             StatusEntity statsEntity = statsRepository.findByStatusCode(statsCode).orElseThrow(() -> new IllegalArgumentException("Status não encontrado"));
             RoleEntity roleEntity = roleRepository.findByRoleCode(roleCode).orElseThrow(() -> new IllegalArgumentException("Role não encontrada"));
 
             for (JsonNode node : rootNode) {
-                Timestamp createdDate = Timestamp.from(Instant.parse(node.get("created_date").asText()));
-                Timestamp finishedDate = Timestamp.from(Instant.parse(node.get("finished_date").asText()));
-
-                userTaskEntity = saveOnDatabaseUserTask(taskEntity, projectEntity, userEntity, periodEntity, statsEntity, roleEntity, createdDate, finishedDate, 1);
+                if (node.get("id").asInt() == taskCode) {
+                    JsonNode finishedDateNode = node.get("finished_date");
+                    Timestamp finishedDate = null;
+                    Timestamp createdDate = Timestamp.from(Instant.parse(node.get("created_date").asText()));
+                    if (finishedDateNode != null && !finishedDateNode.isNull() && !finishedDateNode.asText().isEmpty()) {
+                        finishedDate = Timestamp.from(Instant.parse(finishedDateNode.asText()));
+                    }
+                    saveOnDatabaseUserTask(taskEntity, projectEntity, userEntity, statsEntity, roleEntity, createdDate, finishedDate, 1);
+                }
             }
-        return userTaskEntity;
 
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar User Stories", e);
@@ -115,7 +123,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public TaskStatusHistoryEntity processTaskHistory(Integer taskCode) {
+    public void processTaskHistory(Integer taskCode) {
         setHeadersTasks();
 
         ResponseEntity<String> responseTaskHistory = restTemplate.exchange("https://api.taiga.io/api/v1/history/task/"+taskCode, HttpMethod.GET, headersEntity, String.class);
@@ -131,23 +139,23 @@ public class TaskServiceImpl implements TaskService {
 
                     TaskEntity taskEntity = taskRepository.findByTaskCode(taskCode).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
                     
-                    return saveOnDatabaseTaskStatusHistory(taskEntity, ultimoStatus, statusAtual, Timestamp.from(Instant.parse(current.get("created_at").asText())));
-                } else {
-                    continue;
+                    saveOnDatabaseTaskStatusHistory(taskEntity, ultimoStatus, statusAtual, Timestamp.from(Instant.parse(current.get("created_at").asText())));
                 }
             }
-        return null;
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar User Stories", e);
         }
     }
 
     @Override
-    public Map<String, Integer> countTasksById() {
+    public void processTasksAndStats() {
         setHeadersTasks();
 
         Integer userCode = userServiceImpl.getUserId();
         Integer projectCode = projectServiceImpl.getProjectId();
+        Integer roleCode = projectServiceImpl.getSpecificProjectUserRoleId();
+        Integer taskCode = null;
+        Integer statusCode = null;
 
         ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/tasks?project="+projectCode+"&assigned_to="+userCode, HttpMethod.GET, headersEntity, String.class);
         Map<String, Integer> statusCount = new HashMap<>();
@@ -156,18 +164,13 @@ public class TaskServiceImpl implements TaskService {
             JsonNode rootNode = objectMapper.readTree(response.getBody());
 
             for (JsonNode node : rootNode) {
+                taskCode = node.get("id").asInt();
+                statusCode = node.get("status").asInt();
                 saveOnDatabaseTask(Integer.valueOf(node.get("id").asText()), node.get("subject").asText());
                 saveOnDatabaseStats(Integer.valueOf(node.get("status").asInt()), node.get("status_extra_info").get("name").asText());
                 processTaskHistory(node.get("id").asInt());
-
-                TaskEntity taskEntity = taskRepository.findByTaskCode(node.get("id").asInt()).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
-                StatusEntity statusEntity = statsRepository.findByStatusCodeAndStatusName(node.get("status").asInt(), node.get("status_extra_info").get("name").asText()).orElseThrow(() -> new IllegalArgumentException("Status não encontrado"));
-
-                String nameStatus = node.get("status_extra_info").get("name").asText();
-                statusCount.put(nameStatus, statusCount.getOrDefault(nameStatus, 0) + 1);
+                processTaskUser(projectCode, taskCode, userCode, statusCode, roleCode);
             }
-            return statusCount;
-
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar User Stories", e);
         }
@@ -355,6 +358,18 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException("Erro ao processar as User Stories", e);
         }
     }
+    public MilestoneEntity saveOnDatabaseMilestone(Integer milestoneCode, String milestoneName, Timestamp estimatedStart, Timestamp estimatedEnd, ProjectEntity projectCode) {
+        try {            
+            return milestoneRepository.findByMilestoneCodeAndMilestoneNameAndEstimatedStartAndEstimatedEnd(milestoneCode, milestoneName, estimatedStart, estimatedEnd)
+            .orElseGet(() -> {
+                MilestoneEntity milestoneEntity = new MilestoneEntity(milestoneCode, milestoneName, estimatedStart, estimatedEnd, projectCode);
+                return milestoneRepository.save(milestoneEntity);
+            });
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
+        }
+    }
+
 
     public TaskEntity saveOnDatabaseTask(Integer taskCode, String taskDescription) {
         try {
@@ -393,7 +408,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     public TaskStatusHistoryEntity saveOnDatabaseTaskStatusHistory(TaskEntity taskCode, String lastStatus, String actualStatus, Timestamp changeDate) {
-        try {
+        try {            
             return taskStatusHistoryRepository.findByTaskCodeAndLastStatusAndActualStatusAndChangeDate(taskCode, lastStatus, actualStatus, changeDate)
             .orElseGet(() -> {
                 TaskStatusHistoryEntity taskStatusHistoryEntity = new TaskStatusHistoryEntity(taskCode, lastStatus, actualStatus, changeDate);
@@ -404,11 +419,13 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
-    public UserTaskEntity saveOnDatabaseUserTask(TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, PeriodEntity periodCode, StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate, Integer quant) {
+    public UserTaskEntity saveOnDatabaseUserTask(TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate, Integer quant) {
         try {
-            return userTaskRepository.findByTaskCodeAndProjectCodeAndUserCodeAndPeriodCodeAndStatsCodeAndRoleCode(taskCode, projectCode, userCode, periodCode, statsCode, roleCode)
+            return userTaskRepository.findByTaskCodeAndProjectCodeAndUserCodeAndStatsCodeAndRoleCodeAndStartDate(
+                taskCode, projectCode, userCode, statsCode, roleCode, startDate)
+
             .orElseGet(() -> {
-                UserTaskEntity userTaskEntity = new UserTaskEntity(taskCode, projectCode, userCode, periodCode, statsCode, roleCode, startDate, endDate, quant);
+                UserTaskEntity userTaskEntity = new UserTaskEntity(taskCode, projectCode, userCode, statsCode, roleCode, startDate, endDate, quant);
                 return userTaskRepository.save(userTaskEntity);
             });
         } catch (Exception e) {
