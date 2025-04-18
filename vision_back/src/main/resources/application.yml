@@ -1,19 +1,4 @@
 spring:
-  application:
-    name: vision
-  datasource:
-    url: jdbc:postgresql://localhost:5432/datawarehouse
-    username: vision
-    password: vision
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-  flyway:
-    validate-on-migrate: true
-    enabled: true
-    baseline-on-migrate: true
 
     springdoc:
     api-docs:
