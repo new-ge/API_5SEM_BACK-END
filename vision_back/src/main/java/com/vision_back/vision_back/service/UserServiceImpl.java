@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -52,10 +51,6 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Erro ao processar o Usuário", e);
         }
     }
-    // estruturar uma lógica dentro do UserServiceImpl para pegar todos funcionários 
-    //que fazem parte do projeto, trazer os seguintes dados: userId, nome, e-mail, roles
-        //Os dois utilizam o projectId para unificar as informações
-        //Quantificar quantidade tasks atribuídas a cada funcionário
 
     public List<Map<String, Object>> getUsersAndTasks(Integer projectId) {
             setHeadersProject();
@@ -105,7 +100,6 @@ public class UserServiceImpl implements UserService {
                 throw new IllegalArgumentException("Erro ao retornar usuários ou tasks", e);
         }
    }
-   //Contagem de tasks atribuídas ao usuário do projeto mas por sprint
    public List<Map<String, Object>> getUsersAndTasksPerSprintName(Integer projectId, String sprintName) {
     setHeadersProject();
 
