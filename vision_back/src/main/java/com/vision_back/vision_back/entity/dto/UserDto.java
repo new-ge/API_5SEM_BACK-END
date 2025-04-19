@@ -16,4 +16,11 @@ public class UserDto {
     private String userName;  
     private Integer userRole;  
     private String userEmail; 
+
+    public UserDto(Integer userId, String userName, String userEmail, Integer userRole) {
+        this.userCode = userId;
+        this.userName = userName;
+        this.userEmail = userEmail;
+        this.userRole = userRole;
+    }
 }
