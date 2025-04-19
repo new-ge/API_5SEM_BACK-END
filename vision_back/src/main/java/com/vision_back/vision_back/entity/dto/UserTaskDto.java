@@ -2,6 +2,7 @@ package com.vision_back.vision_back.entity.dto;
 
 import java.sql.Timestamp;
 
+import com.vision_back.vision_back.entity.MilestoneEntity;
 import com.vision_back.vision_back.entity.ProjectEntity;
 import com.vision_back.vision_back.entity.RoleEntity;
 import com.vision_back.vision_back.entity.StatusEntity;
@@ -23,7 +24,7 @@ public class UserTaskDto {
     private TaskEntity taskCode;
     private ProjectEntity projectCode;
     private UserEntity userCode;
-    // private Integer periodId;
+    private MilestoneEntity milestoneCode;
     private StatusEntity statsCode;
     private RoleEntity roleCode;
     private Timestamp startDate;
@@ -31,11 +32,11 @@ public class UserTaskDto {
     private Integer quant;
     private Integer averageTime;
 
-    public UserTaskDto(TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate, Integer quant) {
+    public UserTaskDto(TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, MilestoneEntity milestoneCode, StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate, Integer quant) {
         this.taskCode = taskCode;
         this.projectCode = projectCode;
         this.userCode = userCode;
-        // this.periodCode = periodCode;
+        this.milestoneCode = milestoneCode;
         this.statsCode = statsCode;
         this.roleCode = roleCode;
         this.startDate = startDate;

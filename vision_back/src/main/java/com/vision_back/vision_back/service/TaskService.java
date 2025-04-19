@@ -21,7 +21,9 @@ public interface TaskService {
 
     public void processTasksAndStats();
 
-    public Map<String, Integer> getTasksPerSprint(Integer userId, Integer projectId);
+    public void processTasksAndStatsAndMilestone();
+
+    // public Map<String, Integer> getTasksPerSprint(Integer userId, Integer projectId);
 
     public Map<String, Integer> countTasksByStatusClosedBySprint(Integer userId, Integer projectId);
 
@@ -29,5 +31,7 @@ public interface TaskService {
 
     public void processTaskHistory(Integer taskCode);
 
-    public void processTaskUser(Integer projectCode, Integer taskCode, Integer userCode, Integer statsCode, Integer roleCode);
+    public void processTaskUser(Integer projectCode, Integer taskCode, Integer userCode, Integer milestoneCode, Integer statsCode, Integer roleCode);
+
+    // public Map<String, Integer> getTasksPerSprint();
 }

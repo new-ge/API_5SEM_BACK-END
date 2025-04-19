@@ -14,6 +14,6 @@ import com.vision_back.vision_back.entity.dto.UserTaskDto;
 public interface TaskRepository extends JpaRepository<TaskEntity,Integer> {
     Optional<TaskEntity> findByTaskCode(Integer taskCode);
 
-    // @Query()
-    // Optional<TagDto> countTasksByStatusClosed();
+    Optional<TaskEntity> findByTaskCodeAndTaskDescription(Integer taskCode, String taskDescription);
+
 }

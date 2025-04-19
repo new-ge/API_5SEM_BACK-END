@@ -19,5 +19,14 @@ public interface StatusRepository extends JpaRepository<StatusEntity,Integer>{
     Optional<StatusEntity> findByStatusCode(Integer statusCode);
 
     @Query(value = "SELECT s.stats_name, SUM(ut.quant) FROM usr_task ut join stats s on s.stats_code = ut.stats_code group by s.stats_name", nativeQuery = true)
-    List<StatsDto> countUserStoriesByStatus();
+    List<StatsDto> countTasksByStatus();
+
+    @Query(value = "SELECT s.stats_name, SUM(ut.quant) FROM usr_task ut join stats s on s.stats_code = ut.stats_code where s.stats_name = 'Closed' group by s.stats_name", nativeQuery = true)
+    List<StatsDto> countTasksByStatusClosed();
+
+
+
+
+
+
 }

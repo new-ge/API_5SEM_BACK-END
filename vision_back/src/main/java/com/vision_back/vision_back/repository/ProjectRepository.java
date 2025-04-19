@@ -10,4 +10,6 @@ import com.vision_back.vision_back.entity.ProjectEntity;
 @Repository
 public interface ProjectRepository extends JpaRepository<ProjectEntity,Integer>{
     Optional<ProjectEntity> findByProjectCode(Integer projectCode);
+
+    Optional<ProjectEntity> findByProjectCodeAndProjectName(Integer projectCode, String projectName);
 }

@@ -1,7 +1,7 @@
 package com.vision_back.vision_back.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -112,25 +112,25 @@ public class ProjectServiceImpl implements ProjectService {
 
     public ProjectEntity saveOnDatabaseProject(Integer projectCode, String projectName) {
         try {
-            return projectRepository.findByProjectCode(projectCode)
-            .orElseGet(() -> {
-                ProjectEntity projectEntity = new ProjectEntity(projectCode, projectName);
-                return projectRepository.save(projectEntity);
-            });
+            ProjectEntity projectEntity = new ProjectEntity(projectCode, projectName);
+            return projectRepository.save(projectEntity);
+        } catch (DataIntegrityViolationException e) {
+            return projectRepository.findByProjectCodeAndProjectName(projectCode, projectName)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao recuperar projeto após falha de integridade", e));
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível salvar os dados", e);
         }
     }
 
     public RoleEntity saveOnDatabaseUsersRole(Integer roleCode, String roleName, ProjectEntity projectCode) {
         try {
+            RoleEntity roleEntity = new RoleEntity(roleCode, roleName, projectCode);
+            return roleRepository.save(roleEntity);
+        } catch (DataIntegrityViolationException e) {
             return roleRepository.findByRoleCodeAndRoleName(roleCode, roleName)
-            .orElseGet(() -> {
-                RoleEntity roleEntity = new RoleEntity(roleCode, roleName, projectCode);
-                return roleRepository.save(roleEntity);
-            });
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao recuperar projeto após falha de integridade", e));
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível salvar os dados", e);
         }
     }
 }

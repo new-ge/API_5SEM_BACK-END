@@ -20,5 +20,5 @@ public interface TaskStatusHistoryRepository extends JpaRepository<TaskStatusHis
             Timestamp changeDate);
 
     @Query(value = "SELECT tsh.*, CASE WHEN last_status = 'Closed' AND actual_status <> 'Closed' THEN 1 ELSE 0 END AS rework FROM task_status_history tsh WHERE last_status = 'Closed' AND actual_status <> 'Closed'", nativeQuery = true)
-    List<TaskStatusHistoryDto> findTaskStatusHistoryWithReworkFlagNative();
+    List<TaskStatusHistoryDto> findTaskStatusHistoryWithReworkFlag();
 }

@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import com.vision_back.vision_back.entity.MilestoneEntity;
 import com.vision_back.vision_back.entity.PeriodEntity;
 import com.vision_back.vision_back.entity.ProjectEntity;
 import com.vision_back.vision_back.entity.RoleEntity;
@@ -21,9 +22,9 @@ public interface UserTaskRepository extends JpaRepository<UserTaskEntity,Integer
         Optional<UserTaskEntity> findByTaskCodeAndProjectCodeAndUserCodeAndStatsCodeAndRoleCode(
             TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, StatusEntity statsCode, RoleEntity roleCode);
 
-        Optional<UserTaskEntity> findByTaskCodeAndProjectCodeAndUserCodeAndStatsCodeAndRoleCodeAndStartDateAndEndDate(
-            TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, StatusEntity statsCode,
-            RoleEntity roleCode, Timestamp startDate, Timestamp endDate);
+        Optional<UserTaskEntity> findByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCodeAndStartDateAndEndDate(
+            TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, MilestoneEntity milestoneCode,
+            StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate);
 
         Optional<UserTaskEntity> findByTaskCodeAndProjectCodeAndUserCodeAndStatsCodeAndRoleCodeAndStartDate(
             TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, StatusEntity statsCode,

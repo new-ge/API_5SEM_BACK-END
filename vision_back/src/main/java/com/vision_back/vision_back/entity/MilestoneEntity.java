@@ -1,6 +1,7 @@
 package com.vision_back.vision_back.entity;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -32,18 +33,18 @@ public class MilestoneEntity {
 
     @NotNull
     @Column(name = "estimated_start")
-    private Timestamp estimatedStart;
+    private LocalDate estimatedStart;
 
     @NotNull
     @Column(name = "estimated_end")
-    private Timestamp estimatedEnd;
+    private LocalDate estimatedEnd;
 
     @ManyToOne
     @NotNull
     @JoinColumn(name = "project_code", referencedColumnName = "project_code")
     private ProjectEntity projectCode;  
 
-    public MilestoneEntity(Integer milestoneCode, String milestoneName, Timestamp estimatedStart, Timestamp estimatedEnd, ProjectEntity projectCode) {
+    public MilestoneEntity(Integer milestoneCode, String milestoneName, LocalDate estimatedStart, LocalDate estimatedEnd, ProjectEntity projectCode) {
         this.milestoneCode = milestoneCode;
         this.milestoneName = milestoneName;
         this.estimatedStart = estimatedStart;

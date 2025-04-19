@@ -36,10 +36,10 @@ public class UserTaskEntity {
     @JoinColumn(name = "usr_code", referencedColumnName = "usr_code")
     private UserEntity userCode;
 
-    // @NotNull
-    // @ManyToOne
-    // @JoinColumn(name = "period_code", referencedColumnName = "period_code")
-    // private PeriodEntity periodCode;
+    @NotNull
+    @ManyToOne
+    @JoinColumn(name = "milestone_code", referencedColumnName = "milestone_code")
+    private MilestoneEntity milestoneCode;
 
     @NotNull
     @ManyToOne
@@ -64,11 +64,11 @@ public class UserTaskEntity {
     @Column(name = "average_time", insertable = false, updatable = false)
     private Integer averageTime;
 
-    public UserTaskEntity(TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate, Integer quant) {
+    public UserTaskEntity(TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, MilestoneEntity milestoneCode, StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate, Integer quant) {
         this.taskCode = taskCode;
         this.projectCode = projectCode;
         this.userCode = userCode;
-        // this.periodCode = periodCode;
+        this.milestoneCode = milestoneCode;
         this.statsCode = statsCode;
         this.roleCode = roleCode;
         this.startDate = startDate;
