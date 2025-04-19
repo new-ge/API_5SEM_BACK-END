@@ -93,7 +93,6 @@ public class ProjectServiceImpl implements ProjectService {
         try {
             ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects/"+projectCode, HttpMethod.GET, headersEntity, String.class);
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
-            // saveOnDatabaseProject(projectCode, jsonNode.get("name").asText());
             ProjectEntity projectEntity = projectRepository.findByProjectCode(projectCode).orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado"));
 
             for (JsonNode members : jsonNode.get("members")) {

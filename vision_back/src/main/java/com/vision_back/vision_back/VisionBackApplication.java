@@ -22,7 +22,6 @@ public class VisionBackApplication {
 
 	@PostConstruct
 	public void functionGetToken() {
-		// AuthenticationServiceImpl auth = new AuthenticationServiceImpl();
 		auth.getTokenAuthentication(dotenv.get("PASSWORD_SECRET"), dotenv.get("USERNAME_SECRET"));
 	}
 }

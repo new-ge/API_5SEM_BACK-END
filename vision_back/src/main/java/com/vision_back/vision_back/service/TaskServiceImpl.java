@@ -165,7 +165,6 @@ public class TaskServiceImpl implements TaskService {
                 saveOnDatabaseTask(taskCode, node.get("subject").asText());
                 saveOnDatabaseStats(statusCode, node.get("status_extra_info").get("name").asText());
                 processTaskHistory(node.get("id").asInt());
-                // processTaskUser(projectCode, taskCode, userCode, milestoneCode, statusCode, roleCode);
             }
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar User Stories", e);
@@ -246,12 +245,7 @@ public class TaskServiceImpl implements TaskService {
                     processTaskHistory(task.get("id").asInt());
                     processTaskUser(projectCode, taskCode, userCode, sprintCode, statusCode, roleCode);
                 }
-
-                // tasksPerSprint.put(sprintName, tasks.size());
             }
-
-            // return tasksPerSprint;
-
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
         }
@@ -287,8 +281,7 @@ public class TaskServiceImpl implements TaskService {
                     saveOnDatabaseTask(Integer.valueOf(node.get("id").asText()), node.get("subject").asText());
                     saveOnDatabaseStats(Integer.valueOf(node.get("status").asInt()), node.get("status_extra_info").get("name").asText());
                     processTaskHistory(node.get("id").asInt());
-                    
-                    // processTaskUser(projectCode, taskCode, userCode, statusCode, roleCode);
+                  
 
                     if ((node.get("status_extra_info").get("name").asText()).equals("Closed")){
                         sumClosed += 1;

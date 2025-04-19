@@ -77,16 +77,16 @@ public class TasksController {
         return ResponseEntity.ok(tasksByStatus);
     }
 
-    // @GetMapping("/count-cards-by-period/{userId}/{projectId}/{startDate}/{endDate}")
-    // public int countCardsByPeriod(
-    //     @PathVariable Integer projectId, 
-    //     @PathVariable Integer userId, 
-    //     @PathVariable String startDate, 
-    //     @PathVariable String endDate) {
+    @GetMapping("/count-cards-by-period/{userId}/{projectId}/{startDate}/{endDate}")
+    public int countCardsByPeriod(
+        @PathVariable Integer projectId, 
+        @PathVariable Integer userId, 
+        @PathVariable String startDate, 
+        @PathVariable String endDate) {
             
-        // TaskServiceImpl taskService = new TaskServiceImpl();
-        // return taskService.countCardsCreatedByDateRange(userId, projectId, startDate, endDate);
-    // }
+        TaskServiceImpl taskService = new TaskServiceImpl();
+        return taskService.countCardsCreatedByDateRange(userId, projectId, startDate, endDate);
+    }
 
     @GetMapping("/tasks-per-sprint")
    public ResponseEntity<Map<String, Long>> getTasksPerSprint() {
