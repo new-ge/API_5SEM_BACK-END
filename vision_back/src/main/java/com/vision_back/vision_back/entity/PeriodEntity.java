@@ -38,4 +38,12 @@ public class PeriodEntity {
     @NotNull
     @Column(name = "period_hour")
     private Integer periodHour;  
+
+    public PeriodEntity(Integer periodCode, Integer periodDate, Integer periodMonth, Integer periodYear, Integer periodHour) {
+        this.periodCode = periodCode;
+        this.periodDate = periodDate;
+        this.periodMonth = periodMonth;
+        this.periodYear = periodYear;
+        this.periodHour = periodHour;
+    }
 }

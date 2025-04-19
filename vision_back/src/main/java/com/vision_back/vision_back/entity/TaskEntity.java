@@ -25,5 +25,10 @@ public class TaskEntity {
     
     @NotNull
     @Column(name = "task_description")
-    private String taskDescription;  
+    private String taskDescription;
+    
+    public TaskEntity(Integer taskCode, String taskDescription) {
+        this.taskCode = taskCode;
+        this.taskDescription = taskDescription;
+    }
 }
