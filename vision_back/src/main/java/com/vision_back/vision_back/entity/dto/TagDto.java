@@ -1,5 +1,7 @@
 package com.vision_back.vision_back.entity.dto;
 
+import java.sql.Timestamp;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,7 +13,15 @@ import lombok.Setter;
 @AllArgsConstructor
 
 public class TagDto {
+    private Integer taskUserId;
+    private Integer taskId;
     private Integer tagId;
-    private Integer tagCode;
-    private String tagDescription;
+    private Integer projectId;
+    private String tagName;    
+    private Long quant;
+
+    public TagDto(String tagName, Long quant) {
+        this.tagName = tagName;
+        this.quant = quant;
+    }
 }
