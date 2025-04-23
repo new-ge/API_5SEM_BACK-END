@@ -21,10 +21,10 @@ jobs:
         cache: maven
 
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      run: mvn -B package --file vision_back/pom.xml
 
     - name: Run tests
-      run: mvn test
+      run: mvn test --file vision_back/pom.xml
 
     - name: Update dependency graph
       uses: advanced-security/maven-dependency-submission-action@v1
