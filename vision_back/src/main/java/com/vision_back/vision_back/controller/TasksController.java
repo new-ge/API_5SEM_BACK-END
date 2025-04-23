@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.vision_back.vision_back.configuration.TokenConfiguration;
-import com.vision_back.vision_back.entity.PeriodEntity;
 import com.vision_back.vision_back.entity.ProjectEntity;
 import com.vision_back.vision_back.entity.RoleEntity;
 import com.vision_back.vision_back.entity.StatusEntity;

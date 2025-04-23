@@ -5,6 +5,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -22,10 +24,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
 import com.vision_back.vision_back.configuration.TokenConfiguration;
-import com.vision_back.vision_back.entity.PeriodEntity;
 import com.vision_back.vision_back.entity.StatusEntity;
 import com.vision_back.vision_back.entity.UserEntity;
-import com.vision_back.vision_back.repository.PeriodRepository;
 import com.vision_back.vision_back.repository.RoleRepository;
 import com.vision_back.vision_back.repository.UserRepository;
 
@@ -36,9 +36,6 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private PeriodRepository periodRepository;
     
     ObjectMapper objectMapper = new ObjectMapper();
     RestTemplate restTemplate = new RestTemplate();
@@ -68,15 +65,15 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    @Transactional
     public UserEntity saveOnDatabaseUser(Integer userCode, String userDescription, String[] userRole, String userEmail) {
-        try {
-            UserEntity userEntity = new UserEntity(userCode, userDescription, userRole, userEmail);
-            return userRepository.save(userEntity);
-        } catch (DataIntegrityViolationException e) {
-            return userRepository.findByUserCodeAndUserNameAndUserRoleAndUserEmail(userCode, userDescription, userRole, userEmail)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao recuperar usuário após falha de integridade", e));
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
+        Optional<UserEntity> existingUser = userRepository.findByUserCodeAndUserNameAndUserRoleAndUserEmail(userCode, userDescription, userRole, userEmail);
+
+        if (existingUser.isPresent()) {
+            return existingUser.get();
         }
+
+        UserEntity userEntity = new UserEntity(userCode, userDescription, userRole, userEmail);
+        return userRepository.save(userEntity);
     }
 }
