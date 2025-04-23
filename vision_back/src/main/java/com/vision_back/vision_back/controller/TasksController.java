@@ -30,6 +30,7 @@ import com.vision_back.vision_back.entity.UserEntity;
 import com.vision_back.vision_back.entity.dto.MilestoneDto;
 import com.vision_back.vision_back.entity.dto.StatsDto;
 import com.vision_back.vision_back.entity.dto.TagDto;
+import com.vision_back.vision_back.entity.dto.TaskStatusHistoryDto;
 import com.vision_back.vision_back.repository.MilestoneRepository;
 import com.vision_back.vision_back.repository.StatusRepository;
 import com.vision_back.vision_back.repository.TagRepository;
@@ -59,6 +60,9 @@ public class TasksController {
 
     @Autowired
     private TagRepository tRepo;
+
+    @Autowired
+    private TaskStatusHistoryRepository tshRepo;
 
     @Autowired
     private MilestoneRepository mRepo;
@@ -105,8 +109,14 @@ public class TasksController {
         ));
 
         return ResponseEntity.ok(tasksPerSprint);   
-
     } 
+
+    @GetMapping("/count-rework")
+    public ResponseEntity<Long> countRework() {
+        tServ.processRework();
+        List<TaskStatusHistoryDto> rework = tshRepo.findTaskStatusHistoryWithReworkFlag();
+        return ResponseEntity.ok((long) rework.size());
+    }
 
 
     @GetMapping("/count-tasks-by-tag")

@@ -19,6 +19,8 @@ public interface TaskService {
 
     public Integer countTasksByStatusClosed(Integer projectId, Integer userId, String startDate, String endDate);
 
+    public void processRework();
+
     public void processTasksAndStats();
 
     public void processTasksAndStatsAndMilestone();
