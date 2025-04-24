@@ -10,7 +10,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name="project")
 public class ProjectEntity {
@@ -25,5 +24,10 @@ public class ProjectEntity {
 
     @NotNull
     @Column(name = "project_name")
-    private String projectName;  
+    private String projectName; 
+    
+    public ProjectEntity(Integer projectCode, String projectName) {
+        this.projectCode = projectCode;
+        this.projectName = projectName;
+    }
 }
