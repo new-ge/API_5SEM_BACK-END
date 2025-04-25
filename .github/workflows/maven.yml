@@ -31,6 +31,13 @@ jobs:
       run: |
         cd vision_back
         mvn -B package
+      env:
+        DB_URL: ${{ secrets.URL }}
+        DB_USERNAME: ${{ secrets.POSTGRES_USER }}
+        DB_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        SONAR_JDBC_URL: ${{ secrets.SONAR_JDBC_URL }}
+        SONAR_JDBC_USERNAME: ${{ secrets.SONAR_JDBC_USERNAME }}
+        SONAR_JDBC_PASSWORD: ${{ secrets.SONAR_JDBC_PASSWORD }}
 
 
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
