@@ -1,5 +1,7 @@
 package com.vision_back.vision_back.service;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
@@ -9,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -104,32 +107,34 @@ public class ProjectServiceImpl implements ProjectService {
                 }
             }
         return roleCode;
+
         } catch (Exception e) {
             throw new NullPointerException("Resposta não obtida ou resposta inválida.");
         }
     }
 
+    @Transactional
     public ProjectEntity saveOnDatabaseProject(Integer projectCode, String projectName) {
-        try {
-            ProjectEntity projectEntity = new ProjectEntity(projectCode, projectName);
-            return projectRepository.save(projectEntity);
-        } catch (DataIntegrityViolationException e) {
-            return projectRepository.findByProjectCodeAndProjectName(projectCode, projectName)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao recuperar projeto após falha de integridade", e));
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível salvar os dados", e);
+
+        Optional<ProjectEntity> existingProject = projectRepository.findByProjectCodeAndProjectName(projectCode, projectName);
+
+        if (existingProject.isPresent()) {
+            return existingProject.get();
         }
+
+        ProjectEntity projectEntity = new ProjectEntity(projectCode, projectName);
+        return projectRepository.save(projectEntity);
     }
 
+    @Transactional
     public RoleEntity saveOnDatabaseUsersRole(Integer roleCode, String roleName, ProjectEntity projectCode) {
-        try {
-            RoleEntity roleEntity = new RoleEntity(roleCode, roleName, projectCode);
-            return roleRepository.save(roleEntity);
-        } catch (DataIntegrityViolationException e) {
-            return roleRepository.findByRoleCodeAndRoleName(roleCode, roleName)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao recuperar projeto após falha de integridade", e));
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível salvar os dados", e);
+        Optional<RoleEntity> existingRole = roleRepository.findByRoleCodeAndRoleName(roleCode, roleName);
+
+        if (existingRole.isPresent()) {
+            return existingRole.get();
         }
+
+        RoleEntity roleEntity = new RoleEntity(roleCode, roleName, projectCode);
+        return roleRepository.save(roleEntity);
     }
 }
