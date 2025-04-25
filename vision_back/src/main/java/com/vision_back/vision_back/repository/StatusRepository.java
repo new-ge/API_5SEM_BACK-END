@@ -25,4 +25,6 @@ public interface StatusRepository extends JpaRepository<StatusEntity,Integer>{
     List<StatsDto> countTasksByStatusClosed();
 
     boolean existsByStatusIdIsNotNull();
+    
+    boolean existsByStatusCodeAndStatusName(Integer statusCode, String statusName);
 }

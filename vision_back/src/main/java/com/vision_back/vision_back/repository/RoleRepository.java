@@ -17,4 +17,6 @@ public interface RoleRepository extends JpaRepository<RoleEntity,Integer> {
     Optional<RoleEntity> findByRoleCodeAndRoleNameAndProjectCode(Integer roleCode, String roleName, ProjectEntity projectCode);
     
     boolean existsByRoleIdIsNotNull();
+
+    boolean existsByRoleCodeAndRoleName(Integer roleCode, String roleName);
 }
