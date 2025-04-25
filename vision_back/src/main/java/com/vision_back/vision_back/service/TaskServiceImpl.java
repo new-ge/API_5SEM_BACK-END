@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.TreeMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -23,7 +22,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vision_back.vision_back.VisionBackApplication;
 import com.vision_back.vision_back.configuration.TokenConfiguration;
 import com.vision_back.vision_back.entity.MilestoneEntity;
 import com.vision_back.vision_back.entity.ProjectEntity;
@@ -34,8 +32,6 @@ import com.vision_back.vision_back.entity.TaskStatusHistoryEntity;
 import com.vision_back.vision_back.entity.UserEntity;
 import com.vision_back.vision_back.entity.UserTaskEntity;
 import com.vision_back.vision_back.entity.TagEntity;
-import com.vision_back.vision_back.entity.dto.UserDto;
-import com.vision_back.vision_back.entity.dto.UserTaskDto;
 import com.vision_back.vision_back.repository.*;
 
 @Service
@@ -224,8 +220,7 @@ public class TaskServiceImpl implements TaskService {
   
     @Override
     public void processTasksAndStatsAndMilestone() {
-        HttpEntity<Void> headersEntity = setHeadersTasks(); 
-        Map<String, Integer> tasksPerSprint = new TreeMap<>();
+        HttpEntity<Void> headersEntity = setHeadersTasks();
 
         Integer userCode = userServiceImpl.getUserId();
         Integer projectCode = projectServiceImpl.getProjectId();
@@ -304,7 +299,7 @@ public class TaskServiceImpl implements TaskService {
                     saveOnDatabaseTask(Integer.valueOf(node.get("id").asText()), node.get("subject").asText());
                     saveOnDatabaseStats(Integer.valueOf(node.get("status").asInt()), node.get("status_extra_info").get("name").asText());
                     processTaskHistory(node.get("id").asInt());
-                  
+
                     if ((node.get("status_extra_info").get("name").asText()).equals("Closed")){
                         sumClosed += 1;
                     } else { 
@@ -334,7 +329,6 @@ public class TaskServiceImpl implements TaskService {
             for (JsonNode node : rootNode) {
                 saveOnDatabaseTask(Integer.valueOf(node.get("id").asText()), node.get("subject").asText());
                 saveOnDatabaseStats(Integer.valueOf(node.get("status").asInt()), node.get("status_extra_info").get("name").asText());
-                processTaskHistory(node.get("id").asInt());
 
                 if ((node.get("status_extra_info").get("name").asText()).equals("Closed")){
                     sumClosed += 1;
@@ -389,90 +383,58 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Transactional
-    public MilestoneEntity saveOnDatabaseMilestone(Integer milestoneCode, String milestoneName, LocalDate estimatedStart, LocalDate estimatedEnd, ProjectEntity projectCode) {
-        Optional<MilestoneEntity> existingMilestone = milestoneRepository.findByMilestoneCodeAndMilestoneNameAndEstimatedStartAndEstimatedEnd(milestoneCode, milestoneName, estimatedStart, estimatedEnd);
-
-        if (existingMilestone.isPresent()) {
-            return existingMilestone.get(); 
+    public void saveOnDatabaseMilestone(Integer milestoneCode, String milestoneName, LocalDate estimatedStart, LocalDate estimatedEnd, ProjectEntity projectCode) {
+        if (!milestoneRepository.existsByMilestoneCodeAndMilestoneNameAndEstimatedStartAndEstimatedEnd(milestoneCode, milestoneName, estimatedStart, estimatedEnd)) {
+            MilestoneEntity milestoneEntity = new MilestoneEntity(milestoneCode, milestoneName, estimatedStart, estimatedEnd, projectCode);
+            milestoneRepository.save(milestoneEntity);
         }
-
-        MilestoneEntity milestoneEntity = new MilestoneEntity(milestoneCode, milestoneName, estimatedStart, estimatedEnd, projectCode);
-        return milestoneRepository.save(milestoneEntity);
     }
-
+    
     @Transactional
-    public TaskEntity saveOnDatabaseTask(Integer taskCode, String taskDescription) {
-        Optional<TaskEntity> existingTask = taskRepository.findByTaskCodeAndTaskDescription(taskCode, taskDescription);
-        
-        if (existingTask.isPresent()) {
-            return existingTask.get(); 
+    public void saveOnDatabaseTask(Integer taskCode, String taskDescription) {
+        if (!taskRepository.existsByTaskCodeAndTaskDescription(taskCode, taskDescription)) {
+            TaskEntity taskEntity = new TaskEntity(taskCode, taskDescription);
+            taskRepository.save(taskEntity);
         }
-    
-        TaskEntity taskEntity = new TaskEntity(taskCode, taskDescription);
-        return taskRepository.save(taskEntity);
     }
-
+    
     @Transactional
-    public TagEntity saveOnDatabaseTags(TaskEntity taskCode, ProjectEntity projectCode, String tagName, Integer quant) {
-        try {
-            Optional<TagEntity> existingTag = tagRepository.findByTaskCodeAndProjectCodeAndTagNameAndQuant(
-                taskCode, projectCode, tagName, quant
-            );
-    
-            if (existingTag.isPresent()) {
-                return existingTag.get();
-            }
-    
+    public void saveOnDatabaseTags(TaskEntity taskCode, ProjectEntity projectCode, String tagName, Integer quant) {
+        if (!tagRepository.existsByTaskCodeAndProjectCodeAndTagNameAndQuant(taskCode, projectCode, tagName, quant)) {
             TagEntity tagEntity = new TagEntity(taskCode, projectCode, tagName, quant);
-            return tagRepository.save(tagEntity);
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
+            tagRepository.save(tagEntity);
         }
     }
-
+    
     @Transactional
-    public StatusEntity saveOnDatabaseStats(Integer statusCode, String statusName) {
-        Optional<StatusEntity> existingStatus = statsRepository.findByStatusCodeAndStatusName(statusCode, statusName);
-        if (existingStatus.isPresent()) {
-            return existingStatus.get();
+    public void saveOnDatabaseStats(Integer statusCode, String statusName) {
+        if (!statsRepository.existsByStatusCodeAndStatusName(statusCode, statusName)) {
+            StatusEntity statusEntity = new StatusEntity(statusCode, statusName);
+            statsRepository.save(statusEntity);
         }
-        StatusEntity statusEntity = new StatusEntity(statusCode, statusName);
-        return statsRepository.save(statusEntity);
     }
-
+    
     @Transactional
-    public TaskStatusHistoryEntity saveOnDatabaseTaskStatusHistory(TaskEntity taskCode, String lastStatus, String actualStatus, Timestamp changeDate) {
-        try {            
-            Optional<TaskStatusHistoryEntity> existingHistory = taskStatusHistoryRepository.findByTaskCodeAndLastStatusAndActualStatusAndChangeDate(
-                taskCode, lastStatus, actualStatus, changeDate
-            );
-    
-            if (existingHistory.isPresent()) {
-                return existingHistory.get();
-            }
-    
+    public void saveOnDatabaseTaskStatusHistory(TaskEntity taskCode, String lastStatus, String actualStatus, Timestamp changeDate) {
+        if (!taskStatusHistoryRepository.existsByTaskCodeAndLastStatusAndActualStatusAndChangeDate(taskCode, lastStatus, actualStatus, changeDate)) {
             TaskStatusHistoryEntity entity = new TaskStatusHistoryEntity(taskCode, lastStatus, actualStatus, changeDate);
-            return taskStatusHistoryRepository.save(entity);
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
+            taskStatusHistoryRepository.save(entity);
         }
     }
-
+    
     @Transactional
-    public UserTaskEntity saveOnDatabaseUserTask(TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, MilestoneEntity milestoneCode, StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate, Integer quant) {
-        try {
-            Optional<UserTaskEntity> existingUserTask = userTaskRepository.findByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCodeAndStartDateAndEndDate(
-                taskCode, projectCode, userCode, milestoneCode, statsCode, roleCode, startDate, endDate
-            );
-    
-            if (existingUserTask.isPresent()) {
-                return existingUserTask.get();
-            }
-    
+    public void saveOnDatabaseUserTask(TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, MilestoneEntity milestoneCode, StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate, Integer quant) {
+        if (!userTaskRepository.existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCodeAndStartDateAndEndDate(taskCode, projectCode, userCode, milestoneCode, statsCode, roleCode, startDate, endDate)) {
             UserTaskEntity userTaskEntity = new UserTaskEntity(taskCode, projectCode, userCode, milestoneCode, statsCode, roleCode, startDate, endDate, quant);
-            return userTaskRepository.save(userTaskEntity);
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possivel salvar os dados", e);
+            userTaskRepository.save(userTaskEntity);
+        }
+    }
+    
+    @Transactional
+    public void saveOnDatabaseUser(Integer userCode, String userDescription, String[] userRole, String userEmail) {
+        if (!userRepository.existsByUserCodeAndUserNameAndUserRoleAndUserEmail(userCode, userDescription, userRole, userEmail)) {
+            UserEntity userEntity = new UserEntity(userCode, userDescription, userRole, userEmail);
+            userRepository.save(userEntity);
         }
     }
 }
