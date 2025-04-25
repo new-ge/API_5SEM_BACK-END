@@ -13,26 +13,21 @@ import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
 import com.vision_back.vision_back.entity.dto.UserDto;
 import com.vision_back.vision_back.configuration.TokenConfiguration;
-import com.vision_back.vision_back.entity.StatusEntity;
 import com.vision_back.vision_back.entity.UserEntity;
-import com.vision_back.vision_back.repository.RoleRepository;
 import com.vision_back.vision_back.repository.UserRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -95,13 +90,12 @@ public class UserServiceImpl implements UserService {
                     Integer userId = userNode.get("id").asInt();
                     String userName = userNode.hasNonNull("username") ? userNode.get("username").asText() : "N/A";
                     String userEmail = userNode.hasNonNull("email") ? userNode.get("email").asText() : "N/A";
-                    //List<String> userRole = userNode.hasNonNull("role") ? userNode.get("role").asInt() : -1;
                     List<String> userRole = new ArrayList<>();
                     if (userNode.hasNonNull("role")) {
                         JsonNode rolesNode = userNode.get("role");
                         if (rolesNode.isArray()) {
                             for (JsonNode roleNode : rolesNode) {
-                            userRole.add(roleNode.asText()); // Adiciona cada role como uma string
+                            userRole.add(roleNode.asText()); 
                             }
                         }
                     }
@@ -168,13 +162,12 @@ public class UserServiceImpl implements UserService {
             Integer userId = userNode.get("id").asInt();
             String userName = userNode.hasNonNull("username") ? userNode.get("username").asText() : "N/A";
             String userEmail = userNode.hasNonNull("email") ? userNode.get("email").asText() : "N/A";
-           //List<String> userRole = userNode.hasNonNull("role") ? userNode.get("role").asInt() : -1;
            List<String> userRole = new ArrayList<>();
            if (userNode.hasNonNull("role")) {
                JsonNode rolesNode = userNode.get("role");
                if (rolesNode.isArray()) {
                    for (JsonNode roleNode : rolesNode) {
-                   userRole.add(roleNode.asText()); // Adiciona cada role como uma string
+                   userRole.add(roleNode.asText()); 
                    }
                }
            }
@@ -207,14 +200,10 @@ public class UserServiceImpl implements UserService {
  }
 
     @Transactional
-    public UserEntity saveOnDatabaseUser(Integer userCode, String userDescription, String[] userRole, String userEmail) {
-        Optional<UserEntity> existingUser = userRepository.findByUserCodeAndUserNameAndUserRoleAndUserEmail(userCode, userDescription, userRole, userEmail);
-
-        if (existingUser.isPresent()) {
-            return existingUser.get();
+    public void saveOnDatabaseUser(Integer userCode, String userDescription, String[] userRole, String userEmail) {
+        if (!userRepository.existsByUserCodeAndUserNameAndUserRoleAndUserEmail(userCode, userDescription, userRole, userEmail)) {
+            UserEntity userEntity = new UserEntity(userCode, userDescription, userRole, userEmail);
+            userRepository.save(userEntity);
         }
-
-        UserEntity userEntity = new UserEntity(userCode, userDescription, userRole, userEmail);
-        return userRepository.save(userEntity);
     }
 }

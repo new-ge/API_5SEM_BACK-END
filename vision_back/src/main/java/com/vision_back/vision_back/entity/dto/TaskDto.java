@@ -13,5 +13,11 @@ import lombok.Setter;
 public class TaskDto {
     private Integer taskId;
     private Integer taskCode;
-    private String taskDescription;  
+    private String taskDescription;
+    private Long quant;  
+
+    public TaskDto(String taskDescription, Long quant) {
+        this.taskDescription = taskDescription;
+        this.quant = quant;
+    }
 }
