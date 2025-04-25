@@ -24,6 +24,11 @@ public class StatusEntity {
     private Integer statusCode;
 
     @NotNull
-    @Column(name = "stats_description")
-    private String statusDescription;  
+    @Column(name = "stats_name")
+    private String statusName;
+
+    public StatusEntity(Integer statusCode, String statusName) {
+        this.statusCode = statusCode;
+        this.statusName = statusName;
+    }
 }
