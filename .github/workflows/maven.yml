@@ -41,6 +41,7 @@ jobs:
       run: cd vision_back
     
     - name: Build with Maven
+      working-directory: vision_back
       run: mvn -B clean package --file pom.xml
       env:
         DB_URL: ${{ secrets.POSTGRES_URL }}
