@@ -77,14 +77,11 @@ public class UserServiceImpl implements UserService {
 
             try {
                 JsonNode usersJsonNode = objectMapper.readTree(userResponse.getBody());
-                System.out.println("Usuarios recebidos: " + usersJsonNode);  
 
                 ResponseEntity<String> taskResponse = restTemplate.exchange("https://api.taiga.io/api/v1/tasks?project=" 
                         + projectId, HttpMethod.GET, headersEntity, String.class);
 
                 JsonNode tasksJsonNode = objectMapper.readTree(taskResponse.getBody());
-                System.out.println("Tarefas recebidas: " + tasksJsonNode);  
-
 
                 for (JsonNode userNode : usersJsonNode) {
                     Integer userId = userNode.get("id").asInt();
@@ -109,8 +106,6 @@ public class UserServiceImpl implements UserService {
                         }
                     }
 
-                    System.out.println("Usuário: " + userName + " | Tarefas atribuídas: " + taskCount);
-
                     Map<String, Object> userWithTaskCount = new HashMap<>();
                     userWithTaskCount.put("user", new UserDto(userId, userName, userRole, userEmail));
                     userWithTaskCount.put("taskCount", taskCount); 
@@ -120,7 +115,6 @@ public class UserServiceImpl implements UserService {
 
                 return usersList;
             } catch (Exception e) {
-                System.out.println("Erro: " + e.getMessage()); 
                 throw new IllegalArgumentException("Erro ao retornar usuários ou tasks", e);
         }
    }
@@ -182,8 +176,6 @@ public class UserServiceImpl implements UserService {
                     }
                 }
             }
-
-            System.out.println("Usuário: " + userName + " | Tarefas atribuídas: " + taskCount);
 
             Map<String, Object> userWithTaskCount = new HashMap<>();
             userWithTaskCount.put("user", new UserDto(userId, userName, userRole, userEmail));
