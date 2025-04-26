@@ -1,16 +1,21 @@
 package com.vision_back.vision_back.service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeMap;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -83,6 +88,50 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    public List<TreeMap<String, Object>> listAllProjectsByUser(Integer userCode){
+        setHeadersProject();
+
+        String url = "https://api.taiga.io/api/v1/projects?member=" + userCode;
+
+        System.out.println(" URL da API Taiga:" + url);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                url, 
+                HttpMethod.GET,
+                headersEntity,
+                String.class
+            );
+    
+            if (response.getStatusCode() == HttpStatus.OK) {
+                String body = response.getBody();
+                if (body == null || body.isEmpty()) {
+                    return new ArrayList<>();
+                }
+                List<TreeMap<String, Object>> projects = new ArrayList<>();
+                JsonNode root = objectMapper.readTree(body);
+    
+                if (root.isArray()) {
+                    for (JsonNode node : root) {
+                        Integer projectId = node.get("id").asInt();
+                        String name = node.get("name").asText();
+                        TreeMap<String, Object> projectMap = new TreeMap<>();
+                        projectMap.put("id", projectId);
+                        projectMap.put("name", name);
+                        projects.add(projectMap);
+                    }
+                } 
+                return projects;
+            } else {
+                return new ArrayList<>();
+            }
+    
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Erro ao localizar os projetos", e);
+        }
+    }
+
     public Integer getSpecificProjectUserRoleId() {
         Integer projectCode = getProjectId();
         Integer memberId = userServiceImpl.getUserId();
