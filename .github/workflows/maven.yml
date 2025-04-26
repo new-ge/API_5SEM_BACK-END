@@ -36,6 +36,11 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
         cache: maven
+
+    - name: Print environment variables
+      run: |
+        echo "Printing all environment variables"
+        printenv  # Comando para listar todas as variáveis de ambiente
     
     - name: Build with Maven
       run: mvn -B clean package --file vision_back/pom.xml
