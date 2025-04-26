@@ -2,7 +2,7 @@ spring:
     application:
         name: vision
     datasource:
-        url: ${URL}
+        url: ${POSTGRES_URL}
         username: ${POSTGRES_USER}
         password: ${POSTGRES_PASSWORD}
         driver-class-name: org.postgresql.Driver
