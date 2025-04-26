@@ -273,29 +273,31 @@ public class TaskServiceImpl implements TaskService {
     public Map<String, Integer> countTasksByStatusClosedBySprint(Integer userId, Integer projectId) {
         HttpEntity<Void> headersEntity = setHeadersTasks(); 
         Map<String, Integer> tasksPerSprint = new TreeMap<>();
-        Integer sumClosed = 0;
-
+    
         String sprintUrl = "https://api.taiga.io/api/v1/milestones?project=" + projectId;
         ResponseEntity<String> sprintResponse = restTemplate.exchange(sprintUrl, HttpMethod.GET, headersEntity, String.class);
-
+        String userNameString ="";
         try {
             JsonNode sprints = objectMapper.readTree(sprintResponse.getBody());
-
+    
             for (JsonNode sprint : sprints) {
+                int sumClosed = 0;
+    
                 String sprintName = sprint.get("name").asText();
                 String startDate = sprint.get("estimated_start").asText();
                 String endDate = sprint.get("estimated_finish").asText();
-
+    
                 String taskUrl = "https://api.taiga.io/api/v1/tasks?"
                         + "project=" + projectId + "&"
                         + "assigned_to=" + userId + "&"
                         + "created_date__gte=" + startDate + "&"
                         + "created_date__lte=" + endDate;
-
+    
                 ResponseEntity<String> taskResponse = restTemplate.exchange(taskUrl, HttpMethod.GET, headersEntity, String.class);
                 JsonNode tasks = objectMapper.readTree(taskResponse.getBody());
-
+                
                 for (JsonNode node : tasks) {
+
                     saveOnDatabaseTask(Integer.valueOf(node.get("id").asText()), node.get("subject").asText());
                     saveOnDatabaseStats(Integer.valueOf(node.get("status").asInt()), node.get("status_extra_info").get("name").asText());
                     processTaskHistory(node.get("id").asInt());
@@ -305,16 +307,17 @@ public class TaskServiceImpl implements TaskService {
                     } else { 
                         continue;
                     }
-                } 
-
+                }
+    
                 tasksPerSprint.put(sprintName, sumClosed);
             }
             return tasksPerSprint;
-
+    
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
         }
     }
+    
 
     @Override
     public Integer countTasksByStatusClosed(Integer projectId, Integer userId, String startDate, String endDate) {
@@ -437,4 +440,5 @@ public class TaskServiceImpl implements TaskService {
             userRepository.save(userEntity);
         }
     }
+
 }
