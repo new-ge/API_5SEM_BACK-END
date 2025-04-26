@@ -36,16 +36,11 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
         cache: maven
-
-    - name: Print environment variables
-      run: |
-        echo "Printing all environment variables"
-        printenv  # Comando para listar todas as variáveis de ambiente
     
     - name: Build with Maven
       run: mvn -B clean package --file vision_back/pom.xml
       env:
-        DB_URL: ${{ secrets.URL }}
+        DB_URL: ${{ secrets.POSTGRES_URL }}
         DB_USERNAME: ${{ secrets.POSTGRES_USER }}
         DB_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         SONAR_JDBC_URL: ${{ secrets.SONAR_JDBC_URL }}
