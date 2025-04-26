@@ -33,9 +33,6 @@ jobs:
     
     - name: Subir PostgreSQL na rede
       run: |
-          echo "${{ secrets.POSTGRES_DB }}"
-          echo "${{ secrets.POSTGRES_USER }}"
-          echo "${{ secrets.POSTGRES_PASSWORD }}"
           docker run -d \
             --name postgres \
             --network qtsw-network \
@@ -44,19 +41,9 @@ jobs:
             -e POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
             -p 5433:5432 \
             postgres:17.4
-
-    - name: Aguardar PostgreSQL ficar pronto
-      run: |
-        until docker exec postgres pg_isready -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.POSTGRES_DB }}; do
-          echo "Aguardando PostgreSQL ficar pronto..."
-          sleep 10
-        done
-
     
     - name: Build with Maven
-      run: |
-        cd vision_back
-        mvn -B package
+      run: mvn -B clean package --file vision_back/pom.xml
       env:
         DB_URL: ${{ secrets.URL }}
         DB_USERNAME: ${{ secrets.POSTGRES_USER }}
