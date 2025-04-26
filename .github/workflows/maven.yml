@@ -33,6 +33,9 @@ jobs:
     
     - name: Subir PostgreSQL na rede
       run: |
+          $ ECHO {{ secrets.POSTGRES_DB }}
+          $ ECHO {{ secrets.POSTGRES_USER }}
+          $ ECHO {{ secrets.POSTGRES_PASSWORD }}
           docker run -d \
             --name postgres \
             --network qtsw-network \
