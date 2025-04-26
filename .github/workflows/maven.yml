@@ -36,20 +36,6 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
         cache: maven
-
-    - name: Criar rede personalizada
-      run: docker network create qtsw-network
-    
-    - name: Subir PostgreSQL na rede
-      run: |
-          docker run -d \
-            --name vision-back-postgres \
-            --network qtsw-network \
-            -e POSTGRES_DB=${{ secrets.POSTGRES_DB }} \
-            -e POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
-            -e POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
-            -p 5433:5432 \
-            postgres:17.4
     
     - name: Build with Maven
       run: mvn -B clean package --file vision_back/pom.xml
