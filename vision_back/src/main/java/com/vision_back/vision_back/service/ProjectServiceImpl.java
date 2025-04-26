@@ -89,13 +89,10 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public List<TreeMap<String, Object>> listAllProjectsByUser(Integer userId){
-        
-        System.out.println("Chamando o método listAllProjectsByUser com userId: " + userId);
-
+    public List<TreeMap<String, Object>> listAllProjectsByUser(Integer userCode){
         setHeadersProject();
 
-        String url = "https://api.taiga.io/api/v1/projects?member=" + userId;
+        String url = "https://api.taiga.io/api/v1/projects?member=" + userCode;
 
         System.out.println(" URL da API Taiga:" + url);
 
@@ -109,50 +106,32 @@ public class ProjectServiceImpl implements ProjectService {
     
             if (response.getStatusCode() == HttpStatus.OK) {
                 String body = response.getBody();
-                System.out.println("Corpo da resposta da API: " + body); 
-
                 if (body == null || body.isEmpty()) {
-                    System.out.println("A resposta da API está vazia ou nula.");
                     return new ArrayList<>();
                 }
-    
                 List<TreeMap<String, Object>> projects = new ArrayList<>();
-    
                 JsonNode root = objectMapper.readTree(body);
     
                 if (root.isArray()) {
-                    System.out.println("Número de projetos encontrados: " + root.size());
-    
                     for (JsonNode node : root) {
                         Integer projectId = node.get("id").asInt();
                         String name = node.get("name").asText();
-    
-                        System.out.println("Projeto ID: " + projectId + " | Nome: " + name);
-    
                         TreeMap<String, Object> projectMap = new TreeMap<>();
                         projectMap.put("id", projectId);
                         projectMap.put("name", name);
-    
                         projects.add(projectMap);
                     }
-                } else {
-                    System.out.println("A resposta da API não contém um array de projetos.");
-                }
-    
+                } 
                 return projects;
             } else {
-                System.out.println("Erro na requisição. Status code: " + response.getStatusCode());
                 return new ArrayList<>();
             }
     
         } catch (Exception e) {
-            System.err.println("Erro ao fazer requisição para a API: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Erro ao localizar os projetos", e);
         }
     }
-
-//userId para teste: 754823,758714,754228
 
     public Integer getSpecificProjectUserRoleId() {
         Integer projectCode = getProjectId();

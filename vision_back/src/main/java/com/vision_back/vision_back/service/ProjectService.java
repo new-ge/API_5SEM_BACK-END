@@ -18,7 +18,7 @@ public interface ProjectService {
 
     public Integer getProjectId();
 
-    public List<TreeMap<String, Object>> listAllProjectsByUser(Integer userId);
+    public List<TreeMap<String, Object>> listAllProjectsByUser(Integer userCode);
 
     public Integer getSpecificProjectUserRoleId();
 }
