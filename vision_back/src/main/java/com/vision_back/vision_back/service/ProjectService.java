@@ -19,6 +19,7 @@ public interface ProjectService {
     public Integer getProjectId();
 
     public List<TreeMap<String, Object>> listAllProjectsByUser(Integer userCode);
+    public void saveOnDatabaseProject(Integer projectCode, String projectName);
 
     public Integer getSpecificProjectUserRoleId();
 }

@@ -6,11 +6,9 @@ import java.util.TreeMap;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -147,7 +145,7 @@ public class ProjectServiceImpl implements ProjectService {
 
             for (JsonNode members : jsonNode.get("members")) {
                 if (members.get("id").asInt() == memberId) {
-                    saveOnDatabaseUsersRole(members.get("role").asInt(), members.get("role_name").asText(), projectEntity);
+                    saveOnDatabaseRole(members.get("role").asInt(), members.get("role_name").asText(), projectEntity);
                     roleCode = members.get("role").asInt();
                 } else {
                     continue;
@@ -161,27 +159,18 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Transactional
-    public ProjectEntity saveOnDatabaseProject(Integer projectCode, String projectName) {
-
-        Optional<ProjectEntity> existingProject = projectRepository.findByProjectCodeAndProjectName(projectCode, projectName);
-
-        if (existingProject.isPresent()) {
-            return existingProject.get();
+    public void saveOnDatabaseProject(Integer projectCode, String projectName) {
+        if (!projectRepository.existsByProjectCodeAndProjectName(projectCode, projectName)) {
+            ProjectEntity projectEntity = new ProjectEntity(projectCode, projectName);
+            projectRepository.save(projectEntity);
         }
-
-        ProjectEntity projectEntity = new ProjectEntity(projectCode, projectName);
-        return projectRepository.save(projectEntity);
     }
 
     @Transactional
-    public RoleEntity saveOnDatabaseUsersRole(Integer roleCode, String roleName, ProjectEntity projectCode) {
-        Optional<RoleEntity> existingRole = roleRepository.findByRoleCodeAndRoleName(roleCode, roleName);
-
-        if (existingRole.isPresent()) {
-            return existingRole.get();
+    public void saveOnDatabaseRole(Integer roleCode, String roleName, ProjectEntity projectCode) {
+        if (!roleRepository.existsByRoleCodeAndRoleName(roleCode, roleName)) {
+            RoleEntity roleEntity = new RoleEntity(roleCode, roleName, projectCode);
+            roleRepository.save(roleEntity);
         }
-
-        RoleEntity roleEntity = new RoleEntity(roleCode, roleName, projectCode);
-        return roleRepository.save(roleEntity);
     }
 }

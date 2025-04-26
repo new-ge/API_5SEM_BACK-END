@@ -20,4 +20,7 @@ public interface TagRepository extends JpaRepository<TagEntity,Integer>{
     List<TagDto> countTasksByTag();
 
     boolean existsByUserTagIdIsNotNull();
+
+    boolean existsByTaskCodeAndProjectCodeAndTagNameAndQuant(TaskEntity taskCode, ProjectEntity projectCode,
+            String tagName, Integer quant);
 }
