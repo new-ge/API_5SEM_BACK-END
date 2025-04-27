@@ -14,4 +14,20 @@ public class SwaggerConfig {
                 .pathsToMatch("/tasks/**")
                 .build();
     }
+
+    @Bean
+    public GroupedOpenApi projectsOnlyApi() {
+        return GroupedOpenApi.builder()
+                .group("projects")
+                .pathsToMatch("/projects/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi usersOnlyApi() {
+        return GroupedOpenApi.builder()
+                .group("users")
+                .pathsToMatch("/users/**")
+                .build();
+    }
 }
