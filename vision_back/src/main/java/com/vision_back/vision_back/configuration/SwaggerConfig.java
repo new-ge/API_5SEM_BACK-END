@@ -1,4 +1,4 @@
-package com.vision_back.vision_back.config;
+package com.vision_back.vision_back.configuration;
 
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
