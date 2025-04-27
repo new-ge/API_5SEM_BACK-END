@@ -19,9 +19,4 @@ public class VisionBackApplication {
 		SpringApplication.run(VisionBackApplication.class, args);
 	}
 
-	@PostConstruct
-	public void getToken() {
-		auth.getTokenAuthentication("PASSWORD_SECRET_OPERADOR", "USERNAME_SECRET_OPERADOR");
-	}
-
 }
