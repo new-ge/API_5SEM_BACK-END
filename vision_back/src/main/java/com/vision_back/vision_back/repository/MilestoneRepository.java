@@ -23,6 +23,9 @@ public interface MilestoneRepository extends JpaRepository<MilestoneEntity,Integ
      @Query(value = "select m.milestone_name, SUM(ut.quant) from usr_task ut join milestone m on ut.milestone_code = m.milestone_code where ut.end_date is not null group by m.milestone_name order by m.milestone_name asc", nativeQuery = true)
      List<MilestoneDto> countCardsClosedPerSprint();
 
+     @Query(value = "select milestone_name from milestone", nativeQuery = true)
+     List<String> listAllSprintName();
+
      boolean existsByMilestoneIdIsNotNull();
 
      boolean existsByMilestoneCodeAndMilestoneNameAndEstimatedStartAndEstimatedEnd(Integer milestoneCode, String milestoneName, LocalDate estimatedStart, LocalDate estimatedEnd);

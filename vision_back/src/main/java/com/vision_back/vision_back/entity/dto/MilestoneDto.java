@@ -20,6 +20,10 @@ public class MilestoneDto {
         this.quant = quant;
     }
 
+    public MilestoneDto(String milestoneName) {
+        this.milestoneName = milestoneName;
+    }
+
     @Override
     public String toString() {
         return "MilestoneDto{" +

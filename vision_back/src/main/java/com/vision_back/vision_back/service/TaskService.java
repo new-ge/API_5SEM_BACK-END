@@ -1,9 +1,13 @@
 package com.vision_back.vision_back.service;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 @Service
 public interface TaskService {
@@ -12,8 +16,6 @@ public interface TaskService {
     public void saveOnDatabaseTask(Integer taskCode, String taskDescription);
 
     public int countCardsCreatedByDateRange(Integer userId, Integer projectId, String startDate, String endDate);
-
-    public Integer countTasksByStatusClosed(Integer projectId, Integer userId, String startDate, String endDate);
 
     public void processRework();
 
@@ -24,6 +26,8 @@ public interface TaskService {
     public Map<String, Integer> countTasksByStatusClosedBySprint(Integer userId, Integer projectId);
 
     public Map<String, Integer> countTasksByTag();
+
+public List<Map<String, Object>> getUsersAndTasksPerSprintName() throws JsonMappingException, JsonProcessingException;
 
     public void processTaskHistory(Integer taskCode);
 
