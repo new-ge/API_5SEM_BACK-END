@@ -3,7 +3,6 @@ package com.vision_back.vision_back.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -15,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,7 +23,6 @@ import com.vision_back.vision_back.entity.ProjectEntity;
 import com.vision_back.vision_back.entity.RoleEntity;
 import com.vision_back.vision_back.repository.ProjectRepository;
 import com.vision_back.vision_back.repository.RoleRepository;
-import com.vision_back.vision_back.repository.UserRepository;
 
 @Service
 public class ProjectServiceImpl implements ProjectService {
@@ -34,9 +31,6 @@ public class ProjectServiceImpl implements ProjectService {
     HttpHeaders headers = new HttpHeaders();
     VisionBackApplication vba = new VisionBackApplication();
     HttpEntity<Void> headersEntity;
-    
-    @Autowired
-    private UserRepository userRepository; 
 
     @Autowired
     private UserServiceImpl userServiceImpl;

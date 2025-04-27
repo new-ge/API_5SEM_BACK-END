@@ -5,13 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -29,7 +22,6 @@ import com.vision_back.vision_back.entity.dto.UserDto;
 import com.vision_back.vision_back.configuration.TokenConfiguration;
 import com.vision_back.vision_back.entity.UserEntity;
 import com.vision_back.vision_back.repository.UserRepository;
-import com.fasterxml.jackson.core.type.TypeReference;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -52,7 +44,8 @@ public class UserServiceImpl implements UserService {
             
         return headersEntity = new HttpEntity<>(headers);
     }
-
+    
+    @Transactional
     @Override
     public Integer getUserId() {
         setHeadersProject();
@@ -60,7 +53,7 @@ public class UserServiceImpl implements UserService {
         ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/users/me", HttpMethod.GET, headersEntity, String.class);
         try {
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
-            saveOnDatabaseUser(jsonNode.get("id").asInt(), jsonNode.get("username").asText(), objectMapper.convertValue(jsonNode.get("roles"), String[].class), jsonNode.get("email").asText());
+            saveOnDatabaseUser(jsonNode.get("id").asInt(), jsonNode.get("username").asText(), objectMapper.convertValue(jsonNode.get("roles"), String[].class), jsonNode.get("email").asText(), 1);
             return jsonNode.get("id").asInt();
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar o Usuário", e);
@@ -192,10 +185,17 @@ public class UserServiceImpl implements UserService {
  }
 
     @Transactional
-    public void saveOnDatabaseUser(Integer userCode, String userDescription, String[] userRole, String userEmail) {
+    public void saveOnDatabaseUser(Integer userCode, String userDescription, String[] userRole, String userEmail, Integer isLogged) {
+        System.out.println(!userRepository.existsByUserCodeAndUserNameAndUserRoleAndUserEmail(userCode, userDescription, userRole, userEmail));
         if (!userRepository.existsByUserCodeAndUserNameAndUserRoleAndUserEmail(userCode, userDescription, userRole, userEmail)) {
-            UserEntity userEntity = new UserEntity(userCode, userDescription, userRole, userEmail);
+            UserEntity userEntity = new UserEntity(userCode, userDescription, userRole, userEmail, isLogged);
             userRepository.save(userEntity);
+        } else {
+            System.out.println("Chamando atualização do usuário...");
+            if (userRepository.count() > 1) {
+                userRepository.setAllUsersLoggedOut();
+            }
+            userRepository.updateIsLogged(isLogged, userCode);
         }
     }
 }

@@ -6,9 +6,6 @@ import java.util.TreeMap;
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Service;
 
-
-import com.vision_back.vision_back.entity.ProjectEntity;
-
 @Service
 public interface ProjectService {
     
@@ -19,6 +16,7 @@ public interface ProjectService {
     public Integer getProjectId();
 
     public List<TreeMap<String, Object>> listAllProjectsByUser(Integer userCode);
+    
     public void saveOnDatabaseProject(Integer projectCode, String projectName);
 
     public Integer getSpecificProjectUserRoleId();
