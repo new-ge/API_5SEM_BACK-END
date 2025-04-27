@@ -1,6 +1,5 @@
 package com.vision_back.vision_back.entity;
 
-import java.sql.Timestamp;
 import java.time.LocalDate;
 
 import jakarta.persistence.*;

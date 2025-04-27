@@ -1,7 +1,5 @@
 package com.vision_back.vision_back.entity.dto;
 
-import java.sql.Timestamp;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

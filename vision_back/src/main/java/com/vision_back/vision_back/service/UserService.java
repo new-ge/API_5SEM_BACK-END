@@ -11,5 +11,5 @@ public interface UserService {
 
     public Integer getUserId();
 
-    public UserEntity saveOnDatabaseUser(Integer userCode, String userDescription, String[] userRole, String userEmail);
+    public void saveOnDatabaseUser(Integer userCode, String userDescription, String[] userRole, String userEmail);
 }

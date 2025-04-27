@@ -1,6 +1,5 @@
 package com.vision_back.vision_back.repository;
 
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -20,4 +19,11 @@ public interface MilestoneRepository extends JpaRepository<MilestoneEntity,Integ
 
      @Query(value = "select m.milestone_name, SUM(ut.quant) from usr_task ut join milestone m on ut.milestone_code = m.milestone_code group by m.milestone_name order by m.milestone_name asc", nativeQuery = true)
      List<MilestoneDto> countCardsPerSprint();
+
+     @Query(value = "select m.milestone_name, SUM(ut.quant) from usr_task ut join milestone m on ut.milestone_code = m.milestone_code where ut.end_date is not null group by m.milestone_name order by m.milestone_name asc", nativeQuery = true)
+     List<MilestoneDto> countCardsClosedPerSprint();
+
+     boolean existsByMilestoneIdIsNotNull();
+
+     boolean existsByMilestoneCodeAndMilestoneNameAndEstimatedStartAndEstimatedEnd(Integer milestoneCode, String milestoneName, LocalDate estimatedStart, LocalDate estimatedEnd);
 }

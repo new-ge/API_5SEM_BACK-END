@@ -1,7 +1,11 @@
 package com.vision_back.vision_back.service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeMap;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -10,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -83,6 +88,50 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    public List<TreeMap<String, Object>> listAllProjectsByUser(Integer userCode){
+        setHeadersProject();
+
+        String url = "https://api.taiga.io/api/v1/projects?member=" + userCode;
+
+        System.out.println(" URL da API Taiga:" + url);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                url, 
+                HttpMethod.GET,
+                headersEntity,
+                String.class
+            );
+    
+            if (response.getStatusCode() == HttpStatus.OK) {
+                String body = response.getBody();
+                if (body == null || body.isEmpty()) {
+                    return new ArrayList<>();
+                }
+                List<TreeMap<String, Object>> projects = new ArrayList<>();
+                JsonNode root = objectMapper.readTree(body);
+    
+                if (root.isArray()) {
+                    for (JsonNode node : root) {
+                        Integer projectId = node.get("id").asInt();
+                        String name = node.get("name").asText();
+                        TreeMap<String, Object> projectMap = new TreeMap<>();
+                        projectMap.put("id", projectId);
+                        projectMap.put("name", name);
+                        projects.add(projectMap);
+                    }
+                } 
+                return projects;
+            } else {
+                return new ArrayList<>();
+            }
+    
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Erro ao localizar os projetos", e);
+        }
+    }
+
     public Integer getSpecificProjectUserRoleId() {
         Integer projectCode = getProjectId();
         Integer memberId = userServiceImpl.getUserId();
@@ -97,39 +146,32 @@ public class ProjectServiceImpl implements ProjectService {
 
             for (JsonNode members : jsonNode.get("members")) {
                 if (members.get("id").asInt() == memberId) {
-                    saveOnDatabaseUsersRole(members.get("role").asInt(), members.get("role_name").asText(), projectEntity);
+                    saveOnDatabaseRole(members.get("role").asInt(), members.get("role_name").asText(), projectEntity);
                     roleCode = members.get("role").asInt();
                 } else {
                     continue;
                 }
             }
         return roleCode;
+
         } catch (Exception e) {
             throw new NullPointerException("Resposta não obtida ou resposta inválida.");
         }
     }
 
-    public ProjectEntity saveOnDatabaseProject(Integer projectCode, String projectName) {
-        try {
+    @Transactional
+    public void saveOnDatabaseProject(Integer projectCode, String projectName) {
+        if (!projectRepository.existsByProjectCodeAndProjectName(projectCode, projectName)) {
             ProjectEntity projectEntity = new ProjectEntity(projectCode, projectName);
-            return projectRepository.save(projectEntity);
-        } catch (DataIntegrityViolationException e) {
-            return projectRepository.findByProjectCodeAndProjectName(projectCode, projectName)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao recuperar projeto após falha de integridade", e));
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível salvar os dados", e);
+            projectRepository.save(projectEntity);
         }
     }
 
-    public RoleEntity saveOnDatabaseUsersRole(Integer roleCode, String roleName, ProjectEntity projectCode) {
-        try {
+    @Transactional
+    public void saveOnDatabaseRole(Integer roleCode, String roleName, ProjectEntity projectCode) {
+        if (!roleRepository.existsByRoleCodeAndRoleName(roleCode, roleName)) {
             RoleEntity roleEntity = new RoleEntity(roleCode, roleName, projectCode);
-            return roleRepository.save(roleEntity);
-        } catch (DataIntegrityViolationException e) {
-            return roleRepository.findByRoleCodeAndRoleName(roleCode, roleName)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao recuperar projeto após falha de integridade", e));
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível salvar os dados", e);
+            roleRepository.save(roleEntity);
         }
     }
 }

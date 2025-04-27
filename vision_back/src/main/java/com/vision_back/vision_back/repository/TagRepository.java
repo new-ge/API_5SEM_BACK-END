@@ -18,4 +18,9 @@ public interface TagRepository extends JpaRepository<TagEntity,Integer>{
 
     @Query(value = "SELECT tag_name, SUM(quant) from usr_tag group by tag_name", nativeQuery = true)
     List<TagDto> countTasksByTag();
+
+    boolean existsByUserTagIdIsNotNull();
+
+    boolean existsByTaskCodeAndProjectCodeAndTagNameAndQuant(TaskEntity taskCode, ProjectEntity projectCode,
+            String tagName, Integer quant);
 }

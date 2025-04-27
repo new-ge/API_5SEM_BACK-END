@@ -12,4 +12,8 @@ public interface ProjectRepository extends JpaRepository<ProjectEntity,Integer>{
     Optional<ProjectEntity> findByProjectCode(Integer projectCode);
 
     Optional<ProjectEntity> findByProjectCodeAndProjectName(Integer projectCode, String projectName);
+
+    boolean existsByProjectIdIsNotNull();
+
+    boolean existsByProjectCodeAndProjectName(Integer projectCode, String projectName);
 }
