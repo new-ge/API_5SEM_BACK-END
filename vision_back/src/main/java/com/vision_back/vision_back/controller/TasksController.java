@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.vision_back.vision_back.configuration.TokenConfiguration;
 import com.vision_back.vision_back.entity.dto.MilestoneDto;
 import com.vision_back.vision_back.entity.dto.StatsDto;
 import com.vision_back.vision_back.entity.dto.TagDto;
@@ -25,7 +24,7 @@ import com.vision_back.vision_back.repository.StatusRepository;
 import com.vision_back.vision_back.repository.TagRepository;
 import com.vision_back.vision_back.repository.TaskRepository;
 import com.vision_back.vision_back.repository.TaskStatusHistoryRepository;
-import com.vision_back.vision_back.service.ProjectServiceImpl;
+import com.vision_back.vision_back.repository.UserRepository;
 import com.vision_back.vision_back.service.TaskService;
 import com.vision_back.vision_back.service.TaskServiceImpl;
 
@@ -41,6 +40,9 @@ public class TasksController {
     private StatusRepository sRepo;
 
     @Autowired
+    private UserRepository uRepo;
+
+    @Autowired
     private TagRepository tagRepo;
 
     @Autowired
@@ -53,8 +55,15 @@ public class TasksController {
     private MilestoneRepository mRepo;
     
     @GetMapping("/count-tasks-by-status")
-    public ResponseEntity<Map<String, Long>> countUserStoriesByStatus()  {
-        List<StatsDto> statsList = sRepo.countTasksByStatus();
+    public ResponseEntity<Map<String, Long>> countUserStoriesByStatus() {
+        for (String access : uRepo.accessControl()) {
+            if (access.equals("STAKEHOLDER")) {
+                List<StatsDto> statsList = sRepo.countTasksByStatusManager();
+                Map<String, Long> tasksByStatus = statsList.stream().collect(Collectors.toMap(StatsDto::getStatusName, StatsDto::getQuant));
+                return ResponseEntity.ok(tasksByStatus);
+            }
+        }
+        List<StatsDto> statsList = sRepo.countTasksByStatusOperator();
         Map<String, Long> tasksByStatus = statsList.stream().collect(Collectors.toMap(StatsDto::getStatusName, StatsDto::getQuant));
         return ResponseEntity.ok(tasksByStatus);
     }
@@ -71,8 +80,26 @@ public class TasksController {
     }
 
     @GetMapping("/tasks-per-sprint")
-   public ResponseEntity<Map<String, Long>> getTasksPerSprint() {
-        List<MilestoneDto> tasksSprint = mRepo.countCardsPerSprint();
+    public ResponseEntity<Map<String, Long>> getTasksPerSprint() {
+        for (String access : uRepo.accessControl()) {
+            if (access.equals("STAKEHOLDER")) {
+                List<MilestoneDto> tasksSprint = mRepo.countCardsPerSprintManager();
+                Map<String, Long> tasksPerSprint = tasksSprint.stream()
+                .sorted(Comparator.comparing(m -> {
+                    String name = m.getMilestoneName();
+                    return Integer.parseInt(name.replaceAll("[^0-9]", ""));
+                }))
+                .collect(Collectors.toMap(
+                    MilestoneDto::getMilestoneName,
+                    MilestoneDto::getQuant,
+                    (e1, e2) -> e1,
+                    LinkedHashMap::new
+                ));
+
+                return ResponseEntity.ok(tasksPerSprint);   
+            }
+        }
+        List<MilestoneDto> tasksSprint = mRepo.countCardsPerSprintOperator();
         Map<String, Long> tasksPerSprint = tasksSprint.stream()
         .sorted(Comparator.comparing(m -> {
             String name = m.getMilestoneName();
@@ -85,15 +112,24 @@ public class TasksController {
             LinkedHashMap::new
         ));
 
-        return ResponseEntity.ok(tasksPerSprint);   
+        return ResponseEntity.ok(tasksPerSprint); 
     } 
 
     @GetMapping("/count-rework")
     public ResponseEntity<Map<String, Long>> countRework() {
         tServ.processRework();
-        List<TaskStatusHistoryDto> rework = tshRepo.findTaskStatusHistoryWithReworkFlag();
+        for (String access : uRepo.accessControl()) {
+            if (access.equals("STAKEHOLDER")) {
+                List<TaskStatusHistoryDto> rework = tshRepo.findTaskStatusHistoryWithReworkFlagManager();
+                long totalRework = rework.stream().mapToLong(TaskStatusHistoryDto::getRework).sum();
+                List<TaskDto> tasksDone = taskRepo.countTasksDoneManager();
+                long totalDone = tasksDone.stream().mapToLong(TaskDto::getQuant).sum();
+                return ResponseEntity.ok(Map.of("Concluidas", totalDone, "Retrabalho", totalRework));
+            } 
+        }
+        List<TaskStatusHistoryDto> rework = tshRepo.findTaskStatusHistoryWithReworkFlagOperator();
         long totalRework = rework.stream().mapToLong(TaskStatusHistoryDto::getRework).sum();
-        List<TaskDto> tasksDone = taskRepo.countTasksDone();
+        List<TaskDto> tasksDone = taskRepo.countTasksDoneOperator();
         long totalDone = tasksDone.stream().mapToLong(TaskDto::getQuant).sum();
         return ResponseEntity.ok(Map.of("Concluidas", totalDone, "Retrabalho", totalRework));
     }
@@ -102,14 +138,39 @@ public class TasksController {
     @GetMapping("/count-tasks-by-tag")
     public ResponseEntity<Map<String, Long>> countTasksByTag() {
         tServ.countTasksByTag();
-        List<TagDto> statsList = tagRepo.countTasksByTag();
+        for (String access : uRepo.accessControl()) {
+            if (access.equals("STAKEHOLDER")) {
+                List<TagDto> statsList = tagRepo.countTasksByTagManager();
+                Map<String, Long> tasksByTag = statsList.stream().collect(Collectors.toMap(TagDto::getTagName, TagDto::getQuant));
+                return ResponseEntity.ok(tasksByTag);
+            }
+        }
+        List<TagDto> statsList = tagRepo.countTasksByTagOperator();
         Map<String, Long> tasksByTag = statsList.stream().collect(Collectors.toMap(TagDto::getTagName, TagDto::getQuant));
         return ResponseEntity.ok(tasksByTag);
     }
 
     @GetMapping("/count-cards-by-status-closed")
     public ResponseEntity<Map<String, Long>> countTasksByStatusClosed() {
-        List<MilestoneDto> tasksSprint = mRepo.countCardsClosedPerSprint();
+        for (String access : uRepo.accessControl()) {
+            if (access.equals("STAKEHOLDER")) {
+                List<MilestoneDto> tasksSprint = mRepo.countCardsClosedPerSprintManager();
+                Map<String, Long> tasksPerSprint = tasksSprint.stream()
+                .sorted(Comparator.comparing(m -> {
+                    String name = m.getMilestoneName();
+                    return Integer.parseInt(name.replaceAll("[^0-9]", ""));
+                }))
+                .collect(Collectors.toMap(
+                    MilestoneDto::getMilestoneName,
+                    MilestoneDto::getQuant,
+                    (e1, e2) -> e1,
+                    LinkedHashMap::new
+                ));
+
+                return ResponseEntity.ok(tasksPerSprint);
+            }
+        }
+        List<MilestoneDto> tasksSprint = mRepo.countCardsClosedPerSprintOperator();
         Map<String, Long> tasksPerSprint = tasksSprint.stream()
         .sorted(Comparator.comparing(m -> {
             String name = m.getMilestoneName();
@@ -122,6 +183,6 @@ public class TasksController {
             LinkedHashMap::new
         ));
 
-        return ResponseEntity.ok(tasksPerSprint);   
+        return ResponseEntity.ok(tasksPerSprint);
     }
 }

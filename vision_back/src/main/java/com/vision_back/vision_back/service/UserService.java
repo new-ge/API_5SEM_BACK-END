@@ -3,13 +3,11 @@ package com.vision_back.vision_back.service;
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Service;
 
-import com.vision_back.vision_back.entity.UserEntity;
-
 @Service
 public interface UserService {
     public HttpEntity<Void> setHeadersProject();
 
     public Integer getUserId();
 
-    public void saveOnDatabaseUser(Integer userCode, String userDescription, String[] userRole, String userEmail);
+    public void saveOnDatabaseUser(Integer userCode, String userDescription, String[] userRole, String userEmail, Integer isLogged);
 }

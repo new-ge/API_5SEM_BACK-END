@@ -29,15 +29,21 @@ public class TagEntity {
     private ProjectEntity projectCode;
 
     @NotNull
+    @ManyToOne
+    @JoinColumn(name = "usr_code", referencedColumnName = "usr_code")
+    private UserEntity userCode;
+
+    @NotNull
     @Column(name = "tag_name")
     private String tagName;
 
     @Column(name = "quant")
     private Integer quant;
 
-    public TagEntity(TaskEntity taskCode, ProjectEntity projectCode, String tagName, Integer quant) {
+    public TagEntity(TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, String tagName, Integer quant) {
         this.taskCode = taskCode;
         this.projectCode = projectCode;
+        this.userCode = userCode;
         this.tagName = tagName;
         this.quant = quant;
     }

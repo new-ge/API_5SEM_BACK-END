@@ -22,6 +22,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Autowired
     private TokenConfiguration tokenDto;
+
+    @Autowired
+    private TaskService processTaskStatsAndMilestone;
     
     @Override
     public void getTokenAuthentication(String password, String username) {
@@ -38,6 +41,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         try {
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
             tokenDto.setAuthToken(jsonNode.get("auth_token").asText());
+            processTaskStatsAndMilestone.processTasksAndStatsAndMilestone();
         } catch (Exception e) {
             throw new NullPointerException("A resposta não existe ou não é possivel obter nenhum dado!");
         }

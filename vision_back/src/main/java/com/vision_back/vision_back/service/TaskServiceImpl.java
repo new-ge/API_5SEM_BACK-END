@@ -4,22 +4,18 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -132,6 +128,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public void processTaskHistory(Integer taskCode) {
         HttpEntity<Void> headersEntity = setHeadersTasks();
+        Integer userCode = userServiceImpl.getUserId();
 
         ResponseEntity<String> responseTaskHistory = restTemplate.exchange(
                 "https://api.taiga.io/api/v1/history/task/" + taskCode, HttpMethod.GET, headersEntity, String.class);
@@ -148,9 +145,11 @@ public class TaskServiceImpl implements TaskService {
 
                     TaskEntity taskEntity = taskRepository.findByTaskCode(taskCode)
                             .orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
+                    UserEntity userEntity = userRepository.findByUserCode(userCode)
+                            .orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
 
-                    saveOnDatabaseTaskStatusHistory(taskEntity, ultimoStatus, statusAtual,
-                            Timestamp.from(Instant.parse(current.get("created_at").asText())));
+                    saveOnDatabaseTaskStatusHistory(taskEntity, userEntity, ultimoStatus, statusAtual, Timestamp.from(Instant.parse(current.get("created_at").asText())));
+
                 }
             }
         } catch (Exception e) {
@@ -168,7 +167,6 @@ public class TaskServiceImpl implements TaskService {
         ResponseEntity<String> response = restTemplate.exchange(
                 "https://api.taiga.io/api/v1/tasks?project=" + projectCode + "&assigned_to=" + userCode, HttpMethod.GET,
                 headersEntity, String.class);
-        Map<String, Integer> statusCount = new HashMap<>();
 
         try {
             JsonNode rootNode = objectMapper.readTree(response.getBody());
@@ -299,7 +297,6 @@ public class TaskServiceImpl implements TaskService {
 
         ResponseEntity<String> sprintResponse = restTemplate.exchange(sprintUrl, HttpMethod.GET, headersEntity,
                 String.class);
-        String userNameString = "";
         try {
             JsonNode sprints = objectMapper.readTree(sprintResponse.getBody());
 
@@ -402,7 +399,9 @@ public class TaskServiceImpl implements TaskService {
                                     .orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
                             ProjectEntity projectEntity = projectRepository.findByProjectCode(projectCode)
                                     .orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado"));
-                            saveOnDatabaseTags(taskEntity, projectEntity, tag.asText(), 1);
+                            UserEntity userEntity = userRepository.findByUserCode(userCode)
+                                    .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+                            saveOnDatabaseTags(taskEntity, projectEntity, userEntity, tag.asText(), 1);
                         }
                     }
                 }
@@ -433,9 +432,9 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Transactional
-    public void saveOnDatabaseTags(TaskEntity taskCode, ProjectEntity projectCode, String tagName, Integer quant) {
-        if (!tagRepository.existsByTaskCodeAndProjectCodeAndTagNameAndQuant(taskCode, projectCode, tagName, quant)) {
-            TagEntity tagEntity = new TagEntity(taskCode, projectCode, tagName, quant);
+    public void saveOnDatabaseTags(TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, String tagName, Integer quant) {
+        if (!tagRepository.existsByTaskCodeAndProjectCodeAndUserCodeAndTagNameAndQuant(taskCode, projectCode, userCode, tagName, quant)) {
+            TagEntity tagEntity = new TagEntity(taskCode, projectCode, userCode, tagName, quant);
             tagRepository.save(tagEntity);
         }
     }
@@ -449,11 +448,11 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Transactional
-    public void saveOnDatabaseTaskStatusHistory(TaskEntity taskCode, String lastStatus, String actualStatus,
+    public void saveOnDatabaseTaskStatusHistory(TaskEntity taskCode, UserEntity userCode, String lastStatus, String actualStatus,
             Timestamp changeDate) {
-        if (!taskStatusHistoryRepository.existsByTaskCodeAndLastStatusAndActualStatusAndChangeDate(taskCode, lastStatus,
+        if (!taskStatusHistoryRepository.existsByTaskCodeAndUserCodeAndLastStatusAndActualStatusAndChangeDate(taskCode, userCode, lastStatus,
                 actualStatus, changeDate)) {
-            TaskStatusHistoryEntity entity = new TaskStatusHistoryEntity(taskCode, lastStatus, actualStatus,
+            TaskStatusHistoryEntity entity = new TaskStatusHistoryEntity(taskCode, userCode, lastStatus, actualStatus,
                     changeDate);
             taskStatusHistoryRepository.save(entity);
         }
@@ -471,14 +470,4 @@ public class TaskServiceImpl implements TaskService {
             userTaskRepository.save(userTaskEntity);
         }
     }
-
-    @Transactional
-    public void saveOnDatabaseUser(Integer userCode, String userDescription, String[] userRole, String userEmail) {
-        if (!userRepository.existsByUserCodeAndUserNameAndUserRoleAndUserEmail(userCode, userDescription, userRole,
-                userEmail)) {
-            UserEntity userEntity = new UserEntity(userCode, userDescription, userRole, userEmail);
-            userRepository.save(userEntity);
-        }
-    }
-
 }

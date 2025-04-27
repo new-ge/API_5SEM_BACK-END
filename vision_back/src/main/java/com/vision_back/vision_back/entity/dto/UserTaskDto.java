@@ -43,4 +43,19 @@ public class UserTaskDto {
         this.endDate = endDate;
         this.quant = quant;
     }
+
+    @Override
+    public String toString() {
+        return "UserTaskDto{" +
+                "projectCode=" + projectCode +
+                ", userCode='" + userCode + '\'' +
+                ", taskCode='" + taskCode + '\'' +
+                ", milestoneCode='" + milestoneCode + '\'' +
+                ", statsCode='" + statsCode + '\'' +
+                ", roleCode=" + roleCode +
+                ", startDate=" + startDate +
+                ", endDate=" + endDate +
+                ", quant=" + quant +
+                '}';
+    }
 }

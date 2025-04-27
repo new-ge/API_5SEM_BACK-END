@@ -1,6 +1,6 @@
 services:
   postgresql:
-    image: postgres:17.4
+    image: postgres:17.4-alpine3.21
     container_name: vision-back-postgres
     environment:
       POSTGRES_USER: ${DB_USER}
