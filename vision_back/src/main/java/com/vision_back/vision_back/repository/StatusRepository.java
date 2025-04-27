@@ -18,18 +18,24 @@ public interface StatusRepository extends JpaRepository<StatusEntity,Integer>{
     
     Optional<StatusEntity> findByStatusCode(Integer statusCode);
 
-    @Query(value = "SELECT s.stats_name, SUM(ut.quant) FROM usr_task ut join stats s on s.stats_code = ut.stats_code JOIN usr u ON u.usr_code = ut.usr_code where u.is_logged_in = 1 group by s.stats_name", nativeQuery = true)
+    @Query(value = "SELECT u.usr_name, m.milestone_name, p.project_name, s.stats_name, SUM(ut.quant) \r\n" + 
+                "FROM usr_task ut \r\n" + 
+                "join milestone m on m.milestone_code = ut.milestone_code \r\n" + 
+                "JOIN usr u ON u.usr_code = ut.usr_code \r\n" + 
+                "join project p on p.project_code = ut.project_code \r\n" + 
+                "join stats s on s.stats_code = ut.stats_code \r\n" + 
+                "where u.is_logged_in = 1 \r\n" + 
+                "group by s.stats_name, u.usr_name, m.milestone_name, p.project_name", nativeQuery = true)
     List<StatsDto> countTasksByStatusOperator();
 
-    @Query(value = "SELECT s.stats_name, SUM(ut.quant) FROM usr_task ut join stats s on s.stats_code = ut.stats_code JOIN usr u ON u.usr_code = ut.usr_code where s.stats_name = 'Closed' and u.is_logged_in = 1 group by s.stats_name", nativeQuery = true)
-    List<StatsDto> countTasksByStatusClosedOperator();
-
-    @Query(value = "SELECT s.stats_name, SUM(ut.quant) FROM usr_task ut join stats s on s.stats_code = ut.stats_code JOIN usr u ON u.usr_code = ut.usr_code group by s.stats_name", nativeQuery = true)
+    @Query(value = "SELECT u.usr_name, m.milestone_name, s.stats_name, p.project_name, SUM(ut.quant) \r\n" + 
+                "FROM usr_task ut \r\n" + 
+                "join milestone m on m.milestone_code = ut.milestone_code \r\n" + 
+                "JOIN usr u ON u.usr_code = ut.usr_code \r\n" + 
+                "join project p on p.project_code = ut.project_code \r\n" + 
+                "join stats s on s.stats_code = ut.stats_code \r\n" + 
+                "group by s.stats_name, u.usr_name, m.milestone_name, p.project_name", nativeQuery = true)
     List<StatsDto> countTasksByStatusManager();
-
-    @Query(value = "SELECT s.stats_name, SUM(ut.quant) FROM usr_task ut join stats s on s.stats_code = ut.stats_code JOIN usr u ON u.usr_code = ut.usr_code where s.stats_name = 'Closed' group by s.stats_name", nativeQuery = true)
-    List<StatsDto> countTasksByStatusClosedManager();
-
 
     boolean existsByStatusIdIsNotNull();
     

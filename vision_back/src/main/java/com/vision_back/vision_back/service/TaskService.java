@@ -5,6 +5,8 @@ import java.util.Map;
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Service;
 
+import com.vision_back.vision_back.entity.MilestoneEntity;
+
 @Service
 public interface TaskService {
     public HttpEntity<Void> setHeadersTasks();
@@ -23,9 +25,9 @@ public interface TaskService {
 
     public Map<String, Integer> countTasksByStatusClosedBySprint(Integer userId, Integer projectId);
 
-    public Map<String, Integer> countTasksByTag();
+    public void countTasksByTag();
 
-    public void processTaskHistory(Integer taskCode);
+    public void processTaskHistory(Integer taskCode, Integer projectCode, Integer milestoneCode);
 
     public void processTaskUser(Integer projectCode, Integer taskCode, Integer userCode, Integer milestoneCode, Integer statsCode, Integer roleCode);
 

@@ -6,9 +6,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.vision_back.vision_back.service.AuthenticationServiceImpl;
 
-import io.github.cdimascio.dotenv.Dotenv;
-import jakarta.annotation.PostConstruct;
-
 @SpringBootApplication
 public class VisionBackApplication {
 	
@@ -18,5 +15,5 @@ public class VisionBackApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(VisionBackApplication.class, args);
 	}
-
 }
+

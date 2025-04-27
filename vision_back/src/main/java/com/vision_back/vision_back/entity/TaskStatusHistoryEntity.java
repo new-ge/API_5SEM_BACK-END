@@ -38,6 +38,16 @@ public class TaskStatusHistoryEntity {
     @JoinColumn(name = "usr_code", referencedColumnName = "usr_code")
     private UserEntity userCode;
 
+    @ManyToOne
+    @NotNull
+    @JoinColumn(name = "project_code", referencedColumnName = "project_code")
+    private ProjectEntity projectCode;
+
+    @ManyToOne
+    @NotNull
+    @JoinColumn(name = "milestone_code", referencedColumnName = "milestone_code")
+    private MilestoneEntity milestoneCode;
+
     @NotNull
     @Column(name = "last_status")
     private String lastStatus;
@@ -50,9 +60,11 @@ public class TaskStatusHistoryEntity {
     @Column(name = "change_date")
     private Timestamp changeDate;
 
-    public TaskStatusHistoryEntity(TaskEntity taskCode, UserEntity userCode, String lastStatus, String actualStatus, Timestamp changeDate) {
+    public TaskStatusHistoryEntity(TaskEntity taskCode, UserEntity userCode, ProjectEntity projectCode, MilestoneEntity milestoneCode, String lastStatus, String actualStatus, Timestamp changeDate) {
         this.taskCode = taskCode;
         this.userCode = userCode;
+        this.projectCode = projectCode;
+        this.milestoneCode = milestoneCode;
         this.lastStatus = lastStatus;
         this.actualStatus = actualStatus;
         this.changeDate = changeDate;

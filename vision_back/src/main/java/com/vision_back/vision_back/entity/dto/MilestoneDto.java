@@ -12,19 +12,15 @@ import lombok.Setter;
 
 public class MilestoneDto {
     private Integer milestoneId;
+    private String userName;  
     private String milestoneName;  
+    private String projectName;  
     private Long quant;
 
-    public MilestoneDto(String milestoneName, Long quant) {
+    public MilestoneDto(String projectName, String userName, String milestoneName, Long quant) {
+        this.projectName = projectName;
+        this.userName = userName;
         this.milestoneName = milestoneName;
         this.quant = quant;
-    }
-
-    @Override
-    public String toString() {
-        return "MilestoneDto{" +
-            "statusName='" + milestoneName + '\'' +
-            ", count=" + quant +
-            '}';
     }
 }
