@@ -59,7 +59,7 @@ public class TasksController {
 
     @Autowired
     private MilestoneRepository mRepo;
-    
+
     @Operation(summary = "Conta as tarefas por status do usuário", description = "Conta o número de tarefas por status, baseado no ID do projeto e do usuário.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Número de tarefas por status retornado com sucesso"),
@@ -70,12 +70,14 @@ public class TasksController {
         for (String access : uRepo.accessControl()) {
             if (access.equals("STAKEHOLDER")) {
                 List<StatsDto> statsList = sRepo.countTasksByStatusManager();
-                Map<String, Long> tasksByStatus = statsList.stream().collect(Collectors.toMap(StatsDto::getStatusName, StatsDto::getQuant));
+                Map<String, Long> tasksByStatus = statsList.stream()
+                        .collect(Collectors.toMap(StatsDto::getStatusName, StatsDto::getQuant));
                 return ResponseEntity.ok(tasksByStatus);
             }
         }
         List<StatsDto> statsList = sRepo.countTasksByStatusOperator();
-        Map<String, Long> tasksByStatus = statsList.stream().collect(Collectors.toMap(StatsDto::getStatusName, StatsDto::getQuant));
+        Map<String, Long> tasksByStatus = statsList.stream()
+                .collect(Collectors.toMap(StatsDto::getStatusName, StatsDto::getQuant));
         return ResponseEntity.ok(tasksByStatus);
     }
 
@@ -95,7 +97,6 @@ public class TasksController {
         return taskService.countCardsCreatedByDateRange(userId, projectId, startDate, endDate);
     }
 
-    
     @Operation(summary = "Obtém as tarefas por sprint do usuário", description = "Retorna o número de tarefas de um usuário por sprint no projeto especificado.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Número de tarefas por sprint retornado com sucesso"),
@@ -107,36 +108,39 @@ public class TasksController {
             if (access.equals("STAKEHOLDER")) {
                 List<MilestoneDto> tasksSprint = mRepo.countCardsPerSprintManager();
                 Map<String, Long> tasksPerSprint = tasksSprint.stream()
+                        .sorted(Comparator.comparing(m -> {
+                            String name = m.getMilestoneName();
+                            return Integer.parseInt(name.replaceAll("[^0-9]", ""));
+                        }))
+                        .collect(Collectors.toMap(
+                                MilestoneDto::getMilestoneName,
+                                MilestoneDto::getQuant,
+                                (e1, e2) -> e1,
+                                LinkedHashMap::new));
+
+                return ResponseEntity.ok(tasksPerSprint);
+            }
+        }
+        List<MilestoneDto> tasksSprint = mRepo.countCardsPerSprintOperator();
+        Map<String, Long> tasksPerSprint = tasksSprint.stream()
                 .sorted(Comparator.comparing(m -> {
                     String name = m.getMilestoneName();
                     return Integer.parseInt(name.replaceAll("[^0-9]", ""));
                 }))
                 .collect(Collectors.toMap(
-                    MilestoneDto::getMilestoneName,
-                    MilestoneDto::getQuant,
-                    (e1, e2) -> e1,
-                    LinkedHashMap::new
-                ));
+                        MilestoneDto::getMilestoneName,
+                        MilestoneDto::getQuant,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new));
 
-                return ResponseEntity.ok(tasksPerSprint);   
-            }
-        }
-        List<MilestoneDto> tasksSprint = mRepo.countCardsPerSprintOperator();
-        Map<String, Long> tasksPerSprint = tasksSprint.stream()
-        .sorted(Comparator.comparing(m -> {
-            String name = m.getMilestoneName();
-            return Integer.parseInt(name.replaceAll("[^0-9]", ""));
-        }))
-        .collect(Collectors.toMap(
-            MilestoneDto::getMilestoneName,
-            MilestoneDto::getQuant,
-            (e1, e2) -> e1,
-            LinkedHashMap::new
-        ));
+        return ResponseEntity.ok(tasksPerSprint);
+    }
 
-        return ResponseEntity.ok(tasksPerSprint); 
-    } 
-
+    @Operation(summary = "Conta os retrabalhos", description = "Conta o número de retrabalhos, diferenciando entre gestores e operadores.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Contagem de tarefas retornada com sucesso"),
+            @ApiResponse(responseCode = "500", description = "Erro ao processar a contagem de tarefas")
+    })
     @GetMapping("/count-rework")
     public ResponseEntity<Map<String, Long>> countRework() {
         tServ.processRework();
@@ -147,7 +151,7 @@ public class TasksController {
                 List<TaskDto> tasksDone = taskRepo.countTasksDoneManager();
                 long totalDone = tasksDone.stream().mapToLong(TaskDto::getQuant).sum();
                 return ResponseEntity.ok(Map.of("Concluidas", totalDone, "Retrabalho", totalRework));
-            } 
+            }
         }
         List<TaskStatusHistoryDto> rework = tshRepo.findTaskStatusHistoryWithReworkFlagOperator();
         long totalRework = rework.stream().mapToLong(TaskStatusHistoryDto::getRework).sum();
@@ -167,12 +171,14 @@ public class TasksController {
         for (String access : uRepo.accessControl()) {
             if (access.equals("STAKEHOLDER")) {
                 List<TagDto> statsList = tagRepo.countTasksByTagManager();
-                Map<String, Long> tasksByTag = statsList.stream().collect(Collectors.toMap(TagDto::getTagName, TagDto::getQuant));
+                Map<String, Long> tasksByTag = statsList.stream()
+                        .collect(Collectors.toMap(TagDto::getTagName, TagDto::getQuant));
                 return ResponseEntity.ok(tasksByTag);
             }
         }
         List<TagDto> statsList = tagRepo.countTasksByTagOperator();
-        Map<String, Long> tasksByTag = statsList.stream().collect(Collectors.toMap(TagDto::getTagName, TagDto::getQuant));
+        Map<String, Long> tasksByTag = statsList.stream()
+                .collect(Collectors.toMap(TagDto::getTagName, TagDto::getQuant));
         return ResponseEntity.ok(tasksByTag);
     }
 
@@ -187,32 +193,30 @@ public class TasksController {
             if (access.equals("STAKEHOLDER")) {
                 List<MilestoneDto> tasksSprint = mRepo.countCardsClosedPerSprintManager();
                 Map<String, Long> tasksPerSprint = tasksSprint.stream()
-                .sorted(Comparator.comparing(m -> {
-                    String name = m.getMilestoneName();
-                    return Integer.parseInt(name.replaceAll("[^0-9]", ""));
-                }))
-                .collect(Collectors.toMap(
-                    MilestoneDto::getMilestoneName,
-                    MilestoneDto::getQuant,
-                    (e1, e2) -> e1,
-                    LinkedHashMap::new
-                ));
+                        .sorted(Comparator.comparing(m -> {
+                            String name = m.getMilestoneName();
+                            return Integer.parseInt(name.replaceAll("[^0-9]", ""));
+                        }))
+                        .collect(Collectors.toMap(
+                                MilestoneDto::getMilestoneName,
+                                MilestoneDto::getQuant,
+                                (e1, e2) -> e1,
+                                LinkedHashMap::new));
 
                 return ResponseEntity.ok(tasksPerSprint);
             }
         }
         List<MilestoneDto> tasksSprint = mRepo.countCardsClosedPerSprintOperator();
         Map<String, Long> tasksPerSprint = tasksSprint.stream()
-        .sorted(Comparator.comparing(m -> {
-            String name = m.getMilestoneName();
-            return Integer.parseInt(name.replaceAll("[^0-9]", ""));
-        }))
-        .collect(Collectors.toMap(
-            MilestoneDto::getMilestoneName,
-            MilestoneDto::getQuant,
-            (e1, e2) -> e1,
-            LinkedHashMap::new
-        ));
+                .sorted(Comparator.comparing(m -> {
+                    String name = m.getMilestoneName();
+                    return Integer.parseInt(name.replaceAll("[^0-9]", ""));
+                }))
+                .collect(Collectors.toMap(
+                        MilestoneDto::getMilestoneName,
+                        MilestoneDto::getQuant,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new));
 
         return ResponseEntity.ok(tasksPerSprint);
     }
