@@ -40,3 +40,7 @@ sonar-project.properties
 .mysql_data/
 .mysql/
 .scannerwork/
+
+compose.yaml
+./vision_back/src/main/resources/application.yml
+
