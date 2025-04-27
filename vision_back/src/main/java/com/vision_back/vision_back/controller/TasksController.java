@@ -28,6 +28,12 @@ import com.vision_back.vision_back.repository.UserRepository;
 import com.vision_back.vision_back.service.TaskService;
 import com.vision_back.vision_back.service.TaskServiceImpl;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "tasks", description = "Endpoints relacionados às tarefas")
 @RestController
 @CrossOrigin
 @RequestMapping("/tasks")
@@ -54,6 +60,11 @@ public class TasksController {
     @Autowired
     private MilestoneRepository mRepo;
     
+    @Operation(summary = "Conta as tarefas por status do usuário", description = "Conta o número de tarefas por status, baseado no ID do projeto e do usuário.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Número de tarefas por status retornado com sucesso"),
+            @ApiResponse(responseCode = "500", description = "Erro ao processar a requisição")
+    })
     @GetMapping("/count-tasks-by-status")
     public ResponseEntity<Map<String, Long>> countUserStoriesByStatus() {
         for (String access : uRepo.accessControl()) {
@@ -68,17 +79,28 @@ public class TasksController {
         return ResponseEntity.ok(tasksByStatus);
     }
 
+    @Operation(summary = "Conta os tarefas criados por período", description = "Conta o número de tarefas criados dentro de um período especificado.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Número de tarefas retornado com sucesso"),
+            @ApiResponse(responseCode = "500", description = "Erro ao processar a requisição")
+    })
     @GetMapping("/count-cards-by-period/{userId}/{projectId}/{startDate}/{endDate}")
     public int countCardsByPeriod(
-        @PathVariable Integer projectId, 
-        @PathVariable Integer userId, 
-        @PathVariable String startDate, 
-        @PathVariable String endDate) {
-            
+            @PathVariable Integer projectId,
+            @PathVariable Integer userId,
+            @PathVariable String startDate,
+            @PathVariable String endDate) {
+
         TaskServiceImpl taskService = new TaskServiceImpl();
         return taskService.countCardsCreatedByDateRange(userId, projectId, startDate, endDate);
     }
 
+    
+    @Operation(summary = "Obtém as tarefas por sprint do usuário", description = "Retorna o número de tarefas de um usuário por sprint no projeto especificado.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Número de tarefas por sprint retornado com sucesso"),
+            @ApiResponse(responseCode = "500", description = "Erro ao processar a requisição")
+    })
     @GetMapping("/tasks-per-sprint")
     public ResponseEntity<Map<String, Long>> getTasksPerSprint() {
         for (String access : uRepo.accessControl()) {
@@ -134,7 +156,11 @@ public class TasksController {
         return ResponseEntity.ok(Map.of("Concluidas", totalDone, "Retrabalho", totalRework));
     }
 
-
+    @Operation(summary = "Conta as tarefas por tag do usuário", description = "Conta o número de tarefas de um usuário com base na tag associada, no projeto especificado.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Número de tarefas por tag retornado com sucesso"),
+            @ApiResponse(responseCode = "500", description = "Erro ao processar a requisição")
+    })
     @GetMapping("/count-tasks-by-tag")
     public ResponseEntity<Map<String, Long>> countTasksByTag() {
         tServ.countTasksByTag();
@@ -150,6 +176,11 @@ public class TasksController {
         return ResponseEntity.ok(tasksByTag);
     }
 
+    @Operation(summary = "Conta as tarefas fechadas do usuário por status", description = "Conta as tarefas fechadas de um usuário em um projeto, com base no status de cada sprint.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Número de tarefas fechadas retornado com sucesso"),
+            @ApiResponse(responseCode = "500", description = "Erro ao processar a requisição")
+    })
     @GetMapping("/count-cards-by-status-closed")
     public ResponseEntity<Map<String, Long>> countTasksByStatusClosed() {
         for (String access : uRepo.accessControl()) {
