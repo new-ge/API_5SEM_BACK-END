@@ -1,5 +1,6 @@
 package com.vision_back.vision_back;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -11,6 +12,7 @@ import jakarta.annotation.PostConstruct;
 
 @SpringBootApplication
 public class VisionBackApplication {
+<<<<<<< HEAD
 
     @Autowired
     private AuthenticationServiceImpl auth;
@@ -39,4 +41,14 @@ public class VisionBackApplication {
             System.err.println("Erro na inicialização: " + e.getMessage());
         }
     }
+=======
+	
+	@Autowired
+	private AuthenticationServiceImpl auth;
+	
+	public static void main(String[] args) {
+		SpringApplication.run(VisionBackApplication.class, args);
+	}
+
+>>>>>>> 71c7d93dd61ff73b11b8badc3d6f324d3a2423e3
 }

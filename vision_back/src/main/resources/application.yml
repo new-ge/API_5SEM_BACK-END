@@ -2,9 +2,15 @@ spring:
     application:
         name: vision
     datasource:
+<<<<<<< HEAD
         url: jdbc:postgresql://localhost:5432/datawarehouse
         username: vision
         password: vision
+=======
+        url: ${DB_URL}
+        username: ${DB_USERNAME}
+        password: ${DB_PASSWORD}
+>>>>>>> 71c7d93dd61ff73b11b8badc3d6f324d3a2423e3
         driver-class-name: org.postgresql.Driver
     jpa:
         hibernate:
@@ -14,6 +20,14 @@ spring:
         validate-on-migrate: true
         enabled: true
         baseline-on-migrate: true
+    springdoc:
+    api-docs:
+      enabled: true
+    swagger-ui:
+      enabled: true
+      url: /v3/api-docs
+      operationsSorter: alpha
+      tagsSorter: alpha
 
 server:
   error:

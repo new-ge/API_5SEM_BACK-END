@@ -2,8 +2,14 @@ package com.vision_back.vision_back.entity;
 
 import java.sql.Timestamp;
 
-import jakarta.persistence.*;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,15 +30,31 @@ public class TaskStatusHistoryEntity {
 
     @ManyToOne
     @NotNull
-    @JoinColumn(name = "task_id")
-    private TaskEntity taskId;
+    @JoinColumn(name = "task_code", referencedColumnName = "task_code")
+    private TaskEntity taskCode;
 
     @ManyToOne
     @NotNull
-    @JoinColumn(name = "stats_id")
-    private StatusEntity statsId;
+    @JoinColumn(name = "usr_code", referencedColumnName = "usr_code")
+    private UserEntity userCode;
+
+    @NotNull
+    @Column(name = "last_status")
+    private String lastStatus;
+
+    @NotNull
+    @Column(name = "actual_status")
+    private String actualStatus;
 
     @NotNull
     @Column(name = "change_date")
     private Timestamp changeDate;
+
+    public TaskStatusHistoryEntity(TaskEntity taskCode, UserEntity userCode, String lastStatus, String actualStatus, Timestamp changeDate) {
+        this.taskCode = taskCode;
+        this.userCode = userCode;
+        this.lastStatus = lastStatus;
+        this.actualStatus = actualStatus;
+        this.changeDate = changeDate;
+    }
 }

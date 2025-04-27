@@ -1,12 +1,23 @@
 package com.vision_back.vision_back.service;
 
-import org.springframework.http.HttpEntity;
+import java.util.List;
+import java.util.TreeMap;
 
+import org.springframework.http.HttpEntity;
+import org.springframework.stereotype.Service;
+
+@Service
 public interface ProjectService {
     
     public HttpEntity<Void> setHeadersProject();
     
     public String getProjectBySlug(String slugProject);
 
-    public String getProjectId(Integer memberId);
+    public Integer getProjectId();
+
+    public List<TreeMap<String, Object>> listAllProjectsByUser(Integer userCode);
+    
+    public void saveOnDatabaseProject(Integer projectCode, String projectName);
+
+    public Integer getSpecificProjectUserRoleId();
 }
