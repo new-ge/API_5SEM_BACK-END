@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -50,10 +51,10 @@ public class TaskServiceImpl implements TaskService {
     private ProjectRepository projectRepository;
 
     @Autowired
-    private UserRepository userRepository; 
+    private UserRepository userRepository;
 
     @Autowired
-    private TaskRepository taskRepository; 
+    private TaskRepository taskRepository;
 
     @Autowired
     private StatusRepository statsRepository;
@@ -62,10 +63,10 @@ public class TaskServiceImpl implements TaskService {
     private MilestoneRepository milestoneRepository;
 
     @Autowired
-    private RoleRepository roleRepository; 
-    
+    private RoleRepository roleRepository;
+
     @Autowired
-    private TagRepository tagRepository; 
+    private TagRepository tagRepository;
 
     @Autowired
     private UserTaskRepository userTaskRepository;
@@ -81,34 +82,45 @@ public class TaskServiceImpl implements TaskService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(tokenDto.getAuthToken());
-            
+
         return new HttpEntity<>(headers);
     }
 
     @Override
-    public void processTaskUser(Integer projectCode, Integer taskCode, Integer userCode, Integer milestoneCode, Integer statsCode, Integer roleCode) {
+    public void processTaskUser(Integer projectCode, Integer taskCode, Integer userCode, Integer milestoneCode,
+            Integer statsCode, Integer roleCode) {
         HttpEntity<Void> headersEntity = setHeadersTasks();
 
-        ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/tasks?project="+projectCode+"&assigned_to="+userCode, HttpMethod.GET, headersEntity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange(
+                "https://api.taiga.io/api/v1/tasks?project=" + projectCode + "&assigned_to=" + userCode, HttpMethod.GET,
+                headersEntity, String.class);
         try {
             JsonNode rootNode = objectMapper.readTree(response.getBody());
 
-            ProjectEntity projectEntity = projectRepository.findByProjectCode(projectCode).orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado"));
-            TaskEntity taskEntity = taskRepository.findByTaskCode(taskCode).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
-            UserEntity userEntity = userRepository.findByUserCode(userCode).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
-            StatusEntity statsEntity = statsRepository.findByStatusCode(statsCode).orElseThrow(() -> new IllegalArgumentException("Status não encontrado"));
-            MilestoneEntity milestoneEntity = milestoneRepository.findByMilestoneCode(milestoneCode).orElseThrow(() -> new IllegalArgumentException("Milestone não encontrado"));
-            RoleEntity roleEntity = roleRepository.findByRoleCode(roleCode).orElseThrow(() -> new IllegalArgumentException("Role não encontrada"));
+            ProjectEntity projectEntity = projectRepository.findByProjectCode(projectCode)
+                    .orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado"));
+            TaskEntity taskEntity = taskRepository.findByTaskCode(taskCode)
+                    .orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
+            UserEntity userEntity = userRepository.findByUserCode(userCode)
+                    .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+            StatusEntity statsEntity = statsRepository.findByStatusCode(statsCode)
+                    .orElseThrow(() -> new IllegalArgumentException("Status não encontrado"));
+            MilestoneEntity milestoneEntity = milestoneRepository.findByMilestoneCode(milestoneCode)
+                    .orElseThrow(() -> new IllegalArgumentException("Milestone não encontrado"));
+            RoleEntity roleEntity = roleRepository.findByRoleCode(roleCode)
+                    .orElseThrow(() -> new IllegalArgumentException("Role não encontrada"));
 
             for (JsonNode node : rootNode) {
                 if (node.get("id").asInt() == taskCode) {
                     JsonNode finishedDateNode = node.get("finished_date");
                     Timestamp finishedDate = null;
                     Timestamp createdDate = Timestamp.from(Instant.parse(node.get("created_date").asText()));
-                    if (finishedDateNode != null && !finishedDateNode.isNull() && !finishedDateNode.asText().isEmpty()) {
+                    if (finishedDateNode != null && !finishedDateNode.isNull()
+                            && !finishedDateNode.asText().isEmpty()) {
                         finishedDate = Timestamp.from(Instant.parse(finishedDateNode.asText()));
                     }
-                    saveOnDatabaseUserTask(taskEntity, projectEntity, userEntity, milestoneEntity, statsEntity, roleEntity, createdDate, finishedDate, 1);
+                    saveOnDatabaseUserTask(taskEntity, projectEntity, userEntity, milestoneEntity, statsEntity,
+                            roleEntity, createdDate, finishedDate, 1);
                 }
             }
 
@@ -121,20 +133,24 @@ public class TaskServiceImpl implements TaskService {
     public void processTaskHistory(Integer taskCode) {
         HttpEntity<Void> headersEntity = setHeadersTasks();
 
-        ResponseEntity<String> responseTaskHistory = restTemplate.exchange("https://api.taiga.io/api/v1/history/task/"+taskCode, HttpMethod.GET, headersEntity, String.class);
+        ResponseEntity<String> responseTaskHistory = restTemplate.exchange(
+                "https://api.taiga.io/api/v1/history/task/" + taskCode, HttpMethod.GET, headersEntity, String.class);
 
         try {
             JsonNode rootNodeTaskHistory = objectMapper.readTree(responseTaskHistory.getBody());
             for (int i = rootNodeTaskHistory.size() - 1; i >= 0; i--) {
                 JsonNode current = rootNodeTaskHistory.get(i);
 
-                if (current.has("values_diff") && current.get("values_diff").has("status") && !current.get("values_diff").get("status").isNull()) {
+                if (current.has("values_diff") && current.get("values_diff").has("status")
+                        && !current.get("values_diff").get("status").isNull()) {
                     String statusAtual = current.get("values_diff").get("status").get(1).asText();
                     String ultimoStatus = current.get("values_diff").get("status").get(0).asText();
 
-                    TaskEntity taskEntity = taskRepository.findByTaskCode(taskCode).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
-                    
-                    saveOnDatabaseTaskStatusHistory(taskEntity, ultimoStatus, statusAtual, Timestamp.from(Instant.parse(current.get("created_at").asText())));
+                    TaskEntity taskEntity = taskRepository.findByTaskCode(taskCode)
+                            .orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
+
+                    saveOnDatabaseTaskStatusHistory(taskEntity, ultimoStatus, statusAtual,
+                            Timestamp.from(Instant.parse(current.get("created_at").asText())));
                 }
             }
         } catch (Exception e) {
@@ -149,7 +165,9 @@ public class TaskServiceImpl implements TaskService {
         Integer userCode = userServiceImpl.getUserId();
         Integer projectCode = projectServiceImpl.getProjectId();
 
-        ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/tasks?project="+projectCode+"&assigned_to="+userCode, HttpMethod.GET, headersEntity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange(
+                "https://api.taiga.io/api/v1/tasks?project=" + projectCode + "&assigned_to=" + userCode, HttpMethod.GET,
+                headersEntity, String.class);
         Map<String, Integer> statusCount = new HashMap<>();
 
         try {
@@ -176,9 +194,10 @@ public class TaskServiceImpl implements TaskService {
             Integer projectCode = projectServiceImpl.getProjectId();
 
             String taskUrl = "https://api.taiga.io/api/v1/tasks?"
-                            + "assigned_to=" + userCode + "&"
-                            + "project=" + projectCode;
-            ResponseEntity<String> taskResponse = restTemplate.exchange(taskUrl, HttpMethod.GET, headersEntity, String.class);
+                    + "assigned_to=" + userCode + "&"
+                    + "project=" + projectCode;
+            ResponseEntity<String> taskResponse = restTemplate.exchange(taskUrl, HttpMethod.GET, headersEntity,
+                    String.class);
             JsonNode tasks = objectMapper.readTree(taskResponse.getBody());
 
             for (JsonNode task : tasks) {
@@ -190,18 +209,18 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
         }
     }
-  
+
     @Override
     public int countCardsCreatedByDateRange(Integer userId, Integer projectId, String startDate, String endDate) {
-        HttpEntity<Void> headersEntity = setHeadersTasks(); 
-        
+        HttpEntity<Void> headersEntity = setHeadersTasks();
+
         String url = "https://api.taiga.io/api/v1/tasks?"
-                   + "project=" + projectId + "&"
-                   + "created_date__gte=" + startDate + "&"
-                   + "created_date__lte=" + endDate;
-    
+                + "project=" + projectId + "&"
+                + "created_date__gte=" + startDate + "&"
+                + "created_date__lte=" + endDate;
+
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, headersEntity, String.class);
-    
+
         try {
             JsonNode rootNode = objectMapper.readTree(response.getBody());
 
@@ -210,14 +229,14 @@ public class TaskServiceImpl implements TaskService {
                 saveOnDatabaseStats(task.get("status").asInt(), task.get("status_extra_info").get("name").asText());
                 processTaskHistory(task.get("id").asInt());
             }
-    
-            return rootNode.size(); 
-    
+
+            return rootNode.size();
+
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar cards criados no período", e);
         }
     }
-  
+
     @Override
     public void processTasksAndStatsAndMilestone() {
         HttpEntity<Void> headersEntity = setHeadersTasks();
@@ -227,7 +246,8 @@ public class TaskServiceImpl implements TaskService {
         Integer roleCode = projectServiceImpl.getSpecificProjectUserRoleId();
 
         String sprintUrl = "https://api.taiga.io/api/v1/milestones?project=" + projectCode;
-        ResponseEntity<String> sprintResponse = restTemplate.exchange(sprintUrl, HttpMethod.GET, headersEntity, String.class);
+        ResponseEntity<String> sprintResponse = restTemplate.exchange(sprintUrl, HttpMethod.GET, headersEntity,
+                String.class);
 
         try {
             JsonNode sprints = objectMapper.readTree(sprintResponse.getBody());
@@ -240,12 +260,12 @@ public class TaskServiceImpl implements TaskService {
                 String endDate = sprint.get("estimated_finish").asText();
 
                 saveOnDatabaseMilestone(
-                    sprint.get("id").asInt(), 
-                    sprintName, 
-                    LocalDate.parse(startDate), 
-                    LocalDate.parse(endDate), 
-                    projectRepository.findByProjectCode(projectCode).orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado"))
-                );
+                        sprint.get("id").asInt(),
+                        sprintName,
+                        LocalDate.parse(startDate),
+                        LocalDate.parse(endDate),
+                        projectRepository.findByProjectCode(projectCode)
+                                .orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado")));
 
                 String taskUrl = "https://api.taiga.io/api/v1/tasks?"
                         + "assigned_to=" + userCode + "&"
@@ -253,7 +273,8 @@ public class TaskServiceImpl implements TaskService {
                         + "created_date__gte=" + startDate + "&"
                         + "created_date__lte=" + endDate;
 
-                ResponseEntity<String> taskResponse = restTemplate.exchange(taskUrl, HttpMethod.GET, headersEntity, String.class);
+                ResponseEntity<String> taskResponse = restTemplate.exchange(taskUrl, HttpMethod.GET, headersEntity,
+                        String.class);
                 JsonNode tasks = objectMapper.readTree(taskResponse.getBody());
 
                 for (JsonNode task : tasks) {
@@ -271,59 +292,65 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public Map<String, Integer> countTasksByStatusClosedBySprint(Integer userId, Integer projectId) {
-        HttpEntity<Void> headersEntity = setHeadersTasks(); 
+        HttpEntity<Void> headersEntity = setHeadersTasks();
         Map<String, Integer> tasksPerSprint = new TreeMap<>();
-    
+
         String sprintUrl = "https://api.taiga.io/api/v1/milestones?project=" + projectId;
-        ResponseEntity<String> sprintResponse = restTemplate.exchange(sprintUrl, HttpMethod.GET, headersEntity, String.class);
-        String userNameString ="";
+
+        ResponseEntity<String> sprintResponse = restTemplate.exchange(sprintUrl, HttpMethod.GET, headersEntity,
+                String.class);
+        String userNameString = "";
         try {
             JsonNode sprints = objectMapper.readTree(sprintResponse.getBody());
-    
+
             for (JsonNode sprint : sprints) {
                 int sumClosed = 0;
-    
+
                 String sprintName = sprint.get("name").asText();
                 String startDate = sprint.get("estimated_start").asText();
                 String endDate = sprint.get("estimated_finish").asText();
-    
+
                 String taskUrl = "https://api.taiga.io/api/v1/tasks?"
                         + "project=" + projectId + "&"
                         + "assigned_to=" + userId + "&"
                         + "created_date__gte=" + startDate + "&"
                         + "created_date__lte=" + endDate;
-    
-                ResponseEntity<String> taskResponse = restTemplate.exchange(taskUrl, HttpMethod.GET, headersEntity, String.class);
+
+                ResponseEntity<String> taskResponse = restTemplate.exchange(taskUrl, HttpMethod.GET, headersEntity,
+                        String.class);
                 JsonNode tasks = objectMapper.readTree(taskResponse.getBody());
-                
+
                 for (JsonNode node : tasks) {
 
                     saveOnDatabaseTask(Integer.valueOf(node.get("id").asText()), node.get("subject").asText());
-                    saveOnDatabaseStats(Integer.valueOf(node.get("status").asInt()), node.get("status_extra_info").get("name").asText());
+                    saveOnDatabaseStats(Integer.valueOf(node.get("status").asInt()),
+                            node.get("status_extra_info").get("name").asText());
                     processTaskHistory(node.get("id").asInt());
 
-                    if ((node.get("status_extra_info").get("name").asText()).equals("Closed")){
+                    if ((node.get("status_extra_info").get("name").asText()).equals("Closed")) {
                         sumClosed += 1;
-                    } else { 
+                    } else {
                         continue;
                     }
                 }
-    
+
                 tasksPerSprint.put(sprintName, sumClosed);
             }
             return tasksPerSprint;
-    
+
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
         }
     }
-    
 
     @Override
     public Integer countTasksByStatusClosed(Integer projectId, Integer userId, String startDate, String endDate) {
         HttpEntity<Void> headersEntity = setHeadersTasks();
 
-        ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/tasks?project="+projectId+"&assigned_to="+userId + "&created_date__gte=" + startDate + "&created_date__lte=" + endDate, HttpMethod.GET, headersEntity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange(
+                "https://api.taiga.io/api/v1/tasks?project=" + projectId + "&assigned_to=" + userId
+                        + "&created_date__gte=" + startDate + "&created_date__lte=" + endDate,
+                HttpMethod.GET, headersEntity, String.class);
         Integer sumClosed = 0;
 
         try {
@@ -331,20 +358,21 @@ public class TaskServiceImpl implements TaskService {
 
             for (JsonNode node : rootNode) {
                 saveOnDatabaseTask(Integer.valueOf(node.get("id").asText()), node.get("subject").asText());
-                saveOnDatabaseStats(Integer.valueOf(node.get("status").asInt()), node.get("status_extra_info").get("name").asText());
+                saveOnDatabaseStats(Integer.valueOf(node.get("status").asInt()),
+                        node.get("status_extra_info").get("name").asText());
 
-                if ((node.get("status_extra_info").get("name").asText()).equals("Closed")){
+                if ((node.get("status_extra_info").get("name").asText()).equals("Closed")) {
                     sumClosed += 1;
-                } else { 
+                } else {
                     continue;
                 }
-            } 
+            }
             return sumClosed;
 
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar User Stories", e);
         }
-    } 
+    }
 
     @Override
     public Map<String, Integer> countTasksByTag() {
@@ -352,47 +380,50 @@ public class TaskServiceImpl implements TaskService {
         Integer projectCode = projectServiceImpl.getProjectId();
         Integer userCode = userServiceImpl.getUserId();
 
-    
         ResponseEntity<String> response = restTemplate.exchange(
-            "https://api.taiga.io/api/v1/tasks?project=" + projectCode + "&assigned_to=" + userCode, 
-            HttpMethod.GET, 
-            headersEntity, 
-            String.class
-        );
-    
+                "https://api.taiga.io/api/v1/tasks?project=" + projectCode + "&assigned_to=" + userCode,
+                HttpMethod.GET,
+                headersEntity,
+                String.class);
+
         Map<String, Integer> tagCount = new HashMap<>();
 
         try {
             JsonNode rootNode = objectMapper.readTree(response.getBody());
-    
-            for (JsonNode node : rootNode) {                
+
+            for (JsonNode node : rootNode) {
                 saveOnDatabaseTask(node.get("id").asInt(), node.get("subject").asText());
                 for (JsonNode tagNode : node.get("tags")) {
                     for (JsonNode tag : tagNode) {
                         if (!tag.isNull()) {
-                            tagCount.put(tag.toString().replace("\"", ""), tagCount.getOrDefault(tag.toString().replace("\"", ""), 0) + 1);
-                            TaskEntity taskEntity = taskRepository.findByTaskCode(node.get("id").asInt()).orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
-                            ProjectEntity projectEntity = projectRepository.findByProjectCode(projectCode).orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado"));
+                            tagCount.put(tag.toString().replace("\"", ""),
+                                    tagCount.getOrDefault(tag.toString().replace("\"", ""), 0) + 1);
+                            TaskEntity taskEntity = taskRepository.findByTaskCode(node.get("id").asInt())
+                                    .orElseThrow(() -> new IllegalArgumentException("Task não encontrada"));
+                            ProjectEntity projectEntity = projectRepository.findByProjectCode(projectCode)
+                                    .orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado"));
                             saveOnDatabaseTags(taskEntity, projectEntity, tag.asText(), 1);
                         }
                     }
                 }
             }
             return tagCount;
-    
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao processar as User Stories", e);
         }
     }
 
     @Transactional
-    public void saveOnDatabaseMilestone(Integer milestoneCode, String milestoneName, LocalDate estimatedStart, LocalDate estimatedEnd, ProjectEntity projectCode) {
-        if (!milestoneRepository.existsByMilestoneCodeAndMilestoneNameAndEstimatedStartAndEstimatedEnd(milestoneCode, milestoneName, estimatedStart, estimatedEnd)) {
-            MilestoneEntity milestoneEntity = new MilestoneEntity(milestoneCode, milestoneName, estimatedStart, estimatedEnd, projectCode);
+    public void saveOnDatabaseMilestone(Integer milestoneCode, String milestoneName, LocalDate estimatedStart,
+            LocalDate estimatedEnd, ProjectEntity projectCode) {
+        if (!milestoneRepository.existsByMilestoneCodeAndMilestoneNameAndEstimatedStartAndEstimatedEnd(milestoneCode,
+                milestoneName, estimatedStart, estimatedEnd)) {
+            MilestoneEntity milestoneEntity = new MilestoneEntity(milestoneCode, milestoneName, estimatedStart,
+                    estimatedEnd, projectCode);
             milestoneRepository.save(milestoneEntity);
         }
     }
-    
+
     @Transactional
     public void saveOnDatabaseTask(Integer taskCode, String taskDescription) {
         if (!taskRepository.existsByTaskCodeAndTaskDescription(taskCode, taskDescription)) {
@@ -400,7 +431,7 @@ public class TaskServiceImpl implements TaskService {
             taskRepository.save(taskEntity);
         }
     }
-    
+
     @Transactional
     public void saveOnDatabaseTags(TaskEntity taskCode, ProjectEntity projectCode, String tagName, Integer quant) {
         if (!tagRepository.existsByTaskCodeAndProjectCodeAndTagNameAndQuant(taskCode, projectCode, tagName, quant)) {
@@ -408,7 +439,7 @@ public class TaskServiceImpl implements TaskService {
             tagRepository.save(tagEntity);
         }
     }
-    
+
     @Transactional
     public void saveOnDatabaseStats(Integer statusCode, String statusName) {
         if (!statsRepository.existsByStatusCodeAndStatusName(statusCode, statusName)) {
@@ -416,26 +447,35 @@ public class TaskServiceImpl implements TaskService {
             statsRepository.save(statusEntity);
         }
     }
-    
+
     @Transactional
-    public void saveOnDatabaseTaskStatusHistory(TaskEntity taskCode, String lastStatus, String actualStatus, Timestamp changeDate) {
-        if (!taskStatusHistoryRepository.existsByTaskCodeAndLastStatusAndActualStatusAndChangeDate(taskCode, lastStatus, actualStatus, changeDate)) {
-            TaskStatusHistoryEntity entity = new TaskStatusHistoryEntity(taskCode, lastStatus, actualStatus, changeDate);
+    public void saveOnDatabaseTaskStatusHistory(TaskEntity taskCode, String lastStatus, String actualStatus,
+            Timestamp changeDate) {
+        if (!taskStatusHistoryRepository.existsByTaskCodeAndLastStatusAndActualStatusAndChangeDate(taskCode, lastStatus,
+                actualStatus, changeDate)) {
+            TaskStatusHistoryEntity entity = new TaskStatusHistoryEntity(taskCode, lastStatus, actualStatus,
+                    changeDate);
             taskStatusHistoryRepository.save(entity);
         }
     }
-    
+
     @Transactional
-    public void saveOnDatabaseUserTask(TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, MilestoneEntity milestoneCode, StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate, Integer quant) {
-        if (!userTaskRepository.existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCodeAndStartDateAndEndDate(taskCode, projectCode, userCode, milestoneCode, statsCode, roleCode, startDate, endDate)) {
-            UserTaskEntity userTaskEntity = new UserTaskEntity(taskCode, projectCode, userCode, milestoneCode, statsCode, roleCode, startDate, endDate, quant);
+    public void saveOnDatabaseUserTask(TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode,
+            MilestoneEntity milestoneCode, StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate,
+            Timestamp endDate, Integer quant) {
+        if (!userTaskRepository
+                .existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCodeAndStartDateAndEndDate(
+                        taskCode, projectCode, userCode, milestoneCode, statsCode, roleCode, startDate, endDate)) {
+            UserTaskEntity userTaskEntity = new UserTaskEntity(taskCode, projectCode, userCode, milestoneCode,
+                    statsCode, roleCode, startDate, endDate, quant);
             userTaskRepository.save(userTaskEntity);
         }
     }
-    
+
     @Transactional
     public void saveOnDatabaseUser(Integer userCode, String userDescription, String[] userRole, String userEmail) {
-        if (!userRepository.existsByUserCodeAndUserNameAndUserRoleAndUserEmail(userCode, userDescription, userRole, userEmail)) {
+        if (!userRepository.existsByUserCodeAndUserNameAndUserRoleAndUserEmail(userCode, userDescription, userRole,
+                userEmail)) {
             UserEntity userEntity = new UserEntity(userCode, userDescription, userRole, userEmail);
             userRepository.save(userEntity);
         }
