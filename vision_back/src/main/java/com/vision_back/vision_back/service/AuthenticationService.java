@@ -1,9 +1,9 @@
 package com.vision_back.vision_back.service;
 
-import org.springframework.http.ResponseEntity;
-
+import org.springframework.stereotype.Service;
+@Service
 public interface AuthenticationService {
-    public ResponseEntity<String> consumeAuthentication(String password, String username);
-
     public String getTokenAuthentication(String password, String username);
+
+    public String authenticateAndGetRole(String username, String password);
 }

@@ -29,9 +29,21 @@ public class UserEntity {
 
     @NotNull
     @Column(name = "usr_role")
-    private Integer userRole;  
+    private String[] userRole;    
 
     @NotNull
     @Column(name = "usr_email")
-    private String userEmail;  
+    private String userEmail;
+
+    @NotNull
+    @Column(name = "is_logged_in")
+    private Integer isLogged;
+
+    public UserEntity(Integer userCode, String userName, String[] userRole, String userEmail, Integer isLogged) {
+        this.userCode = userCode;
+        this.userName = userName;
+        this.userRole = userRole;
+        this.userEmail = userEmail;
+        this.isLogged = isLogged;
+    }
 }

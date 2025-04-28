@@ -1,29 +1,50 @@
 package com.vision_back.vision_back.entity;
 
 import jakarta.persistence.*;
+
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@NoArgsConstructor
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
-@Table(name="tag")
+@Table(name="usr_tag")
 public class TagEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "tag_id")
-    private Integer tagId;
-    
-    @NotNull
-    @Column(name = "tag_code")
-    private Integer tagCode;
+    @Column(name = "usr_tag_id")
+    private Integer userTagId;
 
     @NotNull
-    @Column(name = "tag_description")
-    private String tagDescription;
+    @ManyToOne
+    @JoinColumn(name = "task_code", referencedColumnName = "task_code")
+    private TaskEntity taskCode;
+
+    @NotNull
+    @ManyToOne
+    @JoinColumn(name = "project_code", referencedColumnName = "project_code")
+    private ProjectEntity projectCode;
+
+    @NotNull
+    @ManyToOne
+    @JoinColumn(name = "usr_code", referencedColumnName = "usr_code")
+    private UserEntity userCode;
+
+    @NotNull
+    @Column(name = "tag_name")
+    private String tagName;
+
+    @Column(name = "quant")
+    private Integer quant;
+
+    public TagEntity(TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, String tagName, Integer quant) {
+        this.taskCode = taskCode;
+        this.projectCode = projectCode;
+        this.userCode = userCode;
+        this.tagName = tagName;
+        this.quant = quant;
+    }
 }

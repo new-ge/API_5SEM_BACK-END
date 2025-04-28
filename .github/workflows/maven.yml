@@ -10,6 +10,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:17.4
+        ports:
+          - 5433:5432
+        env:
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+
     steps:
     - uses: actions/checkout@v4
 
@@ -20,6 +30,23 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
+    - name: Change directory to vision_back
+      run: cd vision_back
+    
+    - name: Build with Maven
+      working-directory: vision_back
+      run: mvn -B clean package --file pom.xml
+      env:
+        DB_URL: ${{ secrets.POSTGRES_URL }}
+        DB_USERNAME: ${{ secrets.POSTGRES_USER }}
+        DB_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        SONAR_JDBC_URL: ${{ secrets.SONAR_JDBC_URL }}
+        SONAR_JDBC_USERNAME: ${{ secrets.SONAR_JDBC_USERNAME }}
+        SONAR_JDBC_PASSWORD: ${{ secrets.SONAR_JDBC_PASSWORD }}
+        PASSWORD_SECRET_OPERADOR: ${{ secrets.PASSWORD_SECRET_OPERADOR }}
+        USERNAME_SECRET_OPERADOR: ${{ secrets.USERNAME_SECRET_OPERADOR }}
+
+
     - name: Build with Maven
       run: mvn -B package --file vision_back/pom.xml
 
@@ -27,4 +54,8 @@ jobs:
       run: mvn test --file vision_back/pom.xml
 
     - name: Update dependency graph
+      with:
+        directory: vision_back
+        token: ${{ secrets.SECRET_TOKEN }}
+      uses: advanced-security/maven-dependency-submission-action@571e99aab1055c2e71a1e2309b9691de18d6b7d6
       uses: advanced-security/maven-dependency-submission-action@v1
