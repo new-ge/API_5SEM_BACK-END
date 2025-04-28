@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.print.DocFlavor.STRING;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -21,6 +23,7 @@ import com.vision_back.vision_back.VisionBackApplication;
 import com.vision_back.vision_back.entity.dto.UserDto;
 import com.vision_back.vision_back.configuration.TokenConfiguration;
 import com.vision_back.vision_back.entity.UserEntity;
+import com.vision_back.vision_back.repository.MilestoneRepository;
 import com.vision_back.vision_back.repository.UserRepository;
 
 @Service
@@ -30,6 +33,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private MilestoneRepository milestoneRepository;
     
     ObjectMapper objectMapper = new ObjectMapper();
     RestTemplate restTemplate = new RestTemplate();
@@ -111,6 +117,7 @@ public class UserServiceImpl implements UserService {
                 throw new IllegalArgumentException("Erro ao retornar usuários ou tasks", e);
         }
    }
+
    public List<Map<String, Object>> getUsersAndTasksPerSprintName(Integer projectId, String sprintName) {
     setHeadersProject();
 

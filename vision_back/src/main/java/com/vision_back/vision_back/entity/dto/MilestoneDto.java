@@ -23,4 +23,16 @@ public class MilestoneDto {
         this.milestoneName = milestoneName;
         this.quant = quant;
     }
+
+    public MilestoneDto(String milestoneName) {
+        this.milestoneName = milestoneName;
+    }
+
+    @Override
+    public String toString() {
+        return "MilestoneDto{" +
+            "statusName='" + milestoneName + '\'' +
+            ", count=" + quant +
+            '}';
+    }
 }

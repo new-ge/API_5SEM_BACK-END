@@ -53,6 +53,9 @@ public interface MilestoneRepository extends JpaRepository<MilestoneEntity,Integ
                     "group by u.usr_name, p.project_name, m.milestone_name", nativeQuery = true)
      List<MilestoneDto> countCardsClosedPerSprintManager();
 
+     @Query(value = "select milestone_name from milestone", nativeQuery = true)
+     List<String> listAllSprintName();
+
      boolean existsByMilestoneIdIsNotNull();
 
      boolean existsByMilestoneCodeAndMilestoneNameAndEstimatedStartAndEstimatedEnd(Integer milestoneCode, String milestoneName, LocalDate estimatedStart, LocalDate estimatedEnd);

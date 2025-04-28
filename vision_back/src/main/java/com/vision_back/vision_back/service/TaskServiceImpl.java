@@ -3,9 +3,11 @@ package com.vision_back.vision_back.service;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
+
+import java.util.ArrayList;
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -19,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.configuration.TokenConfiguration;
@@ -30,6 +34,7 @@ import com.vision_back.vision_back.entity.TaskEntity;
 import com.vision_back.vision_back.entity.TaskStatusHistoryEntity;
 import com.vision_back.vision_back.entity.UserEntity;
 import com.vision_back.vision_back.entity.UserTaskEntity;
+import com.vision_back.vision_back.entity.dto.UserDto;
 import com.vision_back.vision_back.entity.TagEntity;
 import com.vision_back.vision_back.repository.*;
 
@@ -349,34 +354,90 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public Integer countTasksByStatusClosed(Integer projectId, Integer userId, String startDate, String endDate) {
+    public List<Map<String, Object>> getUsersAndTasksPerSprintName() throws JsonMappingException, JsonProcessingException {
         HttpEntity<Void> headersEntity = setHeadersTasks();
-
-        ResponseEntity<String> response = restTemplate.exchange(
-                "https://api.taiga.io/api/v1/tasks?project=" + projectId + "&assigned_to=" + userId
-                        + "&created_date__gte=" + startDate + "&created_date__lte=" + endDate,
-                HttpMethod.GET, headersEntity, String.class);
-        Integer sumClosed = 0;
-
-        try {
-            JsonNode rootNode = objectMapper.readTree(response.getBody());
-
-            for (JsonNode node : rootNode) {
-                saveOnDatabaseTask(Integer.valueOf(node.get("id").asText()), node.get("subject").asText());
-                saveOnDatabaseStats(Integer.valueOf(node.get("status").asInt()),
-                        node.get("status_extra_info").get("name").asText());
-
-                if ((node.get("status_extra_info").get("name").asText()).equals("Closed")) {
-                    sumClosed += 1;
-                } else {
-                    continue;
+    
+        Integer projectCode = projectServiceImpl.getProjectId(); // Obtemos o código do projeto
+        List<String> sprintNames = milestoneRepository.listAllSprintName();
+        List<String> projectNames = projectRepository.listAllProjectName(); // Obtemos os nomes dos projetos
+    
+        // Recupera os usuários do projeto
+        ResponseEntity<String> userResponse = restTemplate.exchange(
+            "https://api.taiga.io/api/v1/users?project=" + projectCode,
+            HttpMethod.GET, headersEntity, String.class);
+        JsonNode usersJsonNode = objectMapper.readTree(userResponse.getBody());
+    
+        // Recupera as tarefas do projeto
+        ResponseEntity<String> taskResponse = restTemplate.exchange(
+            "https://api.taiga.io/api/v1/tasks?project=" + projectCode,
+            HttpMethod.GET, headersEntity, String.class);
+        JsonNode tasksJsonNode = objectMapper.readTree(taskResponse.getBody());
+    
+        // Recupera as sprints do projeto
+        ResponseEntity<String> sprintResponse = restTemplate.exchange(
+            "https://api.taiga.io/api/v1/milestones?project=" + projectCode,
+            HttpMethod.GET, headersEntity, String.class);
+        JsonNode sprintsJsonNode = objectMapper.readTree(sprintResponse.getBody());
+    
+        List<Map<String, Object>> usersList = new ArrayList<>();
+    
+        // O nome do projeto será o primeiro da lista de projetos
+        String projectName = projectNames.isEmpty() ? "N/A" : projectNames.get(0); // Definindo o nome do projeto, assumindo que o primeiro item da lista é o correto
+    
+        for (String sprintName : sprintNames) {
+            JsonNode selectedSprint = null;
+    
+            // Encontrar a sprint que corresponde ao nome da sprint
+            for (JsonNode sprint : sprintsJsonNode) {
+                if (sprint.get("name").asText().trim().equalsIgnoreCase(sprintName.trim())) {
+                    selectedSprint = sprint;
+                    break;
                 }
             }
-            return sumClosed;
-
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Erro ao processar User Stories", e);
+    
+            if (selectedSprint == null) {
+                continue; // Se não encontrar a sprint, pula para a próxima
+            }
+    
+            String sprintStart = selectedSprint.get("estimated_start").asText();
+            String sprintEnd = selectedSprint.get("estimated_finish").asText();
+    
+            // Itera sobre os usuários do projeto
+            for (JsonNode userNode : usersJsonNode) {
+                Integer userId = userNode.get("id").asInt();
+                String userName = userNode.hasNonNull("username") ? userNode.get("username").asText() : "N/A";
+                String userEmail = userNode.hasNonNull("email") ? userNode.get("email").asText() : "N/A";
+    
+                List<String> userRoles = new ArrayList<>();
+                if (userNode.has("role") && userNode.get("role").isArray()) {
+                    for (JsonNode roleNode : userNode.get("role")) {
+                        userRoles.add(roleNode.asText());
+                    }
+                }
+    
+                long taskCount = 0;
+    
+                // Itera sobre as tarefas do projeto para contar quantas tarefas cada usuário tem na sprint selecionada
+                for (JsonNode task : tasksJsonNode) {
+                    if (task.hasNonNull("assigned_to") && task.get("assigned_to").asInt() == userId) {
+                        if (task.has("milestone") && task.get("milestone").asInt() == selectedSprint.get("id").asInt()) {
+                            taskCount++;
+                        }
+                    }
+                }
+    
+                // Adiciona as informações do usuário com o nome do projeto e a contagem de tarefas
+                Map<String, Object> userWithTaskCount = new HashMap<>();
+                userWithTaskCount.put("projectName", projectName); // Adicionando o nome do projeto
+                userWithTaskCount.put("sprintName", sprintName);
+                userWithTaskCount.put("user", new UserDto(userId, userName, userRoles, userEmail));
+                userWithTaskCount.put("taskCount", taskCount);
+    
+                usersList.add(userWithTaskCount);
+            }
         }
+    
+        return usersList;
     }
 
     @Override
