@@ -25,4 +25,8 @@ public interface TaskRepository extends JpaRepository<TaskEntity,Integer> {
 
     @Query(value = "select t.task_description, SUM(ut.quant) from usr_task ut join task t on ut.task_code = t.task_code join usr u on ut.usr_code = u.usr_code where ut.end_date is not null group by t.task_description", nativeQuery = true)
     List<TaskDto> countTasksDoneManager();
+
+    @Query(value = "select t.task_description, SUM(ut.quant) from usr_task ut join task t on ut.task_code = t.task_code where ut.end_date is not null group by t.task_description", nativeQuery = true)
+    List<TaskDto> countTasksDone();
+
 }

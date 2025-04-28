@@ -25,6 +25,7 @@ import com.vision_back.vision_back.repository.TagRepository;
 import com.vision_back.vision_back.repository.TaskRepository;
 import com.vision_back.vision_back.repository.TaskStatusHistoryRepository;
 import com.vision_back.vision_back.repository.UserRepository;
+import com.vision_back.vision_back.repository.UserTaskRepository;
 import com.vision_back.vision_back.service.TaskService;
 import com.vision_back.vision_back.service.TaskServiceImpl;
 
@@ -59,6 +60,10 @@ public class TasksController {
 
     @Autowired
     private MilestoneRepository mRepo;
+
+    
+    @Autowired
+    private UserTaskRepository ustRepo;
 
     @Operation(summary = "Conta as tarefas por status do usuário", description = "Conta o número de tarefas por status, baseado no ID do projeto e do usuário.")
     @ApiResponses(value = {
@@ -219,5 +224,22 @@ public class TasksController {
                         LinkedHashMap::new));
 
         return ResponseEntity.ok(tasksPerSprint);
+    }
+    @GetMapping("/average-task-time-per-sprint")
+    public ResponseEntity<Map<String, Long>> getAverageTaskTimePerSprint(){
+        List<MilestoneDto> averageTime = mRepo.averageTaskTimePerSprint();
+        Map<String, Long> averageTaskTimePerSprint = averageTime.stream()
+        .sorted(Comparator.comparing(m -> {
+            String name = m.getMilestoneName();
+            return Integer.parseInt(name.replaceAll("[^0-9]", ""));
+        }))
+        .collect(Collectors.toMap(
+            MilestoneDto::getMilestoneName,
+            MilestoneDto::getQuant,
+            (e1, e2) -> e1,
+            LinkedHashMap::new
+        ));
+
+        return ResponseEntity.ok(averageTaskTimePerSprint);
     }
 }
