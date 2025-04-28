@@ -187,7 +187,7 @@ public class TasksController {
                 String projeto = task.getProjectName();
                 String sprint = task.getMilestoneName();
                 Long doneCount = task.getQuant() != null ? task.getQuant() : 0L;
-    
+
                 tasksDoneData
                     .computeIfAbsent(projeto, k -> new HashMap<>())
                     .computeIfAbsent(usuario, k -> new HashMap<>())
