@@ -30,7 +30,6 @@ public class UserController {
     @Autowired
     private TokenConfiguration tokenConf;
 
-
     @Autowired
     private UserServiceImpl userService;
 
@@ -53,11 +52,11 @@ public class UserController {
     })
     @GetMapping("users-and-tasks-per-sprint-name/project/{projectId}/sprint/{sprintName}")
     public List<Map<String, Object>> getUsersAndTasksPerSprintName(
-            @PathVariable Integer projectId,
-            @PathVariable String sprintName) {
+        @PathVariable Integer projectId,
+        @PathVariable String sprintName) {
         return userService.getUsersAndTasksPerSprintName(projectId, sprintName);
     }
-
+    
     @PostMapping("/login")
     public ResponseEntity<?> authenticationControl(@RequestParam String password, @RequestParam String username) {
         try {
@@ -73,6 +72,7 @@ public class UserController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário ou senha inválidos!");
         }
+
     }
 
 }
