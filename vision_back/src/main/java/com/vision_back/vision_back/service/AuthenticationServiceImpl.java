@@ -1,5 +1,8 @@
 package com.vision_back.vision_back.service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -21,29 +24,86 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     ResponseEntity<String> response;
 
     @Autowired
-    private TokenConfiguration tokenDto;
+    private TaskService processTaskStatsAndMilestone;
+
+    private String token;
 
     @Autowired
-    private TaskService processTaskStatsAndMilestone;
-    
-    @Override
-    public void getTokenAuthentication(String password, String username) {
+    private TokenConfiguration tConf;
 
-        headers.setContentType(MediaType.APPLICATION_JSON);
-                
-        String json = "{\"password\": \"" + password + "\"," +
-                        "\"type\": \"normal\"," +
-                        "\"username\": \"" + username + "\"}";
-                
-        HttpEntity<String> headersEntity = new HttpEntity<>(json, headers);
-        ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/auth", HttpMethod.POST, headersEntity, String.class); 
-        
+    @Override
+    public String getTokenAuthentication(String password, String username) {
         try {
-            JsonNode jsonNode = objectMapper.readTree(response.getBody());
-            tokenDto.setAuthToken(jsonNode.get("auth_token").asText());
-            processTaskStatsAndMilestone.processTasksAndStatsAndMilestone();
+            String loginUrl = "https://api.taiga.io/api/v1/auth";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            Map<String, String> body = new HashMap<>();
+            body.put("type", "normal");
+            body.put("username", username);
+            body.put("password", password);
+
+            HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
+
+            ResponseEntity<String> response = restTemplate.postForEntity(loginUrl, request, String.class);
+
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new Exception("Falha na autenticação: " + response.getStatusCode());
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(response.getBody());
+
+            this.token = root.path("auth_token").asText();
+
+            tConf.setAuthToken(token);
+
+            if (this.token == null || this.token.isEmpty()) {
+                throw new Exception("Token de autenticação não encontrado");
+            }
+            return token;
         } catch (Exception e) {
-            throw new NullPointerException("A resposta não existe ou não é possivel obter nenhum dado!");
+            throw new NullPointerException("Token indisponivel");
         }
     }
+    
+    @Override
+    public String authenticateAndGetRole(String username, String password) {
+        try {
+            String token = getTokenAuthentication(password, username);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(token);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                    "https://api.taiga.io/api/v1/users/me",
+                    HttpMethod.GET,
+                    entity,
+                    String.class
+            );
+
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new Exception("Erro ao buscar informações do usuário: " + response.getStatusCode());
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(response.getBody());
+            JsonNode rolesNode = root.path("roles");
+
+            if (!rolesNode.isArray() || rolesNode.isEmpty()) {
+                throw new Exception("Usuário não possui roles definidas");
+            }
+            String userRole = rolesNode.get(0).asText();
+
+            processTaskStatsAndMilestone.processTasksAndStatsAndMilestone();
+
+            System.err.println(userRole);
+            return userRole;
+        } catch (Exception e) {
+            throw new NullPointerException("Role não encontrada");
+        }
+    }
+
 }
