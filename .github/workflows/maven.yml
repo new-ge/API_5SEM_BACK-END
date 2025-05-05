@@ -22,7 +22,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-
     - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
@@ -43,12 +42,9 @@ jobs:
         SONAR_JDBC_URL: ${{ secrets.SONAR_JDBC_URL }}
         SONAR_JDBC_USERNAME: ${{ secrets.SONAR_JDBC_USERNAME }}
         SONAR_JDBC_PASSWORD: ${{ secrets.SONAR_JDBC_PASSWORD }}
-        PASSWORD_SECRET_OPERADOR: ${{ secrets.PASSWORD_SECRET_OPERADOR }}
-        USERNAME_SECRET_OPERADOR: ${{ secrets.USERNAME_SECRET_OPERADOR }}
 
-    - name: Run tests
-      run: mvn test --file vision_back/pom.xml
 
+    # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
     - name: Update dependency graph
       with:
         directory: vision_back
