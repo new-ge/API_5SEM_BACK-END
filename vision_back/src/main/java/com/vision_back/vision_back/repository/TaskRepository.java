@@ -41,4 +41,10 @@ public interface TaskRepository extends JpaRepository<TaskEntity,Integer> {
                 "where ut.end_date is not null \r\n" + 
                 "group by u.usr_name, p.project_name, m.milestone_name", nativeQuery = true)
     List<TaskDto> countTasksDoneManager();
+
+    boolean existsByTaskCode(Integer taskCode);
+
+    @Query(value="SELECT * FROM task t WHERE t.task_code IS NOT NULL", nativeQuery = true)
+    List<TaskEntity> findAllWithTaskCode(); 
+
 }

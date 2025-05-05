@@ -1,5 +1,8 @@
 package com.vision_back.vision_back.service;
 
+import java.time.Instant;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -11,39 +14,48 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vision_back.vision_back.configuration.TokenConfiguration;
 
 @Service
 public class AuthenticationServiceImpl implements AuthenticationService {
-    ObjectMapper objectMapper = new ObjectMapper();
-    RestTemplate restTemplate = new RestTemplate();
-    HttpHeaders headers = new HttpHeaders();
-    ResponseEntity<String> response;
+    private final RestTemplate restTemplate = new RestTemplate();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final HttpHeaders headers = new HttpHeaders();
 
-    @Autowired
-    private TokenConfiguration tokenDto;
-
-    @Autowired
-    private TaskService processTaskStatsAndMilestone;
+    private String cachedToken;
+    private Instant tokenExpirationTime;
     
     @Override
-    public void getTokenAuthentication(String password, String username) {
-
+    public String getTokenAuthentication(String password, String username) {
+        
         headers.setContentType(MediaType.APPLICATION_JSON);
                 
         String json = "{\"password\": \"" + password + "\"," +
                         "\"type\": \"normal\"," +
                         "\"username\": \"" + username + "\"}";
-                
+
         HttpEntity<String> headersEntity = new HttpEntity<>(json, headers);
-        ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/auth", HttpMethod.POST, headersEntity, String.class); 
         
         try {
+            ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/auth", HttpMethod.POST, headersEntity, String.class); 
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
-            tokenDto.setAuthToken(jsonNode.get("auth_token").asText());
-            processTaskStatsAndMilestone.processTasksAndStatsAndMilestone();
+            cachedToken = jsonNode.get("auth_token").asText();
+
+            tokenExpirationTime = Instant.now().plusSeconds(3600);
+            return cachedToken;
+
         } catch (Exception e) {
             throw new NullPointerException("A resposta não existe ou não é possivel obter nenhum dado!");
         }
+    }
+
+    public String getCachedToken() {
+        if (cachedToken == null || isTokenExpired()) {
+            throw new IllegalStateException("Token não existe ou expirado. É necessário autenticar novamente.");
+        }
+        return cachedToken;
+    }
+
+    private boolean isTokenExpired() {
+        return tokenExpirationTime == null || Instant.now().isAfter(tokenExpirationTime);
     }
 }

@@ -7,7 +7,11 @@ import org.springframework.stereotype.Service;
 public interface UserService {
     public HttpEntity<Void> setHeadersProject();
 
+    public String getUserRole();
+
     public Integer getUserId();
 
-    public void saveOnDatabaseUser(Integer userCode, String userDescription, String[] userRole, String userEmail, Integer isLogged);
+    public void processUser();
+
+    public void verifyIfIsLogged(Integer userCode, Integer isLogged);
 }

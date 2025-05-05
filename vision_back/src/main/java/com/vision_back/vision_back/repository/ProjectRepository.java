@@ -21,4 +21,6 @@ public interface ProjectRepository extends JpaRepository<ProjectEntity,Integer>{
 
     @Query(value = "select project_name from project", nativeQuery = true)
     List<String> listAllProjectName();
+
+    boolean existsByProjectCode(Integer projectCode);
 }

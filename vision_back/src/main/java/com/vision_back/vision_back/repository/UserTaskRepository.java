@@ -34,6 +34,10 @@ public interface UserTaskRepository extends JpaRepository<UserTaskEntity,Integer
     boolean existsByTaskUserIdIsNotNull();
 
     boolean existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCodeAndStartDateAndEndDate(
-            TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, MilestoneEntity milestoneCode,
-            StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate);    
+        TaskEntity taskCode, ProjectEntity projectCode, UserEntity userCode, MilestoneEntity milestoneCode,
+        StatusEntity statsCode, RoleEntity roleCode, Timestamp startDate, Timestamp endDate);
+
+    boolean existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCode(TaskEntity taskCode,
+            ProjectEntity projectCode, UserEntity userCode, MilestoneEntity milestoneCode,
+            StatusEntity statsCode, RoleEntity roleCode);
 }

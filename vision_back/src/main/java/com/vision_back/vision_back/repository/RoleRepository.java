@@ -19,4 +19,6 @@ public interface RoleRepository extends JpaRepository<RoleEntity,Integer> {
     boolean existsByRoleIdIsNotNull();
 
     boolean existsByRoleCodeAndRoleName(Integer roleCode, String roleName);
+
+    boolean existsByRoleCode(Integer roleCode);
 }
