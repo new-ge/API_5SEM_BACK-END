@@ -46,10 +46,6 @@ jobs:
         PASSWORD_SECRET_OPERADOR: ${{ secrets.PASSWORD_SECRET_OPERADOR }}
         USERNAME_SECRET_OPERADOR: ${{ secrets.USERNAME_SECRET_OPERADOR }}
 
-
-    - name: Build with Maven
-      run: mvn -B package --file vision_back/pom.xml
-
     - name: Run tests
       run: mvn test --file vision_back/pom.xml
 
