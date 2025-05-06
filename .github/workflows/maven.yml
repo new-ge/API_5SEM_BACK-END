@@ -55,31 +55,22 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     permissions:
-        contents: write
-        pull-requests: write
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Fetch all branches
+      - name: Set up GitHub CLI
         run: |
-          git fetch --all
+          curl -fsSL https://cli.github.com/install.sh | bash
+          gh --version
 
-      - name: Set up Git for merge
+      - name: Enable auto-merge for PR
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-
-      - name: Checkout the ${{ github.base_ref }} branch
-        run: |
-          git checkout ${{ github.base_ref }}
-
-      - name: Checkout the ${{ github.head_ref }} branch
-        run: |
-          git checkout -b ${{ github.head_ref }} origin/${{ github.head_ref }}
-
-      - name: Merge ${{ github.head_ref }} to ${{ github.base_ref }}
-        run: |
-          git checkout ${{ github.base_ref }}
-          git merge ${{ github.head_ref }} --no-ff -m "${{ github.head_ref }} - merge: Merge branch ${{ github.head_ref }} into ${{ github.base_ref }}"
-          git push origin ${{ github.base_ref }}
+          gh pr merge "$GITHUB_HEAD_REF" \
+            --repo "$GITHUB_REPOSITORY" \
+            --auto \
+            --merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
