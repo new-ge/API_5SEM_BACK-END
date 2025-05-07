@@ -17,11 +17,9 @@ import jakarta.transaction.Transactional;
 public interface UserRepository extends JpaRepository<UserEntity,Integer>{
     Optional<UserEntity> findByUserCode(Integer userCode);
 
-    Optional<UserEntity> findByUserCodeAndUserNameAndUserRoleAndUserEmail(
-        Integer userCode, String userName, String[] userRole, String userEmail
+    Optional<UserEntity> findByUserCodeAndUserNameAndUserRole(
+        Integer userCode, String userName, String[] userRole
     );
-
-    boolean existsByUserCodeAndUserNameAndUserRoleAndUserEmail(Integer userCode, String userName, String[] userRole, String userEmail);
 
     boolean existsByUserCode(Integer userCode);
 
@@ -37,4 +35,6 @@ public interface UserRepository extends JpaRepository<UserEntity,Integer>{
 
     @Query(value = "SELECT usr_role from usr WHERE is_logged_in = 1", nativeQuery = true)
     List<String> accessControl();
+
+    boolean existsByUserCodeAndUserNameAndUserRole(Integer userId, String username, String[] roles);
 }

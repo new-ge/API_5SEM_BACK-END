@@ -108,27 +108,24 @@ public class TaskServiceImpl implements TaskService {
                                 StatusEntity statusEntity,
                                 RoleEntity roleEntity) {
 
-        try {              
-            if (taskNode.get("id").asInt() == taskEntity.getTaskCode() && taskNode.get("milestone").asInt() == milestoneEntity.getMilestoneCode()) {
-                Timestamp createdDate = Timestamp.from(Instant.parse(taskNode.get("created_date").asText()));
-                JsonNode finishedDateNode = taskNode.get("finished_date");
-                Timestamp finishedDate = (finishedDateNode != null && !finishedDateNode.isNull() && !finishedDateNode.asText().isEmpty())
-                        ? Timestamp.from(Instant.parse(finishedDateNode.asText()))
-                        : null;
+        try {
+            Timestamp createdDate = Timestamp.from(Instant.parse(taskNode.get("created_date").asText()));
+            JsonNode finishedDateNode = taskNode.get("finished_date");
+            Timestamp finishedDate = (finishedDateNode != null && !finishedDateNode.isNull() && !finishedDateNode.asText().isEmpty())
+                    ? Timestamp.from(Instant.parse(finishedDateNode.asText()))
+                    : null;
 
-                boolean exists = userTaskRepository.existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCodeAndStartDateAndEndDate(
-                        taskEntity, projectEntity, userEntity, milestoneEntity, statusEntity, roleEntity, createdDate, finishedDate
+            boolean exists = userTaskRepository.existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCodeAndStartDateAndEndDate(
+                    taskEntity, projectEntity, userEntity, milestoneEntity, statusEntity, roleEntity, createdDate, finishedDate
+            );
+
+            if (!exists) {
+                UserTaskEntity entity = new UserTaskEntity(
+                        taskEntity, projectEntity, userEntity, milestoneEntity, statusEntity,
+                        roleEntity, createdDate, finishedDate, 1
                 );
-
-                if (!exists) {
-                    UserTaskEntity entity = new UserTaskEntity(
-                            taskEntity, projectEntity, userEntity, milestoneEntity, statusEntity,
-                            roleEntity, createdDate, finishedDate, 1
-                    );
-                    userTaskRepository.save(entity);
-                }
+                userTaskRepository.save(entity);
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -262,96 +259,81 @@ public class TaskServiceImpl implements TaskService {
         Integer projectCode = projectServiceImpl.getProjectId();
         Integer roleCode = projectServiceImpl.getSpecificProjectUserRoleId();
     
-        String sprintUrl = "https://api.taiga.io/api/v1/milestones?project=" + projectCode;
-        ResponseEntity<String> sprintResponse = restTemplate.exchange(sprintUrl, HttpMethod.GET, headersEntity, String.class);
-    
         try {
-            JsonNode sprints = objectMapper.readTree(sprintResponse.getBody());
-    
-
-            Optional<ProjectEntity> projectOpt = EntityRetryUtils.retryUntilFound(
-                () -> projectRepository.findByProjectCode(projectCode),
-                5,
-                200,
-                "ProjectEntity"
-            );
-            Optional<UserEntity> userOpt =
-            EntityRetryUtils.retryUntilFound(
-                () -> userRepository.findByUserCode(userCode),
-                5,
-                200,
-                "UserEntity"
-            );
-            Optional<RoleEntity> roleOpt =                     
-            EntityRetryUtils.retryUntilFound(
-                () -> roleRepository.findByRoleCode(roleCode),
-                5,
-                200,
-                "RoleEntity"
-            );
-    
-            if (projectOpt.isEmpty() || userOpt.isEmpty() || roleOpt.isEmpty()) {
-                throw new IllegalArgumentException("Entidade base não encontrada");
-            }
-    
-            String taskUrl = "https://api.taiga.io/api/v1/tasks?assigned_to=" + userCode + "&project=" + projectCode;
+            String taskUrl = "https://api.taiga.io/api/v1/tasks?&project=" + projectCode;
             ResponseEntity<String> taskResponse = restTemplate.exchange(taskUrl, HttpMethod.GET, headersEntity, String.class);
             JsonNode tasks = objectMapper.readTree(taskResponse.getBody());
     
-            for (JsonNode sprint : sprints) {
-                Integer sprintCode = sprint.get("id").asInt();
-
-                Optional<MilestoneEntity> milestoneOpt =                     
-                EntityRetryUtils.retryUntilFound(
-                    () -> milestoneRepository.findByMilestoneCode(sprintCode),
-                    5,
-                    200,
-                    "MilestoneEntity"
+            // Pré-buscas estáticas (que não mudam entre tarefas)
+            Optional<ProjectEntity> projectOpt = EntityRetryUtils.retryUntilFound(
+                () -> projectRepository.findByProjectCode(projectCode),
+                5, 200, "ProjectEntity"
+            );
+            Optional<UserEntity> userOpt = EntityRetryUtils.retryUntilFound(
+                () -> userRepository.findByUserCode(userCode),
+                5, 200, "UserEntity"
+            );
+            Optional<RoleEntity> roleOpt = EntityRetryUtils.retryUntilFound(
+                () -> roleRepository.findByRoleCode(roleCode),
+                5, 200, "RoleEntity"
+            );
+    
+            // Cache local para evitar reconsultas de milestones e status
+            Map<Integer, MilestoneEntity> milestoneCache = new HashMap<>();
+            Map<Integer, StatusEntity> statusCache = new HashMap<>();
+    
+            for (JsonNode task : tasks) {
+                if (!task.has("milestone") || task.get("milestone").isNull()) continue;
+    
+                Integer sprintCode = task.get("milestone").asInt();
+                Integer taskCode = task.get("id").asInt();
+                Integer statusCode = task.get("status").asInt();
+    
+                // Milestone com cache
+                MilestoneEntity milestone = milestoneCache.computeIfAbsent(sprintCode, code ->
+                    EntityRetryUtils.retryUntilFound(
+                        () -> milestoneRepository.findByMilestoneCode(code),
+                        5, 200, "MilestoneEntity"
+                    ).orElse(null)
+                );
+                if (milestone == null) continue;
+    
+                // Status com cache
+                StatusEntity status = statusCache.computeIfAbsent(statusCode, code ->
+                    EntityRetryUtils.retryUntilFound(
+                        () -> statsRepository.findByStatusCode(code),
+                        5, 200, "StatsEntity"
+                    ).orElse(null)
+                );
+                if (status == null) continue;
+    
+                // Tarefa
+                Optional<TaskEntity> taskOpt = EntityRetryUtils.retryUntilFound(
+                    () -> taskRepository.findByTaskCode(taskCode),
+                    5, 200, "TaskEntity"
+                );
+                if (taskOpt.isEmpty()) continue;
+    
+                boolean alreadyExists = userTaskRepository.existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCode(
+                    taskOpt.get(), 
+                    projectOpt.get(), 
+                    userOpt.get(), 
+                    milestone, 
+                    status, 
+                    roleOpt.get()
                 );
     
-                for (JsonNode task : tasks) {
-                    if (task.has("milestone") && task.get("milestone").asInt() == sprintCode) {
-
-                        Integer taskCode = task.get("id").asInt();
-                        Integer statusCode = task.get("status").asInt();
-        
-                        Optional<StatusEntity> statusOpt = 
-                        EntityRetryUtils.retryUntilFound(
-                            () -> statsRepository.findByStatusCode(statusCode),
-                            5,
-                            200,
-                            "StatsEntity"
-                        );
-
-                        Optional<TaskEntity> taskOpt =
-                        EntityRetryUtils.retryUntilFound(
-                            () -> taskRepository.findByTaskCode(taskCode),
-                            5,
-                            200,
-                            "TaskEntity"
-                        );
-
-                        boolean alreadyExists = userTaskRepository.existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCode(
-                            taskOpt.get(), 
-                            projectOpt.get(), 
-                            userOpt.get(), 
-                            milestoneOpt.get(), 
-                            statusOpt.get(), 
-                            roleOpt.get()
-                        );
-            
-                        if (!alreadyExists) {
-                            processTaskUser(task, taskOpt.get(), projectOpt.get(), userOpt.get(), milestoneOpt.get(), statusOpt.get(), roleOpt.get());
-                        }
-                    }
+                if (!alreadyExists) {
+                    processTaskUser(task, taskOpt.get(), projectOpt.get(), userOpt.get(), milestone, status, roleOpt.get());
                 }
             }
+    
         } catch (Exception e) {
             e.printStackTrace();
             throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
         }
     }
-
+    
     @Transactional
     @Override
     public void processMilestone() {
@@ -432,9 +414,7 @@ public class TaskServiceImpl implements TaskService {
                 }
 
                 if (processHistory) {
-                    if (userCode == node.get("assigned_to").asInt()) {
-                        processTaskHistory(taskCode, projectCode, node.get("milestone").asInt(), node.get("assigned_to").asInt());
-                    }
+                    processTaskHistory(taskCode, projectCode, node.get("milestone").asInt(), node.get("assigned_to").asInt());
                 }
             }
     
