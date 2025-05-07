@@ -32,7 +32,6 @@ public class ProjectController {
     })
     @GetMapping("/get-all-projects/{userCode}")
     public List<TreeMap<String, Object>> getAllProjects(@PathVariable Integer userCode) {
-        System.out.println("Endpoint /projects chamado com userId: " + userCode);
         return projectService.listAllProjectsByUser(userCode);
     }
 

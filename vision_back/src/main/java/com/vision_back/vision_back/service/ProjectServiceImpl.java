@@ -1,5 +1,6 @@
 package com.vision_back.vision_back.service;
 
+import java.nio.channels.Pipe.SourceChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
@@ -18,7 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
-import com.vision_back.vision_back.configuration.TokenConfiguration;
+import com.vision_back.vision_back.component.EntityRetryUtils;
+import com.vision_back.vision_back.entity.MilestoneEntity;
 import com.vision_back.vision_back.entity.ProjectEntity;
 import com.vision_back.vision_back.entity.RoleEntity;
 import com.vision_back.vision_back.repository.ProjectRepository;
@@ -42,12 +44,12 @@ public class ProjectServiceImpl implements ProjectService {
     private ProjectRepository projectRepository; 
 
     @Autowired
-    private TokenConfiguration tokenDto;
+    private AuthenticationService auth;
 
     @Override
     public HttpEntity<Void> setHeadersProject() {
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(tokenDto.getAuthToken());
+        headers.setBearerAuth(auth.getCachedToken());
             
         return headersEntity = new HttpEntity<>(headers);
     }
@@ -62,9 +64,62 @@ public class ProjectServiceImpl implements ProjectService {
             JsonNode getProjectId = jsonNode.get("id");
             return new ObjectMapper().writeValueAsString(getProjectId).replace("\"", "");
         } catch (Exception e) {
+            e.printStackTrace();
             throw new NullPointerException("Resposta não obtida ou resposta inválida.");
         }
     }
+
+    @Transactional
+    @Override
+    public void processRoles() {
+        Integer projectCode = getProjectId();
+        Integer memberId = userServiceImpl.getUserId();
+        List<RoleEntity> roleEntites = new ArrayList<>();
+
+        setHeadersProject();
+        
+        try {
+            ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects/"+projectCode, HttpMethod.GET, headersEntity, String.class);
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            ProjectEntity projectEntity = EntityRetryUtils.retryUntilFound(
+                () -> projectRepository.findByProjectCode(projectCode).orElse(null),
+                5,
+                200,
+                "ProjectEntity"
+            );
+
+            for (JsonNode members : jsonNode.get("members")) {
+                if (members.get("id").asInt() == memberId) {
+                    if (!roleRepository.existsByRoleCode(members.get("role").asInt())) {
+                        roleEntites.add(new RoleEntity(members.get("role").asInt(), members.get("role_name").asText(), projectEntity));
+                    }
+                } 
+            }            
+            roleRepository.saveAll(roleEntites);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Transactional
+    @Override
+    public void processProject() {
+        Integer memberId = userServiceImpl.getUserId();
+        List<ProjectEntity> projectEntites = new ArrayList<>();
+        setHeadersProject();
+        
+        try {
+            ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects?member="+memberId, HttpMethod.GET, headersEntity, String.class);
+            JsonNode jsonNode = objectMapper.readTree(response.getBody()).get(0);
+            if (!projectRepository.existsByProjectCode(jsonNode.get("id").asInt())) {
+                projectEntites.add(new ProjectEntity(jsonNode.get("id").asInt(), jsonNode.get("name").asText()));
+            }
+            projectRepository.saveAll(projectEntites);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
     @Override
     public Integer getProjectId() {
@@ -74,9 +129,9 @@ public class ProjectServiceImpl implements ProjectService {
         try {
             ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects?member="+memberId, HttpMethod.GET, headersEntity, String.class);
             JsonNode jsonNode = objectMapper.readTree(response.getBody()).get(0);
-            saveOnDatabaseProject(jsonNode.get("id").asInt(), jsonNode.get("name").asText());
             return jsonNode.get("id").asInt();
         } catch (Exception e) {
+            e.printStackTrace();
             throw new NullPointerException("Resposta não obtida ou resposta inválida.");
         }
     }
@@ -86,9 +141,7 @@ public class ProjectServiceImpl implements ProjectService {
         setHeadersProject();
 
         String url = "https://api.taiga.io/api/v1/projects?member=" + userCode;
-
-        System.out.println(" URL da API Taiga:" + url);
-
+        
         try {
             ResponseEntity<String> response = restTemplate.exchange(
                 url, 
@@ -136,7 +189,12 @@ public class ProjectServiceImpl implements ProjectService {
         try {
             ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects/"+projectCode, HttpMethod.GET, headersEntity, String.class);
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
-            ProjectEntity projectEntity = projectRepository.findByProjectCode(projectCode).orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado"));
+            ProjectEntity projectEntity = EntityRetryUtils.retryUntilFound(
+                () -> projectRepository.findByProjectCode(projectCode).orElse(null),
+                5,
+                200,
+                "ProjectEntity"
+            );
 
             for (JsonNode members : jsonNode.get("members")) {
                 if (members.get("id").asInt() == memberId) {
@@ -149,6 +207,7 @@ public class ProjectServiceImpl implements ProjectService {
         return roleCode;
 
         } catch (Exception e) {
+            e.printStackTrace();
             throw new NullPointerException("Resposta não obtida ou resposta inválida.");
         }
     }

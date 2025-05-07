@@ -15,6 +15,10 @@ public interface ProjectService {
 
     public Integer getProjectId();
 
+    public void processProject();
+
+    public void processRoles();
+
     public List<TreeMap<String, Object>> listAllProjectsByUser(Integer userCode);
     
     public void saveOnDatabaseProject(Integer projectCode, String projectName);
