@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.SecurityProperties.User;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -34,6 +35,7 @@ import com.vision_back.vision_back.entity.TaskEntity;
 import com.vision_back.vision_back.entity.TaskStatusHistoryEntity;
 import com.vision_back.vision_back.entity.UserEntity;
 import com.vision_back.vision_back.entity.UserTaskEntity;
+import com.vision_back.vision_back.entity.dto.UserDto;
 import com.vision_back.vision_back.repository.MilestoneRepository;
 import com.vision_back.vision_back.repository.ProjectRepository;
 import com.vision_back.vision_back.repository.RoleRepository;
@@ -88,6 +90,7 @@ public class TaskServiceImpl implements TaskService {
 
     ObjectMapper objectMapper = new ObjectMapper();
     RestTemplate restTemplate = new RestTemplate();
+    UserEntity usrEntity = new UserEntity();
 
     @Override
     public HttpEntity<Void> setHeadersTasks() {
@@ -255,7 +258,7 @@ public class TaskServiceImpl implements TaskService {
     public void baseProcessTaskUser() {
         HttpEntity<Void> headersEntity = setHeadersTasks();
     
-        Integer userCode = userServiceImpl.getUserId();
+        List<UserDto> users = userRepository.listAllUsersCode();
         Integer projectCode = projectServiceImpl.getProjectId();
         Integer roleCode = projectServiceImpl.getSpecificProjectUserRoleId();
     
@@ -264,21 +267,12 @@ public class TaskServiceImpl implements TaskService {
             ResponseEntity<String> taskResponse = restTemplate.exchange(taskUrl, HttpMethod.GET, headersEntity, String.class);
             JsonNode tasks = objectMapper.readTree(taskResponse.getBody());
     
-            // Pré-buscas estáticas (que não mudam entre tarefas)
             Optional<ProjectEntity> projectOpt = EntityRetryUtils.retryUntilFound(
                 () -> projectRepository.findByProjectCode(projectCode),
                 5, 200, "ProjectEntity"
             );
-            Optional<UserEntity> userOpt = EntityRetryUtils.retryUntilFound(
-                () -> userRepository.findByUserCode(userCode),
-                5, 200, "UserEntity"
-            );
-            Optional<RoleEntity> roleOpt = EntityRetryUtils.retryUntilFound(
-                () -> roleRepository.findByRoleCode(roleCode),
-                5, 200, "RoleEntity"
-            );
+
     
-            // Cache local para evitar reconsultas de milestones e status
             Map<Integer, MilestoneEntity> milestoneCache = new HashMap<>();
             Map<Integer, StatusEntity> statusCache = new HashMap<>();
     
@@ -288,8 +282,17 @@ public class TaskServiceImpl implements TaskService {
                 Integer sprintCode = task.get("milestone").asInt();
                 Integer taskCode = task.get("id").asInt();
                 Integer statusCode = task.get("status").asInt();
+
+                Optional<RoleEntity> roleOpt = EntityRetryUtils.retryUntilFound(
+                    () -> roleRepository.findByRoleCode(roleCode),
+                    5, 200, "RoleEntity"
+                );
+
+                UserEntity userOpt = EntityRetryUtils.retryUntilFound(
+                        () -> userRepository.findByUserCode(task.get("assigned_to").asInt()),
+                        5, 200, "MilestoneEntity"
+                    ).orElse(null);
     
-                // Milestone com cache
                 MilestoneEntity milestone = milestoneCache.computeIfAbsent(sprintCode, code ->
                     EntityRetryUtils.retryUntilFound(
                         () -> milestoneRepository.findByMilestoneCode(code),
@@ -317,14 +320,14 @@ public class TaskServiceImpl implements TaskService {
                 boolean alreadyExists = userTaskRepository.existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCode(
                     taskOpt.get(), 
                     projectOpt.get(), 
-                    userOpt.get(), 
+                    userOpt, 
                     milestone, 
                     status, 
                     roleOpt.get()
                 );
     
                 if (!alreadyExists) {
-                    processTaskUser(task, taskOpt.get(), projectOpt.get(), userOpt.get(), milestone, status, roleOpt.get());
+                    processTaskUser(task, taskOpt.get(), projectOpt.get(), userOpt, milestone, status, roleOpt.get());
                 }
             }
     

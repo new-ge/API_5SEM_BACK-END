@@ -70,6 +70,7 @@ public class UserServiceImpl implements UserService {
     public void processAllUsers() {
         Integer projectId = taigaHelper.fetchProjectIdByUserId(taigaHelper.fetchLoggedUserId());
         taigaHelper.processUsersByProjectId(projectId);
+
     }
 
     @Transactional

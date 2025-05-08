@@ -10,12 +10,16 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.vision_back.vision_back.entity.UserEntity;
+import com.vision_back.vision_back.entity.dto.UserDto;
 
 import jakarta.transaction.Transactional;
 
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity,Integer>{
     Optional<UserEntity> findByUserCode(Integer userCode);
+
+    @Query(value = "SELECT usr_code from usr", nativeQuery = true)
+    List<UserDto> listAllUsersCode();
 
     Optional<UserEntity> findByUserCodeAndUserNameAndUserRole(
         Integer userCode, String userName, String[] userRole

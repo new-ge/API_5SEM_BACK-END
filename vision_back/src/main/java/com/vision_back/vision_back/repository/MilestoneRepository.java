@@ -27,6 +27,7 @@ public interface MilestoneRepository extends JpaRepository<MilestoneEntity,Integ
                     "AND (:milestone IS NULL OR m.milestone_name = :milestone) \r\n" +
                     "AND (:project IS NULL OR p.project_name = :project) \r\n" + 
                     "AND (:user IS NULL OR u.usr_name = :user) \r\n" +
+                    "and u.is_logged_in = 1 \r\n" +
                     "group by u.usr_name, m.milestone_name, p.project_name", nativeQuery = true)
      List<MilestoneDto> countCardsPerSprintOperator(@Param("milestone") String milestone,
                                                     @Param("project") String project,

@@ -1,5 +1,9 @@
 package com.vision_back.vision_back.entity;
 
+import java.util.Arrays;
+
+import com.vision_back.vision_back.entity.dto.UserDto;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -40,5 +44,24 @@ public class UserEntity {
         this.userName = userName;
         this.userRole = userRole;
         this.isLogged = isLogged;
+    }
+
+    @Override
+    public String toString() {
+        return "UserEntity{" +
+            "userCode=" + userCode +
+            ", userName='" + userName + '\'' +
+            ", userRole=" + Arrays.toString(userRole) +
+            ", isLogged=" + isLogged +
+            '}';
+    }
+
+    public UserEntity convertToUserEntity(UserDto dto) {
+        return new UserEntity(
+            dto.getUserCode(),
+            dto.getUserName(),
+            dto.getUserRole(),
+            dto.getIsLogged()
+        );
     }
 }
