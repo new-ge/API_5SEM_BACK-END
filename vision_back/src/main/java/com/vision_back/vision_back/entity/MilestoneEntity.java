@@ -41,7 +41,7 @@ public class MilestoneEntity {
     @ManyToOne
     @NotNull
     @JoinColumn(name = "project_code", referencedColumnName = "project_code")
-    private ProjectEntity projectCode;  
+    private ProjectEntity projectCode;   
 
     public MilestoneEntity(Integer milestoneCode, String milestoneName, LocalDate estimatedStart, LocalDate estimatedEnd, ProjectEntity projectCode) {
         this.milestoneCode = milestoneCode;

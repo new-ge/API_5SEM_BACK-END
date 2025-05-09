@@ -11,13 +11,13 @@ import lombok.Setter;
 @AllArgsConstructor
 
 public class MilestoneDto {
-    private Integer milestoneId;
+    private String userName;  
+    private String projectName; 
     private String milestoneName;  
     private Long quant;
 
-    public MilestoneDto(String milestoneName, Long quant) {
+    public MilestoneDto(String milestoneName) {
         this.milestoneName = milestoneName;
-        this.quant = quant;
     }
 
     @Override

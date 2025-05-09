@@ -26,9 +26,15 @@ public class TaskEntity {
     @NotNull
     @Column(name = "task_description")
     private String taskDescription;
+
+    @ManyToOne
+    @NotNull
+    @JoinColumn(name = "milestone_code", referencedColumnName = "milestone_code")
+    private MilestoneEntity milestoneCode;   
     
-    public TaskEntity(Integer taskCode, String taskDescription) {
+    public TaskEntity(Integer taskCode, String taskDescription, MilestoneEntity milestoneCode) {
         this.taskCode = taskCode;
         this.taskDescription = taskDescription;
+        this.milestoneCode = milestoneCode;
     }
 }
