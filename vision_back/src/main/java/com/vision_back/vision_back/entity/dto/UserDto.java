@@ -2,6 +2,8 @@ package com.vision_back.vision_back.entity.dto;
 
 import java.util.List;
 
+import com.vision_back.vision_back.entity.UserEntity;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,17 +18,17 @@ public class UserDto {
     private Integer taskId;
     private Integer userCode;
     private String userName;  
-    private List<String> userRole;
-    private String userEmail; 
+    private String[] userRole;
+    private Integer isLogged; 
 
-    public UserDto(Integer userId, String userName, List<String> userRole, String userEmail) {
-        this.userCode = userId;
+    public UserDto(Integer userCode, String userName, String[] userRole, Integer isLogged) {
+        this.userCode = userCode;
         this.userName = userName;
         this.userRole = userRole;
-        this.userEmail = userEmail;
+        this.isLogged = isLogged;
     }
 
-    public UserDto(List<String> userRole) {
-        this.userRole = userRole;
+    public UserDto(Integer userCode) {
+        this.userCode = userCode;
     }
 }

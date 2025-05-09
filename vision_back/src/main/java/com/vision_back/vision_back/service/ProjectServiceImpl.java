@@ -35,7 +35,7 @@ public class ProjectServiceImpl implements ProjectService {
     HttpEntity<Void> headersEntity;
 
     @Autowired
-    private UserServiceImpl userServiceImpl;
+    private UserService userService;
 
     @Autowired
     private RoleRepository roleRepository; 
@@ -45,6 +45,9 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Autowired
     private AuthenticationService auth;
+
+    @Autowired
+    private UserProjectHelperServiceImpl taigaHelper;
 
     @Override
     public HttpEntity<Void> setHeadersProject() {
@@ -73,7 +76,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public void processRoles() {
         Integer projectCode = getProjectId();
-        Integer memberId = userServiceImpl.getUserId();
+        Integer memberId = userService.getUserId();
         List<RoleEntity> roleEntites = new ArrayList<>();
 
         setHeadersProject();
@@ -104,7 +107,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional
     @Override
     public void processProject() {
-        Integer memberId = userServiceImpl.getUserId();
+        Integer memberId = userService.getUserId();
         List<ProjectEntity> projectEntites = new ArrayList<>();
         setHeadersProject();
         
@@ -120,20 +123,10 @@ public class ProjectServiceImpl implements ProjectService {
         }
     }
 
-
     @Override
     public Integer getProjectId() {
-        Integer memberId = userServiceImpl.getUserId();
-        setHeadersProject();
-        
-        try {
-            ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects?member="+memberId, HttpMethod.GET, headersEntity, String.class);
-            JsonNode jsonNode = objectMapper.readTree(response.getBody()).get(0);
-            return jsonNode.get("id").asInt();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new NullPointerException("Resposta não obtida ou resposta inválida.");
-        }
+        Integer memberId = taigaHelper.fetchLoggedUserId();
+        return taigaHelper.fetchProjectIdByUserId(memberId);
     }
 
     @Override
@@ -181,7 +174,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     public Integer getSpecificProjectUserRoleId() {
         Integer projectCode = getProjectId();
-        Integer memberId = userServiceImpl.getUserId();
+        Integer memberId = userService.getUserId();
         Integer roleCode = null;
 
         setHeadersProject();

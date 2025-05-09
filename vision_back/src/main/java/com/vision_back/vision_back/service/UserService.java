@@ -11,7 +11,5 @@ public interface UserService {
 
     public Integer getUserId();
 
-    public void processUser();
-
-    public void verifyIfIsLogged(Integer userCode, Integer isLogged);
+    public void processAllUsers();
 }
