@@ -14,4 +14,7 @@ public interface UserService {
     public void processUser();
 
     public void verifyIfIsLogged(Integer userCode, Integer isLogged);
+
+    Double getAverageExecutionTimeByUserId(Integer userId);
+
 }

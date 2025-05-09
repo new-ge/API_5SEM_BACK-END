@@ -46,4 +46,25 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Tempo médio de execução dos cards por usuário")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Tempo médio calculado com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
+    })
+    
+    @GetMapping("/{userId}/average-time")
+    public ResponseEntity<?> getAverageExecutionTime(@PathVariable Integer userId) {
+        try {
+            Double averageTime = userService.getAverageExecutionTimeByUserId(userId);
+            Map<String, Object> response = new HashMap<>();
+            response.put("userId", userId);
+            response.put("averageTime", averageTime);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body("Erro ao calcular tempo médio: " + e.getMessage());
+        }
+    }
+
+
 }

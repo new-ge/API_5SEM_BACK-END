@@ -23,6 +23,7 @@ import com.vision_back.vision_back.VisionBackApplication;
 import com.vision_back.vision_back.entity.TaskEntity;
 import com.vision_back.vision_back.entity.UserEntity;
 import com.vision_back.vision_back.repository.UserRepository;
+import com.vision_back.vision_back.repository.UserTaskRepository;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -96,4 +97,14 @@ public class UserServiceImpl implements UserService {
         }
         userRepository.updateIsLogged(isLogged, userCode);
     }
+
+    @Autowired
+    private UserTaskRepository userTaskRepository;
+
+    @Override
+    public Double getAverageExecutionTimeByUserId(Integer userId) {
+        Double avg = userTaskRepository.findAverageExecutionTimeByUserId(userId);
+        return avg != null ? avg : 0.0;
+    }
+
 }

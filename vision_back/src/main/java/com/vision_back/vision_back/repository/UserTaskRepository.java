@@ -4,6 +4,8 @@ import java.sql.Timestamp;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.vision_back.vision_back.entity.MilestoneEntity;
@@ -40,4 +42,13 @@ public interface UserTaskRepository extends JpaRepository<UserTaskEntity,Integer
     boolean existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCode(TaskEntity taskCode,
             ProjectEntity projectCode, UserEntity userCode, MilestoneEntity milestoneCode,
             StatusEntity statsCode, RoleEntity roleCode);
+
+    @Query(value = """
+    SELECT AVG(average_time)
+    FROM usr_task
+    WHERE usr_code = :userId AND end_date IS NOT NULL
+    """, nativeQuery = true)
+    Double findAverageExecutionTimeByUserId(@Param("userId") Integer userId);
+
 }
+
