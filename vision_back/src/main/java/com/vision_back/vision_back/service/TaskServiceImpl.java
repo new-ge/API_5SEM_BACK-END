@@ -296,7 +296,7 @@ public class TaskServiceImpl implements TaskService {
                 );
                 if (milestone == null) continue;
     
-                // Status com cache
+
                 StatusEntity status = statusCache.computeIfAbsent(statusCode, code ->
                     EntityRetryUtils.retryUntilFound(
                         () -> statsRepository.findByStatusCode(code),
@@ -305,7 +305,6 @@ public class TaskServiceImpl implements TaskService {
                 );
                 if (status == null) continue;
     
-                // Tarefa
                 Optional<TaskEntity> taskOpt = EntityRetryUtils.retryUntilFound(
                     () -> taskRepository.findByTaskCode(taskCode),
                     5, 200, "TaskEntity"
@@ -396,8 +395,6 @@ public class TaskServiceImpl implements TaskService {
             for (JsonNode node : tasks) {
                 Integer taskCode = node.get("id").asInt();
                 String subject = node.get("subject").asText();
-
-                System.out.println("Task Code: " + taskCode + ", Subject: " + subject);
     
                 MilestoneEntity milestone;
                     milestone = EntityRetryUtils.retryUntilFound(
@@ -567,71 +564,4 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException("Erro ao processar as User Stories", e);
         }
     }
-
-    // @Transactional
-    // public MilestoneEntity saveOnDatabaseMilestone(Integer milestoneCode, String milestoneName, LocalDate estimatedStart,
-    //         LocalDate estimatedEnd, Integer projectCode) {
-    //     if (!milestoneRepository.existsByMilestoneCodeAndMilestoneNameAndEstimatedStartAndEstimatedEnd(milestoneCode,
-    //             milestoneName, estimatedStart, estimatedEnd)) {
-    //         MilestoneEntity milestoneEntity = new MilestoneEntity(milestoneCode, milestoneName, estimatedStart,
-    //                 estimatedEnd, projectCode);
-    //         return milestoneRepository.save(milestoneEntity);
-    //     }
-    //     return null;
-    // }
-
-
-    // @Transactional
-    // public TaskEntity saveOnDatabaseTask(Integer taskCode, String taskDescription) {
-    //     if (!taskRepository.existsByTaskCodeAndTaskDescription(taskCode, taskDescription)) {
-    //         TaskEntity taskEntity = new TaskEntity(taskCode, taskDescription);
-    //         return taskRepository.save(taskEntity);
-    //     }
-    //     return null;
-    // }
-
-
-    // @Transactional
-    // public TagEntity saveOnDatabaseTags(Integer taskCode, Integer projectCode, Integer userCode, String tagName, Integer quant) {
-    //     if (!tagRepository.existsByTaskCodeAndProjectCodeAndUserCodeAndTagNameAndQuant(taskCode, projectCode, userCode, tagName, quant)) {
-    //         TagEntity tagEntity = new TagEntity(taskCode, projectCode, userCode, tagName, quant);
-    //         return tagRepository.save(tagEntity);
-    //     }
-    //     return null;
-    // }
-
-
-    // @Transactional
-    // public StatusEntity saveOnDatabaseStats(Integer statusCode, String statusName) {
-    //     if (!statsRepository.existsByStatusCodeAndStatusName(statusCode, statusName)) {
-    //         StatusEntity statusEntity = new StatusEntity(statusCode, statusName);
-    //         return statsRepository.save(statusEntity);
-    //     }
-    //     return null;
-    // }
-
-    // @Transactional
-    // public TaskStatusHistoryEntity saveOnDatabaseTaskStatusHistory(Integer taskCode, Integer userCode, String lastStatus, String actualStatus,
-    //         Timestamp changeDate) {
-    //     if (!taskStatusHistoryRepository.existsByTaskCodeAndLastStatusAndActualStatusAndChangeDate(taskCode, lastStatus, actualStatus, changeDate)) {
-    //         TaskStatusHistoryEntity entity = new TaskStatusHistoryEntity(taskCode, userCode, lastStatus, actualStatus,
-    //                 changeDate);
-    //         return taskStatusHistoryRepository.save(entity);
-    //     }
-    //     return null;
-    // }
-
-    // @Transactional
-    // public UserTaskEntity saveOnDatabaseUserTask(Integer taskCode, Integer projectCode, Integer userCode,
-    //         Integer milestoneCode, Integer statsCode, Integer roleCode, Timestamp startDate,
-    //         Timestamp endDate, Integer quant) {
-    //     if (!userTaskRepository
-    //             .existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCodeAndStartDateAndEndDate(
-    //                     taskCode, projectCode, userCode, milestoneCode, statsCode, roleCode, startDate, endDate)) {
-    //         UserTaskEntity userTaskEntity = new UserTaskEntity(taskCode, projectCode, userCode, milestoneCode,
-    //                 statsCode, roleCode, startDate, endDate, quant);
-    //         return userTaskRepository.save(userTaskEntity);
-    //     }
-    //     return null;
-    // }
 }
