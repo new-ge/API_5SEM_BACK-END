@@ -9,5 +9,7 @@ public interface UserProjectHelperService  {
     public void processUsersByProjectId(Integer projectCode);
 
     public Integer fetchProjectIdByUserId(Integer userId);
+
+    public void verifyIfIsLogged(Integer userCode, Integer isLogged);
     
 }

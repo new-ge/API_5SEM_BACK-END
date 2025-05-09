@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.vision_back.vision_back.entity.RoleEntity;
 import com.vision_back.vision_back.entity.UserEntity;
 import com.vision_back.vision_back.entity.dto.UserDto;
 
@@ -19,7 +20,9 @@ public interface UserRepository extends JpaRepository<UserEntity,Integer>{
     Optional<UserEntity> findByUserCode(Integer userCode);
 
     @Query(value = "SELECT usr_code from usr", nativeQuery = true)
-    List<UserDto> listAllUsersCode();
+    List<Integer> listAllUserCode();
+
+    Optional<RoleEntity> findFirstByUserCodeIn(List<Integer> userCode);
 
     Optional<UserEntity> findByUserCodeAndUserNameAndUserRole(
         Integer userCode, String userName, String[] userRole

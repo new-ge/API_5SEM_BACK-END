@@ -27,8 +27,8 @@ public interface MilestoneRepository extends JpaRepository<MilestoneEntity,Integ
                     "AND (:milestone IS NULL OR m.milestone_name = :milestone) \r\n" +
                     "AND (:project IS NULL OR p.project_name = :project) \r\n" + 
                     "AND (:user IS NULL OR u.usr_name = :user) \r\n" +
-                    "and u.is_logged_in = 1 \r\n" +
-                    "group by u.usr_name, m.milestone_name, p.project_name", nativeQuery = true)
+                    "group by u.usr_name, m.milestone_name, p.project_name \r\n"+
+                    "order by m.milestone_name asc", nativeQuery = true)
      List<MilestoneDto> countCardsPerSprintOperator(@Param("milestone") String milestone,
                                                     @Param("project") String project,
                                                     @Param("user") String user);
@@ -38,39 +38,45 @@ public interface MilestoneRepository extends JpaRepository<MilestoneEntity,Integ
                     "join milestone m on m.milestone_code = ut.milestone_code \r\n" +
                     "JOIN usr u ON u.usr_code = ut.usr_code \r\n" + 
                     "join project p on p.project_code = ut.project_code  \r\n" + 
-                    "where ut.end_date is not null \r\n" + 
-                    "AND (:milestone IS NULL OR m.milestone_name = :milestone) \r\n" +
+                    "where (:milestone IS NULL OR m.milestone_name = :milestone) \r\n" +
                     "AND (:project IS NULL OR p.project_name = :project) \r\n" + 
                     "AND (:user IS NULL OR u.usr_name = :user) \r\n" +
                     "and u.is_logged_in = 1 \r\n" +
-                    "group by u.usr_name, p.project_name, m.milestone_name", nativeQuery = true)
+                    "and ut.end_date is not null \r\n" +
+                    "group by u.usr_name, p.project_name, m.milestone_name \r\n"+
+                    "order by m.milestone_name asc", nativeQuery = true)
      List<MilestoneDto> countCardsClosedPerSprintOperator(@Param("milestone") String milestone,
                                                           @Param("project") String project,
                                                           @Param("user") String user);
 
-     @Query(value = "select u.usr_name, p.project_name, m.milestone_name, SUM(ut.quant)\r\n" + 
-                    "from usr_task ut \r\n" + 
-                    "join milestone m on m.milestone_code = ut.milestone_code \r\n" + 
-                    "JOIN usr u ON u.usr_code = ut.usr_code \r\n" + 
-                    "join project p on p.project_code = ut.project_code \r\n" + 
-                    "WHERE (:milestone IS NULL OR m.milestone_name = :milestone) \r\n" +
-                    "AND (:project IS NULL OR p.project_name = :project) \r\n" + 
-                    "AND (:user IS NULL OR u.usr_name = :user) \r\n" + 
-                    "group by u.usr_name, m.milestone_name, p.project_name", nativeQuery = true)
+     @Query(value = """
+                    select u.usr_name, p.project_name, m.milestone_name, SUM(ut.quant)
+                    from usr_task ut
+                    join milestone m on m.milestone_code = ut.milestone_code
+                    join usr u ON u.usr_code = ut.usr_code 
+                    join project p on p.project_code = ut.project_code
+                    WHERE (:milestone IS NULL OR m.milestone_name = :milestone)
+                    AND (:project IS NULL OR p.project_name = :project)
+                    AND (:user IS NULL OR u.usr_name = :user)
+                    group by u.usr_name, m.milestone_name, p.project_name
+                    order by m.milestone_name asc
+                    """, nativeQuery = true)
      List<MilestoneDto> countCardsPerSprintManager(@Param("milestone") String milestone,
                                                    @Param("project") String project,
                                                    @Param("user") String user);
 
-     @Query(value = "select u.usr_name, p.project_name, m.milestone_name, SUM(ut.quant)\r\n" + 
-                    "from usr_task ut \r\n" + 
-                    "join milestone m on m.milestone_code = ut.milestone_code \r\n" + 
-                    "JOIN usr u ON u.usr_code = ut.usr_code \r\n" + 
-                    "join project p on p.project_code = ut.project_code  \r\n" + 
-                    "where ut.end_date is not null \r\n" + 
-                    "AND (:milestone IS NULL OR m.milestone_name = :milestone) \r\n" +
-                    "AND (:project IS NULL OR p.project_name = :project) \r\n" + 
-                    "AND (:user IS NULL OR u.usr_name = :user) \r\n" +
-                    "group by u.usr_name, p.project_name, m.milestone_name", nativeQuery = true)
+     @Query(value = """
+                    select u.usr_name, p.project_name, m.milestone_name, SUM(ut.quant)
+                    from usr_task ut
+                    join milestone m on m.milestone_code = ut.milestone_code
+                    JOIN usr u ON u.usr_code = ut.usr_code
+                    join project p on p.project_code = ut.project_code
+                    WHERE (:milestone IS NULL OR m.milestone_name = :milestone)
+                    AND (:project IS NULL OR p.project_name = :project)
+                    AND (:user IS NULL OR u.usr_name = :user)
+                    and ut.end_date is not null
+                    group by u.usr_name, p.project_name, m.milestone_name
+                    order by m.milestone_name asc """, nativeQuery = true)
      List<MilestoneDto> countCardsClosedPerSprintManager(@Param("milestone") String milestone,
                                                          @Param("project") String project,
                                                          @Param("user") String user);

@@ -1,15 +1,12 @@
 package com.vision_back.vision_back.service;
 
-import java.nio.channels.Pipe.SourceChannel;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -18,14 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vision_back.vision_back.VisionBackApplication;
-import com.vision_back.vision_back.component.EntityRetryUtils;
-import com.vision_back.vision_back.entity.MilestoneEntity;
-import com.vision_back.vision_back.entity.ProjectEntity;
-import com.vision_back.vision_back.entity.RoleEntity;
 import com.vision_back.vision_back.entity.UserEntity;
-import com.vision_back.vision_back.repository.ProjectRepository;
-import com.vision_back.vision_back.repository.RoleRepository;
 import com.vision_back.vision_back.repository.UserRepository;
 
 @Service
@@ -58,6 +48,7 @@ public class UserProjectHelperServiceImpl implements UserProjectHelperService {
 
         try {
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            verifyIfIsLogged(jsonNode.get("id").asInt(), 1);
             return jsonNode.get("id").asInt();
         } catch (Exception e) {
             e.printStackTrace();
@@ -80,13 +71,12 @@ public class UserProjectHelperServiceImpl implements UserProjectHelperService {
             JsonNode usersArray = objectMapper.readTree(response.getBody());
 
             for (JsonNode userNode : usersArray) {
-                System.out.print(userNode);
-                Integer userId = userNode.get("id").asInt();
+                Integer userCode = userNode.get("id").asInt();
                 String username = userNode.get("username").asText();
                 String[] roles = objectMapper.convertValue(userNode.get("roles"), String[].class);
 
-                if (!userRepository.existsByUserCodeAndUserNameAndUserRole(userId, username, roles)) {
-                    userEntities.add(new UserEntity(userId, username, roles, 1));
+                if (!userRepository.existsByUserCodeAndUserNameAndUserRole(userCode, username, roles)) {
+                    userEntities.add(new UserEntity(userCode, username, roles, 1));
                 }
             }
 
@@ -111,5 +101,14 @@ public class UserProjectHelperServiceImpl implements UserProjectHelperService {
             e.printStackTrace();
             throw new NullPointerException("Resposta não obtida ou resposta inválida.");
         }
+    }
+
+    @Transactional
+    @Override
+    public void verifyIfIsLogged(Integer userCode, Integer isLogged) {
+        if (userRepository.count() > 1) {
+            userRepository.setAllUsersLoggedOut();
+        }
+        userRepository.updateIsLogged(isLogged, userCode);
     }
 }

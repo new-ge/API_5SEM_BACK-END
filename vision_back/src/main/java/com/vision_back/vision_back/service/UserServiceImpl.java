@@ -1,12 +1,5 @@
 package com.vision_back.vision_back.service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.print.DocFlavor.STRING;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -20,12 +13,11 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
-import com.vision_back.vision_back.entity.TaskEntity;
-import com.vision_back.vision_back.entity.UserEntity;
 import com.vision_back.vision_back.repository.UserRepository;
 
 @Service
 public class UserServiceImpl implements UserService {
+    
     @Autowired
     private AuthenticationService auth;
 
@@ -70,15 +62,6 @@ public class UserServiceImpl implements UserService {
     public void processAllUsers() {
         Integer projectId = taigaHelper.fetchProjectIdByUserId(taigaHelper.fetchLoggedUserId());
         taigaHelper.processUsersByProjectId(projectId);
-
-    }
-
-    @Transactional
-    @Override
-    public void verifyIfIsLogged(Integer userCode, Integer isLogged) {
-        if (userRepository.count() > 1) {
-            userRepository.setAllUsersLoggedOut();
-        }
-        userRepository.updateIsLogged(isLogged, userCode);
+        taigaHelper.fetchLoggedUserId();
     }
 }

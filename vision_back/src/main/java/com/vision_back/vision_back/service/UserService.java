@@ -12,6 +12,4 @@ public interface UserService {
     public Integer getUserId();
 
     public void processAllUsers();
-
-    public void verifyIfIsLogged(Integer userCode, Integer isLogged);
 }

@@ -13,7 +13,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.SecurityProperties.User;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -35,7 +34,6 @@ import com.vision_back.vision_back.entity.TaskEntity;
 import com.vision_back.vision_back.entity.TaskStatusHistoryEntity;
 import com.vision_back.vision_back.entity.UserEntity;
 import com.vision_back.vision_back.entity.UserTaskEntity;
-import com.vision_back.vision_back.entity.dto.UserDto;
 import com.vision_back.vision_back.repository.MilestoneRepository;
 import com.vision_back.vision_back.repository.ProjectRepository;
 import com.vision_back.vision_back.repository.RoleRepository;
@@ -257,10 +255,8 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public void baseProcessTaskUser() {
         HttpEntity<Void> headersEntity = setHeadersTasks();
-    
-        List<UserDto> users = userRepository.listAllUsersCode();
         Integer projectCode = projectServiceImpl.getProjectId();
-        Integer roleCode = projectServiceImpl.getSpecificProjectUserRoleId();
+        List<Integer> roleList = roleRepository.listAllRolesCode();
     
         try {
             String taskUrl = "https://api.taiga.io/api/v1/tasks?&project=" + projectCode;
@@ -272,7 +268,6 @@ public class TaskServiceImpl implements TaskService {
                 5, 200, "ProjectEntity"
             );
 
-    
             Map<Integer, MilestoneEntity> milestoneCache = new HashMap<>();
             Map<Integer, StatusEntity> statusCache = new HashMap<>();
     
@@ -284,7 +279,7 @@ public class TaskServiceImpl implements TaskService {
                 Integer statusCode = task.get("status").asInt();
 
                 Optional<RoleEntity> roleOpt = EntityRetryUtils.retryUntilFound(
-                    () -> roleRepository.findByRoleCode(roleCode),
+                    () -> roleRepository.findFirstByRoleCodeIn(roleList),
                     5, 200, "RoleEntity"
                 );
 
@@ -473,7 +468,7 @@ public class TaskServiceImpl implements TaskService {
     public void processTags() {
         HttpEntity<Void> headersEntity = setHeadersTasks();
         Integer projectCode = projectServiceImpl.getProjectId();
-        Integer userCode = userServiceImpl.getUserId();
+        List<Integer> usersList = userRepository.listAllUserCode();
         List<TagEntity> tagEntities = new ArrayList<>();
     
         String sprintUrl = "https://api.taiga.io/api/v1/milestones?project=" + projectCode;
@@ -488,7 +483,7 @@ public class TaskServiceImpl implements TaskService {
                 Integer sprintCode = sprint.get("id").asInt();
     
                 ResponseEntity<String> response = restTemplate.exchange(
-                        "https://api.taiga.io/api/v1/tasks?project=" + projectCode + "&assigned_to=" + userCode,
+                        "https://api.taiga.io/api/v1/tasks?project=" + projectCode,
                         HttpMethod.GET,
                         headersEntity,
                         String.class);
@@ -496,7 +491,7 @@ public class TaskServiceImpl implements TaskService {
                 JsonNode rootNode = objectMapper.readTree(response.getBody());
     
                 for (JsonNode node : rootNode) {
-                    
+                    Integer userCode = node.get("assigned_to").asInt();
                     Integer taskCode = node.get("id").asInt();
                     Integer taskSprintCode = node.get("milestone").asInt(); 
     
