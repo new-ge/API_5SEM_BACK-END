@@ -1,6 +1,7 @@
 package com.vision_back.vision_back.repository;
 
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +16,7 @@ import com.vision_back.vision_back.entity.StatusEntity;
 import com.vision_back.vision_back.entity.TaskEntity;
 import com.vision_back.vision_back.entity.UserEntity;
 import com.vision_back.vision_back.entity.UserTaskEntity;
+import com.vision_back.vision_back.entity.dto.UserTaskAverageDTO;
 import com.vision_back.vision_back.entity.dto.UserTaskDto;
 
 @Repository
@@ -44,11 +46,25 @@ public interface UserTaskRepository extends JpaRepository<UserTaskEntity,Integer
             StatusEntity statsCode, RoleEntity roleCode);
 
     @Query(value = """
-    SELECT AVG(average_time)
-    FROM usr_task
-    WHERE usr_code = :userId AND end_date IS NOT NULL
-    """, nativeQuery = true)
-    Double findAverageExecutionTimeByUserId(@Param("userId") Integer userId);
+        SELECT m.milestone_name AS milestoneName,
+            p.project_name AS projectName,
+            u.usr_name AS userName, 
+            AVG(ut.average_time) AS tempoMedio
+        FROM usr_task ut
+        JOIN usr u ON u.usr_code = ut.usr_code
+        JOIN milestone m ON m.milestone_code = ut.milestone_code
+        JOIN project p ON p.project_code = ut.project_code
+        WHERE (:milestone IS NULL OR m.milestone_name = :milestone)
+            AND (:project IS NULL OR p.project_name = :project)
+            AND (:user IS NULL OR u.usr_name = :user)
+            AND ut.end_date IS NOT NULL  -- Filtra apenas as tarefas com data de fim
+        GROUP BY m.milestone_name, p.project_name, u.usr_name
+        """, nativeQuery = true)
+        List<UserTaskAverageDTO> findAverageTimeByFilters(
+            @Param("milestone") String milestone,
+            @Param("project") String project,
+            @Param("user") String user
+        );
 
 }
 

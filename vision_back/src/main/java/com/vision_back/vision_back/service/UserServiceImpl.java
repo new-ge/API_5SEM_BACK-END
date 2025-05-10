@@ -1,12 +1,7 @@
 package com.vision_back.vision_back.service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import javax.print.DocFlavor.STRING;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -20,8 +15,8 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
-import com.vision_back.vision_back.entity.TaskEntity;
 import com.vision_back.vision_back.entity.UserEntity;
+import com.vision_back.vision_back.entity.dto.UserTaskAverageDTO;
 import com.vision_back.vision_back.repository.UserRepository;
 import com.vision_back.vision_back.repository.UserTaskRepository;
 
@@ -32,6 +27,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserTaskRepository userTaskRepository;
     
     ObjectMapper objectMapper = new ObjectMapper();
     RestTemplate restTemplate = new RestTemplate();
@@ -98,13 +96,36 @@ public class UserServiceImpl implements UserService {
         userRepository.updateIsLogged(isLogged, userCode);
     }
 
-    @Autowired
-    private UserTaskRepository userTaskRepository;
-
     @Override
-    public Double getAverageExecutionTimeByUserId(Integer userId) {
-        Double avg = userTaskRepository.findAverageExecutionTimeByUserId(userId);
-        return avg != null ? avg : 0.0;
+    public List<UserTaskAverageDTO> getAverageExecutionTimeManager(String milestone, String project, String user) {
+        return userTaskRepository.findAverageTimeByFilters(milestone, project, user); 
     }
 
+    @Override
+    public List<UserTaskAverageDTO> getAverageExecutionTimeOperator(String milestone, String project, String user) {
+        Integer userId = getUserId(); 
+        return userTaskRepository.findAverageTimeByFilters(milestone, project, String.valueOf(userId));
+    }
+
+    @Override
+    public List<String> accessControl() {
+        List<String> roles = new ArrayList<>();
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                "https://api.taiga.io/api/v1/users/me",
+                HttpMethod.GET,
+                setHeadersProject(),
+                String.class
+            );
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+
+            for (JsonNode roleNode : jsonNode.get("roles")) {
+                roles.add(roleNode.asText());
+            }
+
+            return roles;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Erro ao obter os papéis do usuário", e);
+        }
+    }    
 }

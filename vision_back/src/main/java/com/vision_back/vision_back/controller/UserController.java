@@ -1,5 +1,7 @@
 package com.vision_back.vision_back.controller;
 
+import com.vision_back.vision_back.entity.dto.UserTaskAverageDTO;
+import com.vision_back.vision_back.repository.UserRepository;
 import com.vision_back.vision_back.service.AuthenticationService;
 import com.vision_back.vision_back.service.UserServiceImpl;
 
@@ -13,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,20 +54,28 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = "Tempo médio calculado com sucesso"),
         @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
     })
-    
-    @GetMapping("/{userId}/average-time")
-    public ResponseEntity<?> getAverageExecutionTime(@PathVariable Integer userId) {
+
+    @GetMapping("/average-time")
+    public ResponseEntity<List<UserTaskAverageDTO>> getAverageExecutionTime(
+        @RequestParam(required = false) String milestone,
+        @RequestParam(required = false) String project,
+        @RequestParam(required = false) String user
+    ) {
         try {
-            Double averageTime = userService.getAverageExecutionTimeByUserId(userId);
-            Map<String, Object> response = new HashMap<>();
-            response.put("userId", userId);
-            response.put("averageTime", averageTime);
-            return ResponseEntity.ok(response);
+            List<String> accessList = userService.accessControl();
+            List<UserTaskAverageDTO> result;
+
+            if (accessList.contains("STAKEHOLDER")) {
+                result = userService.getAverageExecutionTimeManager(milestone, project, user);
+            } else {
+                result = userService.getAverageExecutionTimeOperator(milestone, project, user);
+            }
+
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                .body("Erro ao calcular tempo médio: " + e.getMessage());
+                                 .body(Collections.emptyList());
         }
     }
-
-
 }

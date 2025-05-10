@@ -1,7 +1,11 @@
 package com.vision_back.vision_back.service;
 
+import java.util.List;
+
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Service;
+
+import com.vision_back.vision_back.entity.dto.UserTaskAverageDTO;
 
 @Service
 public interface UserService {
@@ -15,6 +19,10 @@ public interface UserService {
 
     public void verifyIfIsLogged(Integer userCode, Integer isLogged);
 
-    Double getAverageExecutionTimeByUserId(Integer userId);
+    public List<UserTaskAverageDTO> getAverageExecutionTimeManager(String milestone, String project, String user);
+
+    public List<UserTaskAverageDTO> getAverageExecutionTimeOperator(String milestone, String project, String user);
+    
+    List<String> accessControl();
 
 }
