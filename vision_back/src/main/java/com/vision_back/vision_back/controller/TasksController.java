@@ -120,12 +120,12 @@ public class TasksController {
         return ResponseEntity.ok(tasksSprint);
     }
 
-    @GetMapping("/syncAll")
+    @GetMapping("/sync-all-process")
     public ResponseEntity<Void> syncAll() {
         try {
             pServ.processProject();
             pServ.processRoles();
-            uServ.processUser();
+            uServ.processAllUsers();
             tServ.processStatus();
             tServ.processMilestone();
             tServ.processTasks(false);

@@ -36,6 +36,7 @@ public class UserController {
             String role = userService.getUserRole();
 
             Map<String, String> response = new HashMap<>();
+
             response.put("token", token);
             response.put("role", role);
             return ResponseEntity.ok(response);

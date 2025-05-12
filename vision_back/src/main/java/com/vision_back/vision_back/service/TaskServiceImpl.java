@@ -88,6 +88,7 @@ public class TaskServiceImpl implements TaskService {
 
     ObjectMapper objectMapper = new ObjectMapper();
     RestTemplate restTemplate = new RestTemplate();
+    UserEntity usrEntity = new UserEntity();
 
     @Override
     public HttpEntity<Void> setHeadersTasks() {
@@ -108,27 +109,24 @@ public class TaskServiceImpl implements TaskService {
                                 StatusEntity statusEntity,
                                 RoleEntity roleEntity) {
 
-        try {              
-            if (taskNode.get("id").asInt() == taskEntity.getTaskCode() && taskNode.get("milestone").asInt() == milestoneEntity.getMilestoneCode()) {
-                Timestamp createdDate = Timestamp.from(Instant.parse(taskNode.get("created_date").asText()));
-                JsonNode finishedDateNode = taskNode.get("finished_date");
-                Timestamp finishedDate = (finishedDateNode != null && !finishedDateNode.isNull() && !finishedDateNode.asText().isEmpty())
-                        ? Timestamp.from(Instant.parse(finishedDateNode.asText()))
-                        : null;
+        try {
+            Timestamp createdDate = Timestamp.from(Instant.parse(taskNode.get("created_date").asText()));
+            JsonNode finishedDateNode = taskNode.get("finished_date");
+            Timestamp finishedDate = (finishedDateNode != null && !finishedDateNode.isNull() && !finishedDateNode.asText().isEmpty())
+                    ? Timestamp.from(Instant.parse(finishedDateNode.asText()))
+                    : null;
 
-                boolean exists = userTaskRepository.existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCodeAndStartDateAndEndDate(
-                        taskEntity, projectEntity, userEntity, milestoneEntity, statusEntity, roleEntity, createdDate, finishedDate
+            boolean exists = userTaskRepository.existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCodeAndStartDateAndEndDate(
+                    taskEntity, projectEntity, userEntity, milestoneEntity, statusEntity, roleEntity, createdDate, finishedDate
+            );
+
+            if (!exists) {
+                UserTaskEntity entity = new UserTaskEntity(
+                        taskEntity, projectEntity, userEntity, milestoneEntity, statusEntity,
+                        roleEntity, createdDate, finishedDate, 1
                 );
-
-                if (!exists) {
-                    UserTaskEntity entity = new UserTaskEntity(
-                            taskEntity, projectEntity, userEntity, milestoneEntity, statusEntity,
-                            roleEntity, createdDate, finishedDate, 1
-                    );
-                    userTaskRepository.save(entity);
-                }
+                userTaskRepository.save(entity);
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -257,101 +255,82 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public void baseProcessTaskUser() {
         HttpEntity<Void> headersEntity = setHeadersTasks();
-    
-        Integer userCode = userServiceImpl.getUserId();
         Integer projectCode = projectServiceImpl.getProjectId();
-        Integer roleCode = projectServiceImpl.getSpecificProjectUserRoleId();
-    
-        String sprintUrl = "https://api.taiga.io/api/v1/milestones?project=" + projectCode;
-        ResponseEntity<String> sprintResponse = restTemplate.exchange(sprintUrl, HttpMethod.GET, headersEntity, String.class);
+        List<Integer> roleList = roleRepository.listAllRolesCode();
     
         try {
-            JsonNode sprints = objectMapper.readTree(sprintResponse.getBody());
-    
-
-            Optional<ProjectEntity> projectOpt = EntityRetryUtils.retryUntilFound(
-                () -> projectRepository.findByProjectCode(projectCode),
-                5,
-                200,
-                "ProjectEntity"
-            );
-            Optional<UserEntity> userOpt =
-            EntityRetryUtils.retryUntilFound(
-                () -> userRepository.findByUserCode(userCode),
-                5,
-                200,
-                "UserEntity"
-            );
-            Optional<RoleEntity> roleOpt =                     
-            EntityRetryUtils.retryUntilFound(
-                () -> roleRepository.findByRoleCode(roleCode),
-                5,
-                200,
-                "RoleEntity"
-            );
-    
-            if (projectOpt.isEmpty() || userOpt.isEmpty() || roleOpt.isEmpty()) {
-                throw new IllegalArgumentException("Entidade base não encontrada");
-            }
-    
-            String taskUrl = "https://api.taiga.io/api/v1/tasks?assigned_to=" + userCode + "&project=" + projectCode;
+            String taskUrl = "https://api.taiga.io/api/v1/tasks?&project=" + projectCode;
             ResponseEntity<String> taskResponse = restTemplate.exchange(taskUrl, HttpMethod.GET, headersEntity, String.class);
             JsonNode tasks = objectMapper.readTree(taskResponse.getBody());
     
-            for (JsonNode sprint : sprints) {
-                Integer sprintCode = sprint.get("id").asInt();
+            Optional<ProjectEntity> projectOpt = EntityRetryUtils.retryUntilFound(
+                () -> projectRepository.findByProjectCode(projectCode),
+                5, 200, "ProjectEntity"
+            );
 
-                Optional<MilestoneEntity> milestoneOpt =                     
-                EntityRetryUtils.retryUntilFound(
-                    () -> milestoneRepository.findByMilestoneCode(sprintCode),
-                    5,
-                    200,
-                    "MilestoneEntity"
+            Map<Integer, MilestoneEntity> milestoneCache = new HashMap<>();
+            Map<Integer, StatusEntity> statusCache = new HashMap<>();
+    
+            for (JsonNode task : tasks) {
+                if (!task.has("milestone") || task.get("milestone").isNull()) continue;
+    
+                Integer sprintCode = task.get("milestone").asInt();
+                Integer taskCode = task.get("id").asInt();
+                Integer statusCode = task.get("status").asInt();
+
+                Optional<RoleEntity> roleOpt = EntityRetryUtils.retryUntilFound(
+                    () -> roleRepository.findFirstByRoleCodeIn(roleList),
+                    5, 200, "RoleEntity"
+                );
+
+                UserEntity userOpt = EntityRetryUtils.retryUntilFound(
+                        () -> userRepository.findByUserCode(task.get("assigned_to").asInt()),
+                        5, 200, "MilestoneEntity"
+                    ).orElse(null);
+    
+                MilestoneEntity milestone = milestoneCache.computeIfAbsent(sprintCode, code ->
+                    EntityRetryUtils.retryUntilFound(
+                        () -> milestoneRepository.findByMilestoneCode(code),
+                        5, 200, "MilestoneEntity"
+                    ).orElse(null)
+                );
+                if (milestone == null) continue;
+    
+
+                StatusEntity status = statusCache.computeIfAbsent(statusCode, code ->
+                    EntityRetryUtils.retryUntilFound(
+                        () -> statsRepository.findByStatusCode(code),
+                        5, 200, "StatsEntity"
+                    ).orElse(null)
+                );
+                if (status == null) continue;
+    
+                Optional<TaskEntity> taskOpt = EntityRetryUtils.retryUntilFound(
+                    () -> taskRepository.findByTaskCode(taskCode),
+                    5, 200, "TaskEntity"
+                );
+                if (taskOpt.isEmpty()) continue;
+    
+                boolean alreadyExists = userTaskRepository.existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCode(
+                    taskOpt.get(), 
+                    projectOpt.get(), 
+                    userOpt, 
+                    milestone, 
+                    status, 
+                    roleOpt.get()
                 );
     
-                for (JsonNode task : tasks) {
-                    if (task.has("milestone") && task.get("milestone").asInt() == sprintCode) {
-
-                        Integer taskCode = task.get("id").asInt();
-                        Integer statusCode = task.get("status").asInt();
-        
-                        Optional<StatusEntity> statusOpt = 
-                        EntityRetryUtils.retryUntilFound(
-                            () -> statsRepository.findByStatusCode(statusCode),
-                            5,
-                            200,
-                            "StatsEntity"
-                        );
-
-                        Optional<TaskEntity> taskOpt =
-                        EntityRetryUtils.retryUntilFound(
-                            () -> taskRepository.findByTaskCode(taskCode),
-                            5,
-                            200,
-                            "TaskEntity"
-                        );
-
-                        boolean alreadyExists = userTaskRepository.existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCode(
-                            taskOpt.get(), 
-                            projectOpt.get(), 
-                            userOpt.get(), 
-                            milestoneOpt.get(), 
-                            statusOpt.get(), 
-                            roleOpt.get()
-                        );
-            
-                        if (!alreadyExists) {
-                            processTaskUser(task, taskOpt.get(), projectOpt.get(), userOpt.get(), milestoneOpt.get(), statusOpt.get(), roleOpt.get());
-                        }
-                    }
+                if (!alreadyExists) {
+                    processTaskUser(task, taskOpt.get(), projectOpt.get(), userOpt, milestone, status, roleOpt.get());
                 }
             }
+    
         } catch (Exception e) {
             e.printStackTrace();
             throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
         }
     }
-
+    
     @Transactional
     @Override
     public void processMilestone() {
@@ -416,8 +395,6 @@ public class TaskServiceImpl implements TaskService {
             for (JsonNode node : tasks) {
                 Integer taskCode = node.get("id").asInt();
                 String subject = node.get("subject").asText();
-
-                System.out.println("Task Code: " + taskCode + ", Subject: " + subject);
     
                 MilestoneEntity milestone;
                     milestone = EntityRetryUtils.retryUntilFound(
@@ -432,9 +409,7 @@ public class TaskServiceImpl implements TaskService {
                 }
 
                 if (processHistory) {
-                    if (userCode == node.get("assigned_to").asInt()) {
-                        processTaskHistory(taskCode, projectCode, node.get("milestone").asInt(), node.get("assigned_to").asInt());
-                    }
+                    processTaskHistory(taskCode, projectCode, node.get("milestone").asInt(), node.get("assigned_to").asInt());
                 }
             }
     
@@ -490,7 +465,7 @@ public class TaskServiceImpl implements TaskService {
     public void processTags() {
         HttpEntity<Void> headersEntity = setHeadersTasks();
         Integer projectCode = projectServiceImpl.getProjectId();
-        Integer userCode = userServiceImpl.getUserId();
+        List<Integer> usersList = userRepository.listAllUserCode();
         List<TagEntity> tagEntities = new ArrayList<>();
     
         String sprintUrl = "https://api.taiga.io/api/v1/milestones?project=" + projectCode;
@@ -505,7 +480,7 @@ public class TaskServiceImpl implements TaskService {
                 Integer sprintCode = sprint.get("id").asInt();
     
                 ResponseEntity<String> response = restTemplate.exchange(
-                        "https://api.taiga.io/api/v1/tasks?project=" + projectCode + "&assigned_to=" + userCode,
+                        "https://api.taiga.io/api/v1/tasks?project=" + projectCode,
                         HttpMethod.GET,
                         headersEntity,
                         String.class);
@@ -513,7 +488,7 @@ public class TaskServiceImpl implements TaskService {
                 JsonNode rootNode = objectMapper.readTree(response.getBody());
     
                 for (JsonNode node : rootNode) {
-                    
+                    Integer userCode = node.get("assigned_to").asInt();
                     Integer taskCode = node.get("id").asInt();
                     Integer taskSprintCode = node.get("milestone").asInt(); 
     
@@ -589,71 +564,4 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException("Erro ao processar as User Stories", e);
         }
     }
-
-    // @Transactional
-    // public MilestoneEntity saveOnDatabaseMilestone(Integer milestoneCode, String milestoneName, LocalDate estimatedStart,
-    //         LocalDate estimatedEnd, Integer projectCode) {
-    //     if (!milestoneRepository.existsByMilestoneCodeAndMilestoneNameAndEstimatedStartAndEstimatedEnd(milestoneCode,
-    //             milestoneName, estimatedStart, estimatedEnd)) {
-    //         MilestoneEntity milestoneEntity = new MilestoneEntity(milestoneCode, milestoneName, estimatedStart,
-    //                 estimatedEnd, projectCode);
-    //         return milestoneRepository.save(milestoneEntity);
-    //     }
-    //     return null;
-    // }
-
-
-    // @Transactional
-    // public TaskEntity saveOnDatabaseTask(Integer taskCode, String taskDescription) {
-    //     if (!taskRepository.existsByTaskCodeAndTaskDescription(taskCode, taskDescription)) {
-    //         TaskEntity taskEntity = new TaskEntity(taskCode, taskDescription);
-    //         return taskRepository.save(taskEntity);
-    //     }
-    //     return null;
-    // }
-
-
-    // @Transactional
-    // public TagEntity saveOnDatabaseTags(Integer taskCode, Integer projectCode, Integer userCode, String tagName, Integer quant) {
-    //     if (!tagRepository.existsByTaskCodeAndProjectCodeAndUserCodeAndTagNameAndQuant(taskCode, projectCode, userCode, tagName, quant)) {
-    //         TagEntity tagEntity = new TagEntity(taskCode, projectCode, userCode, tagName, quant);
-    //         return tagRepository.save(tagEntity);
-    //     }
-    //     return null;
-    // }
-
-
-    // @Transactional
-    // public StatusEntity saveOnDatabaseStats(Integer statusCode, String statusName) {
-    //     if (!statsRepository.existsByStatusCodeAndStatusName(statusCode, statusName)) {
-    //         StatusEntity statusEntity = new StatusEntity(statusCode, statusName);
-    //         return statsRepository.save(statusEntity);
-    //     }
-    //     return null;
-    // }
-
-    // @Transactional
-    // public TaskStatusHistoryEntity saveOnDatabaseTaskStatusHistory(Integer taskCode, Integer userCode, String lastStatus, String actualStatus,
-    //         Timestamp changeDate) {
-    //     if (!taskStatusHistoryRepository.existsByTaskCodeAndLastStatusAndActualStatusAndChangeDate(taskCode, lastStatus, actualStatus, changeDate)) {
-    //         TaskStatusHistoryEntity entity = new TaskStatusHistoryEntity(taskCode, userCode, lastStatus, actualStatus,
-    //                 changeDate);
-    //         return taskStatusHistoryRepository.save(entity);
-    //     }
-    //     return null;
-    // }
-
-    // @Transactional
-    // public UserTaskEntity saveOnDatabaseUserTask(Integer taskCode, Integer projectCode, Integer userCode,
-    //         Integer milestoneCode, Integer statsCode, Integer roleCode, Timestamp startDate,
-    //         Timestamp endDate, Integer quant) {
-    //     if (!userTaskRepository
-    //             .existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndStatsCodeAndRoleCodeAndStartDateAndEndDate(
-    //                     taskCode, projectCode, userCode, milestoneCode, statsCode, roleCode, startDate, endDate)) {
-    //         UserTaskEntity userTaskEntity = new UserTaskEntity(taskCode, projectCode, userCode, milestoneCode,
-    //                 statsCode, roleCode, startDate, endDate, quant);
-    //         return userTaskRepository.save(userTaskEntity);
-    //     }
-    //     return null;
-    // }
 }
