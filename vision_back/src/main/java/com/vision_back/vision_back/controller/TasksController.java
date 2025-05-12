@@ -1,5 +1,7 @@
 package com.vision_back.vision_back.controller;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -7,9 +9,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,6 +44,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Tag(name = "tasks", description = "Endpoints relacionados às tarefas")
 @RestController
@@ -73,6 +81,53 @@ public class TasksController {
 
     @Autowired
     private MilestoneRepository mRepo;
+
+    @GetMapping("/request-excel")
+    public void exportToExcel(HttpServletResponse response, 
+                              @RequestParam(required = false) String milestone,
+                              @RequestParam(required = false) String project,
+                              @RequestParam(required = false) String user)  {
+        try {
+            List<String> accessList = uRepo.accessControl();
+
+            Workbook workbook = new XSSFWorkbook();
+            Sheet sheet = workbook.createSheet("Persons");
+
+            Row headerRow = sheet.createRow(0);
+            headerRow.createCell(0).setCellValue("Projeto");
+            headerRow.createCell(1).setCellValue("Operador");
+            headerRow.createCell(2).setCellValue("Sprint");
+            headerRow.createCell(3).setCellValue("Tarefas por Status");
+
+            if (accessList.contains("STAKEHOLDER")) {
+                List<StatsDto> statsList = sRepo.countTasksByStatusManager(milestone, project, user);
+                List<MilestoneDto> tasksSprint = mRepo.countCardsPerSprintManager(milestone, project, user);
+                List<TaskStatusHistoryDto> reworkDetails = tshRepo.findTaskStatusHistoryWithReworkFlagManager(milestone, project, user);
+
+                System.out.println(statsList.size());
+
+                int rowIdx = 1;
+                for (StatsDto stats : statsList) {
+                    Row row = sheet.createRow(rowIdx++);
+                    row.createCell(0).setCellValue(stats.getProjectName());
+                    row.createCell(1).setCellValue(stats.getUserName());
+                    row.createCell(2).setCellValue(stats.getMilestoneName());
+                    row.createCell(3).setCellValue(stats.getQuant());
+                }
+
+                response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+                response.setHeader("Content-Disposition", "attachment; filename=relatorio.xlsx");
+
+                OutputStream outputStream = response.getOutputStream();
+                workbook.write(outputStream);
+                workbook.close();
+                outputStream.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
     @Operation(summary = "Conta as tarefas por status do usuário", description = "Conta o número de tarefas por status, baseado no ID do projeto e do usuário.")
     @ApiResponses(value = {
@@ -121,7 +176,7 @@ public class TasksController {
     }
 
     @GetMapping("/sync-all-process")
-    public ResponseEntity<Void> syncAll() {
+    public void syncAll() {
         try {
             pServ.processProject();
             pServ.processRoles();
@@ -130,10 +185,8 @@ public class TasksController {
             tServ.processMilestone();
             tServ.processTasks(false);
             tServ.baseProcessTaskUser();
-            return ResponseEntity.ok().build();
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
