@@ -110,11 +110,15 @@ public class TasksController {
 
         List<String> accessList = uRepo.accessControl();
         List<MilestoneDto> tasksSprint;
-
         if (accessList.contains("STAKEHOLDER")) {
             tasksSprint = mRepo.countCardsPerSprintManager(milestone, project, user);
-        } else {
+        } else if(accessList.contains("UX") ||
+                  accessList.contains("BACK") ||
+                  accessList.contains("FRONT") ||
+                  accessList.contains("DESIGN")){
             tasksSprint = mRepo.countCardsPerSprintOperator(milestone, project, user);
+        }else{
+           tasksSprint = taskRepo.countTaskscreatedAdmin();
         }
 
         return ResponseEntity.ok(tasksSprint);
