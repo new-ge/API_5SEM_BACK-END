@@ -189,8 +189,13 @@ public class TasksController {
     
         if (accessList.contains("STAKEHOLDER")) {
             statsList = tagRepo.countTasksByTagManager(milestone, project, user);
-        } else {
+        } else if(accessList.contains("UX") ||
+                  accessList.contains("BACK") ||
+                  accessList.contains("FRONT") ||
+                  accessList.contains("DESIGN")) {
             statsList = tagRepo.countTasksByTagOperator(milestone, project, user);
+        }else{
+            statsList = tagRepo.countTasksByTagAdmin();
         }
     
         return ResponseEntity.ok(statsList);
