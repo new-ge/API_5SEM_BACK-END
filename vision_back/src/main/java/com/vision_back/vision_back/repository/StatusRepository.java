@@ -53,4 +53,13 @@ public interface StatusRepository extends JpaRepository<StatusEntity,Integer>{
     boolean existsByStatusCodeAndStatusName(Integer statusCode, String statusName);
 
     boolean existsByStatusCode(Integer statsCode);
+
+        @Query(value = "select max(u.usr_name), p.project_name, m.milestone_name, s.stats_name, SUM(ut.quant) \r\n" +
+                "FROM usr_task ut \r\n" +
+                "join milestone m on m.milestone_code = ut.milestone_code \r\n"+
+                "JOIN usr u ON u.usr_code = ut.usr_code \r\n"+
+                "join project p on p.project_code = ut.project_code \r\n"+
+                "join stats s on s.stats_code = ut.stats_code \r\n"+
+                "group by s.stats_name, m.milestone_name, p.project_name", nativeQuery = true)
+    List<StatsDto> countTasksByStatusAdmin();
 }
