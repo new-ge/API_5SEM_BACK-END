@@ -89,30 +89,105 @@ public class TasksController {
                               @RequestParam(required = false) String user)  {
         try {
             List<String> accessList = uRepo.accessControl();
-
             Workbook workbook = new XSSFWorkbook();
-            Sheet sheet = workbook.createSheet("Persons");
 
-            Row headerRow = sheet.createRow(0);
-            headerRow.createCell(0).setCellValue("Projeto");
-            headerRow.createCell(1).setCellValue("Operador");
-            headerRow.createCell(2).setCellValue("Sprint");
-            headerRow.createCell(3).setCellValue("Tarefas por Status");
 
+            
             if (accessList.contains("STAKEHOLDER")) {
+
                 List<StatsDto> statsList = sRepo.countTasksByStatusManager(milestone, project, user);
                 List<MilestoneDto> tasksSprint = mRepo.countCardsPerSprintManager(milestone, project, user);
                 List<TaskStatusHistoryDto> reworkDetails = tshRepo.findTaskStatusHistoryWithReworkFlagManager(milestone, project, user);
+                List<TagDto> tagList = tagRepo.countTasksByTagManager(milestone, project, user);
+                List<MilestoneDto> tasksSprintClosed = mRepo.countCardsClosedPerSprintManager(milestone, project, user);
 
-                System.out.println(statsList.size());
+                Sheet statusSheet = workbook.createSheet("Tarefas por Status");
 
-                int rowIdx = 1;
+                Row headerStatusRow = statusSheet.createRow(0);
+                headerStatusRow.createCell(0).setCellValue("Projeto");
+                headerStatusRow.createCell(1).setCellValue("Operador");
+                headerStatusRow.createCell(2).setCellValue("Sprint");
+                headerStatusRow.createCell(3).setCellValue("Status");
+                headerStatusRow.createCell(4).setCellValue("Qtd Tarefas");
+
+                int rowIdxStatus = 1;
                 for (StatsDto stats : statsList) {
-                    Row row = sheet.createRow(rowIdx++);
+                    Row row = statusSheet.createRow(rowIdxStatus++);
                     row.createCell(0).setCellValue(stats.getProjectName());
                     row.createCell(1).setCellValue(stats.getUserName());
                     row.createCell(2).setCellValue(stats.getMilestoneName());
-                    row.createCell(3).setCellValue(stats.getQuant());
+                    row.createCell(3).setCellValue(stats.getStatusName());
+                    row.createCell(4).setCellValue(stats.getQuant());
+                }
+
+                Sheet createdCardsSheet = workbook.createSheet("Tarefas Criadas");
+
+                Row headerCreatedCardsRow = createdCardsSheet.createRow(0);
+                headerCreatedCardsRow.createCell(0).setCellValue("Projeto");
+                headerCreatedCardsRow.createCell(1).setCellValue("Operador");
+                headerCreatedCardsRow.createCell(2).setCellValue("Sprint");
+                headerCreatedCardsRow.createCell(3).setCellValue("Qtd Tarefas Criadas");
+
+                int rowIdxCreatedCards = 1;
+                for (MilestoneDto milestoneDto : tasksSprint) {
+                    Row row = createdCardsSheet.createRow(rowIdxCreatedCards++);
+                    row.createCell(0).setCellValue(milestoneDto.getProjectName());
+                    row.createCell(1).setCellValue(milestoneDto.getUserName());
+                    row.createCell(2).setCellValue(milestoneDto.getMilestoneName());
+                    row.createCell(3).setCellValue(milestoneDto.getQuant());
+                }
+
+                Sheet reworkSheet = workbook.createSheet("Retrabalhos");
+
+                Row headerReworkSheet = reworkSheet.createRow(0);
+                headerReworkSheet.createCell(0).setCellValue("Projeto");
+                headerReworkSheet.createCell(1).setCellValue("Operador");
+                headerReworkSheet.createCell(2).setCellValue("Sprint");
+                headerReworkSheet.createCell(3).setCellValue("Qtd Retrabalhos");
+
+                int rowIdxRework = 1;
+                for (TaskStatusHistoryDto rework : reworkDetails) {
+                    Row row = reworkSheet.createRow(rowIdxRework++);
+                    row.createCell(0).setCellValue(rework.getProjectName());
+                    row.createCell(1).setCellValue(rework.getUserName());
+                    row.createCell(2).setCellValue(rework.getMilestoneName());
+                    row.createCell(3).setCellValue(rework.getRework());
+                }
+
+                Sheet tagSheet = workbook.createSheet("Tarefas por Tag");
+
+                Row headerTagSheet = tagSheet.createRow(0);
+                headerTagSheet.createCell(0).setCellValue("Projeto");
+                headerTagSheet.createCell(1).setCellValue("Operador");
+                headerTagSheet.createCell(2).setCellValue("Sprint");
+                headerTagSheet.createCell(3).setCellValue("Tag");
+                headerTagSheet.createCell(4).setCellValue("Qtd Tarefas por Tag");
+
+                int rowIdxTag = 1;
+                for (TagDto tag : tagList) {
+                    Row row = tagSheet.createRow(rowIdxTag++);
+                    row.createCell(0).setCellValue(tag.getProjectName());
+                    row.createCell(1).setCellValue(tag.getUserName());
+                    row.createCell(2).setCellValue(tag.getMilestoneName());
+                    row.createCell(3).setCellValue(tag.getTagName());
+                    row.createCell(4).setCellValue(tag.getQuant());
+                }
+
+                Sheet tasksClosedSheet = workbook.createSheet("Tarefas Finalizadas");
+
+                Row headerTasksClosedSheet = tasksClosedSheet.createRow(0);
+                headerTasksClosedSheet.createCell(0).setCellValue("Projeto");
+                headerTasksClosedSheet.createCell(1).setCellValue("Operador");
+                headerTasksClosedSheet.createCell(2).setCellValue("Sprint");
+                headerTasksClosedSheet.createCell(3).setCellValue("Qtd Tarefas Finalizadas");
+
+                int rowIdxTaskClosed = 1;
+                for (MilestoneDto sprintClosed : tasksSprintClosed) {
+                    Row row = tasksClosedSheet.createRow(rowIdxTaskClosed++);
+                    row.createCell(0).setCellValue(sprintClosed.getProjectName());
+                    row.createCell(1).setCellValue(sprintClosed.getUserName());
+                    row.createCell(2).setCellValue(sprintClosed.getMilestoneName());
+                    row.createCell(3).setCellValue(sprintClosed.getQuant());
                 }
 
                 response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -122,7 +197,7 @@ public class TasksController {
                 workbook.write(outputStream);
                 workbook.close();
                 outputStream.close();
-            }
+                }
         } catch (Exception e) {
             e.printStackTrace();
         }
