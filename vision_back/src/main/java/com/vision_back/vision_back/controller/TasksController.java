@@ -208,8 +208,13 @@ public class TasksController {
 
         if (accessList.contains("STAKEHOLDER")) {
             tasksSprint = mRepo.countCardsClosedPerSprintManager(milestone, project, user);
-        } else {
+        } else if(accessList.contains("UX") ||
+                  accessList.contains("BACK") ||
+                  accessList.contains("FRONT") ||
+                  accessList.contains("DESIGN")){
             tasksSprint = mRepo.countCardsClosedPerSprintOperator(milestone, project, user);
+        }else{
+            tasksSprint = mRepo.countCardsClosedPerSprintAdmin();
         }
         return ResponseEntity.ok(tasksSprint);
     }
