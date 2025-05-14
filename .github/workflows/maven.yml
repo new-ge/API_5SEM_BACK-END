@@ -2,9 +2,15 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: ["Sprint-1", "Sprint-2", "Sprint-3"]
+    branches:       
+      - "main"
+      - "Sprint-*"
+      - "VSN-*"
   pull_request:
-    branches: ["Sprint-1", "Sprint-2", "Sprint-3"]
+    branches: 
+      - "main"
+      - "Sprint-*"
+      - "VSN-*"
 
 jobs:
   build:
