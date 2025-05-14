@@ -358,8 +358,8 @@ public class TasksController {
     }
     @Operation(summary = "Sincroniza todos os processos para popular o banco de dados", description = "Sincroniza os processos para evitar erros no banco de dados")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Excel retornado com sucesso"),
-            @ApiResponse(responseCode = "500", description = "Erro ao processar o Excel")
+            @ApiResponse(responseCode = "200", description = "Processos sincronizados com sucesso"),
+            @ApiResponse(responseCode = "500", description = "Erro ao sincronizar os processos")
     })
     @GetMapping("/sync-all-process")
     public ResponseEntity<Void> syncAll() {
