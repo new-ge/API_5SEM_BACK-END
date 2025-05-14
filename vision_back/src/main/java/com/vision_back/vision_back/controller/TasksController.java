@@ -90,8 +90,13 @@ public class TasksController {
     
         if (accessList.contains("STAKEHOLDER")) {
             statsList = sRepo.countTasksByStatusManager(milestone, project, user);
-        } else {
+        } else if(accessList.contains("UX") ||
+                  accessList.contains("BACK") ||
+                  accessList.contains("FRONT") ||
+                  accessList.contains("DESIGN")){
             statsList = sRepo.countTasksByStatusOperator(milestone, project, user);
+        }else{
+            statsList = sRepo.countTasksByStatusAdmin();
         }
     
         return ResponseEntity.ok(statsList);
