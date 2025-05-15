@@ -48,27 +48,3 @@ jobs:
         SONAR_JDBC_URL: ${{ secrets.SONAR_JDBC_URL }}
         SONAR_JDBC_USERNAME: ${{ secrets.SONAR_JDBC_USERNAME }}
         SONAR_JDBC_PASSWORD: ${{ secrets.SONAR_JDBC_PASSWORD }}
-
-  merge:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up GitHub CLI
-        run: |
-          curl -fsSL https://cli.github.com/install.sh | bash
-          gh --version
-
-      - name: Enable auto-merge for PR
-        run: |
-          gh pr merge "$GITHUB_HEAD_REF" \
-            --repo "$GITHUB_REPOSITORY" \
-            --auto \
-            --merge
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
