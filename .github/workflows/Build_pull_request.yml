@@ -5,7 +5,7 @@ on:
     branches:       
       - "main"
       - "VSN-*"
-      
+      - "Sprint-*"
 jobs:
   build:
     runs-on: ubuntu-latest
