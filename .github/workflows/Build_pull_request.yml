@@ -1,17 +1,11 @@
-name: Java CI with Maven
+name: Build_pull_request
 
 on:
-  push:
+  pull_request:
     branches:       
       - "main"
-      - "Sprint-*"
       - "VSN-*"
-  pull_request:
-    branches: 
-      - "main"
-      - "Sprint-*"
-      - "VSN-*"
-
+      
 jobs:
   build:
     runs-on: ubuntu-latest
