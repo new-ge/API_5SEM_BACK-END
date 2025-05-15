@@ -1,10 +1,10 @@
 name: Auto Merge
 
 on:
-  workflow_run:
-    workflows: ["Java CI with Maven"]
-    types:
-      - completed
+    workflow_run:
+        workflows: [Java CI with Maven]
+        types:
+        - completed
 
 jobs:
   merge:
