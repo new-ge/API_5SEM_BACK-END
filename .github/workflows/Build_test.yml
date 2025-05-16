@@ -1,0 +1,45 @@
+name: Build_test
+
+on:
+  push:
+    branches:       
+      - "main"
+      - "VSN-*"
+      - "Sprint-*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17.4
+        ports:
+          - 5433:5432
+        env:
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Change directory to vision_back
+      run: cd vision_back
+    
+    - name: Build with Maven
+      working-directory: vision_back
+      run: mvn -B clean package --file pom.xml
+      env:
+        DB_URL: ${{ secrets.POSTGRES_URL }}
+        DB_USERNAME: ${{ secrets.POSTGRES_USER }}
+        DB_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        SONAR_JDBC_URL: ${{ secrets.SONAR_JDBC_URL }}
+        SONAR_JDBC_USERNAME: ${{ secrets.SONAR_JDBC_USERNAME }}
+        SONAR_JDBC_PASSWORD: ${{ secrets.SONAR_JDBC_PASSWORD }}
