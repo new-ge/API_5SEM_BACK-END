@@ -42,3 +42,7 @@ jobs:
         SONAR_JDBC_URL: ${{ secrets.SONAR_JDBC_URL }}
         SONAR_JDBC_USERNAME: ${{ secrets.SONAR_JDBC_USERNAME }}
         SONAR_JDBC_PASSWORD: ${{ secrets.SONAR_JDBC_PASSWORD }}
+    
+    - name: Disparar Merge_pull_request
+      run: |
+       gh workflow run Merge_pull_request.yml --repo $GITHUB_REPOSITORY
