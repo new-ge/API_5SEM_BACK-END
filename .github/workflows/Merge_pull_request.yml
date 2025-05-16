@@ -1,10 +1,13 @@
 name: Merge_pull_request
 
 on:
-  workflow_dispatch:
-      
+  workflow_run:
+    workflows: ["Build_pull_request"]
+    types: [completed]
+
 jobs:
-  merge:
+  on-success:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -18,9 +21,14 @@ jobs:
           curl -fsSL https://cli.github.com/install.sh | bash
           gh --version
 
-      - name: Enable auto-merge for PR
+      - name: Find pull request and enable auto-merge
         run: |
-          gh pr merge "$GITHUB_HEAD_REF" \
+          PR_NUMBER=$(gh pr list --state open --json number,headRefName --jq \
+            ".[] | select(.headRefName == \"${{ github.event.workflow_run.head_branch }}\") | .number")
+
+          echo "Found PR number: $PR_NUMBER"
+
+          gh pr merge "$PR_NUMBER" \
             --repo "$GITHUB_REPOSITORY" \
             --auto \
             --merge
