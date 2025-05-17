@@ -19,10 +19,6 @@ public interface UserService {
 
     public void verifyIfIsLogged(Integer userCode, Integer isLogged);
 
-    public List<UserTaskAverageDTO> getAverageExecutionTimeManager(String milestone, String project, String user);
-
-    public List<UserTaskAverageDTO> getAverageExecutionTimeOperator(String milestone, String project, String user);
-    
     List<String> accessControl();
 
 }

@@ -48,34 +48,4 @@ public class UserController {
 
         }
     }
-
-    @Operation(summary = "Tempo médio de execução dos cards por usuário")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Tempo médio calculado com sucesso"),
-        @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
-    })
-
-    @GetMapping("/average-time")
-    public ResponseEntity<List<UserTaskAverageDTO>> getAverageExecutionTime(
-        @RequestParam(required = false) String milestone,
-        @RequestParam(required = false) String project,
-        @RequestParam(required = false) String user
-    ) {
-        try {
-            List<String> accessList = userService.accessControl();
-            List<UserTaskAverageDTO> result;
-
-            if (accessList.contains("STAKEHOLDER")) {
-                result = userService.getAverageExecutionTimeManager(milestone, project, user);
-            } else {
-                result = userService.getAverageExecutionTimeOperator(milestone, project, user);
-            }
-
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                 .body(Collections.emptyList());
-        }
-    }
 }

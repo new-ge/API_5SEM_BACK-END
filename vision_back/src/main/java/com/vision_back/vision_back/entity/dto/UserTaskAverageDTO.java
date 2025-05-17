@@ -18,11 +18,5 @@ public class UserTaskAverageDTO {
     private String milestoneName;
     private String projectName;
     private String userName;
-    private BigDecimal tempoMedio;
-    
-    
-    public UserTaskAverageDTO(BigDecimal tempoMedio) {
-        this.tempoMedio = tempoMedio.setScale(2, RoundingMode.HALF_UP);
-    }
-    
+    private BigDecimal quant;
 }

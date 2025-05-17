@@ -16,7 +16,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
 import com.vision_back.vision_back.entity.UserEntity;
-import com.vision_back.vision_back.entity.dto.UserTaskAverageDTO;
 import com.vision_back.vision_back.repository.UserRepository;
 import com.vision_back.vision_back.repository.UserTaskRepository;
 
@@ -94,17 +93,6 @@ public class UserServiceImpl implements UserService {
             userRepository.setAllUsersLoggedOut();
         }
         userRepository.updateIsLogged(isLogged, userCode);
-    }
-
-    @Override
-    public List<UserTaskAverageDTO> getAverageExecutionTimeManager(String milestone, String project, String user) {
-        return userTaskRepository.findAverageTimeByFilters(milestone, project, user); 
-    }
-
-    @Override
-    public List<UserTaskAverageDTO> getAverageExecutionTimeOperator(String milestone, String project, String user) {
-        Integer userId = getUserId(); 
-        return userTaskRepository.findAverageTimeByFilters(milestone, project, String.valueOf(userId));
     }
 
     @Override
