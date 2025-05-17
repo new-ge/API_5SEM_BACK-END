@@ -92,8 +92,13 @@ public class TasksController {
     
         if (accessList.contains("STAKEHOLDER")) {
             statsList = sRepo.countTasksByStatusManager(milestone, project, user);
-        } else {
+        } else if(accessList.contains("UX") ||
+                  accessList.contains("BACK") ||
+                  accessList.contains("FRONT") ||
+                  accessList.contains("DESIGN")){
             statsList = sRepo.countTasksByStatusOperator(milestone, project, user);
+        }else{
+            statsList = sRepo.countTasksByStatusAdmin();
         }
     
         return ResponseEntity.ok(statsList);
@@ -112,22 +117,26 @@ public class TasksController {
 
         List<String> accessList = uRepo.accessControl();
         List<MilestoneDto> tasksSprint;
-
         if (accessList.contains("STAKEHOLDER")) {
             tasksSprint = mRepo.countCardsPerSprintManager(milestone, project, user);
-        } else {
+        } else if(accessList.contains("UX") ||
+                  accessList.contains("BACK") ||
+                  accessList.contains("FRONT") ||
+                  accessList.contains("DESIGN")){
             tasksSprint = mRepo.countCardsPerSprintOperator(milestone, project, user);
+        }else{
+           tasksSprint = taskRepo.countTaskscreatedAdmin();
         }
 
         return ResponseEntity.ok(tasksSprint);
     }
 
-    @GetMapping("/syncAll")
+    @GetMapping("/sync-all-process")
     public ResponseEntity<Void> syncAll() {
         try {
             pServ.processProject();
             pServ.processRoles();
-            uServ.processUser();
+            uServ.processAllUsers();
             tServ.processStatus();
             tServ.processMilestone();
             tServ.processTasks(false);
@@ -182,8 +191,13 @@ public class TasksController {
     
         if (accessList.contains("STAKEHOLDER")) {
             statsList = tagRepo.countTasksByTagManager(milestone, project, user);
-        } else {
+        } else if(accessList.contains("UX") ||
+                  accessList.contains("BACK") ||
+                  accessList.contains("FRONT") ||
+                  accessList.contains("DESIGN")) {
             statsList = tagRepo.countTasksByTagOperator(milestone, project, user);
+        }else{
+            statsList = tagRepo.countTasksByTagAdmin();
         }
     
         return ResponseEntity.ok(statsList);
@@ -206,8 +220,13 @@ public class TasksController {
 
         if (accessList.contains("STAKEHOLDER")) {
             tasksSprint = mRepo.countCardsClosedPerSprintManager(milestone, project, user);
-        } else {
+        } else if(accessList.contains("UX") ||
+                  accessList.contains("BACK") ||
+                  accessList.contains("FRONT") ||
+                  accessList.contains("DESIGN")){
             tasksSprint = mRepo.countCardsClosedPerSprintOperator(milestone, project, user);
+        }else{
+            tasksSprint = mRepo.countCardsClosedPerSprintAdmin();
         }
         return ResponseEntity.ok(tasksSprint);
     }
