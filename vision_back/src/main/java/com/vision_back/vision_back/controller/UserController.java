@@ -1,5 +1,7 @@
 package com.vision_back.vision_back.controller;
 
+import com.vision_back.vision_back.entity.dto.UserTaskAverageDTO;
+import com.vision_back.vision_back.repository.UserRepository;
 import com.vision_back.vision_back.service.AuthenticationService;
 import com.vision_back.vision_back.service.UserServiceImpl;
 
@@ -13,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,5 +49,4 @@ public class UserController {
 
         }
     }
-
 }
