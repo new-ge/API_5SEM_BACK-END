@@ -1,6 +1,7 @@
 package com.vision_back.vision_back.controller;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,6 +23,7 @@ import com.vision_back.vision_back.entity.dto.StatsDto;
 import com.vision_back.vision_back.entity.dto.TagDto;
 import com.vision_back.vision_back.entity.dto.TaskDto;
 import com.vision_back.vision_back.entity.dto.TaskStatusHistoryDto;
+import com.vision_back.vision_back.entity.dto.UserTaskAverageDTO;
 import com.vision_back.vision_back.repository.MilestoneRepository;
 import com.vision_back.vision_back.repository.StatusRepository;
 import com.vision_back.vision_back.repository.TagRepository;
@@ -189,8 +191,13 @@ public class TasksController {
     
         if (accessList.contains("STAKEHOLDER")) {
             statsList = tagRepo.countTasksByTagManager(milestone, project, user);
-        } else {
+        } else if(accessList.contains("UX") ||
+                  accessList.contains("BACK") ||
+                  accessList.contains("FRONT") ||
+                  accessList.contains("DESIGN")) {
             statsList = tagRepo.countTasksByTagOperator(milestone, project, user);
+        }else{
+            statsList = tagRepo.countTasksByTagAdmin();
         }
     
         return ResponseEntity.ok(statsList);
@@ -222,5 +229,36 @@ public class TasksController {
             tasksSprint = mRepo.countCardsClosedPerSprintAdmin();
         }
         return ResponseEntity.ok(tasksSprint);
+    }
+
+    
+    @Operation(summary = "Tempo médio de execução dos cards por usuário")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Tempo médio calculado com sucesso"),
+        @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
+    })
+
+    @GetMapping("/average-time")
+    public ResponseEntity<List<UserTaskAverageDTO>> getAverageExecutionTime(
+        @RequestParam(required = false) String milestone,
+        @RequestParam(required = false) String project,
+        @RequestParam(required = false) String user
+    ) {
+        try {
+            List<String> accessList = uRepo.accessControl();
+            List<UserTaskAverageDTO> result;
+
+            if (accessList.contains("STAKEHOLDER")) {
+                result = userTaskRepo.findAverageTimeByFiltersManager(milestone, project, user);
+            } else {
+                result = userTaskRepo.findAverageTimeByFiltersOperador(milestone, project, user);
+            }
+
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                 .body(Collections.emptyList());
+        }
     }
 }
