@@ -88,6 +88,18 @@ public interface UserTaskRepository extends JpaRepository<UserTaskEntity,Integer
             @Param("user") String user
         );
 
+        @Query(value = """
+        SELECT m.milestone_name AS milestoneName,
+            p.project_name AS projectName,
+            max(u.usr_name) AS userName, 
+            AVG(ut.average_time) AS quant
+        FROM usr_task ut
+        JOIN usr u ON u.usr_code = ut.usr_code
+        JOIN milestone m ON m.milestone_code = ut.milestone_code
+        JOIN project p ON p.project_code = ut.project_code
+        GROUP BY m.milestone_name, p.project_name
+        """, nativeQuery = true)
+        List<UserTaskAverageDTO> findAverageTimeByFiltersAdmin();
 
 }
 

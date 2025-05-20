@@ -250,8 +250,13 @@ public class TasksController {
 
             if (accessList.contains("STAKEHOLDER")) {
                 result = userTaskRepo.findAverageTimeByFiltersManager(milestone, project, user);
-            } else {
+            } else if(accessList.contains("UX") ||
+                  accessList.contains("BACK") ||
+                  accessList.contains("FRONT") ||
+                  accessList.contains("DESIGN")){
                 result = userTaskRepo.findAverageTimeByFiltersOperador(milestone, project, user);
+            }else{
+                result = userTaskRepo.findAverageTimeByFiltersAdmin();
             }
 
             return ResponseEntity.ok(result);
