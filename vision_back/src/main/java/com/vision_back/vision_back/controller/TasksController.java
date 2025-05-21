@@ -266,4 +266,34 @@ public class TasksController {
                                  .body(Collections.emptyList());
         }
     }
+
+    @Operation(summary = "Retorna as milestones (sprints) disponíveis para o operador", description = "Retorna os nomes das sprints que o operador pode acessar.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de sprints retornada com sucesso"),
+            @ApiResponse(responseCode = "500", description = "Erro ao processar a requisição")
+        })
+        
+    @GetMapping("/sprints-for-operator")
+    public ResponseEntity<List<String>> getSprintsForOperator(
+        @RequestParam(required = false) String project,
+        @RequestParam(required = false) String user) {
+            
+            try {
+                List<String> accessList = uRepo.accessControl();
+                
+                if (accessList.contains("UX") || 
+                accessList.contains("BACK") || 
+                accessList.contains("FRONT") || 
+                accessList.contains("DESIGN")) {
+                    List<String> milestones = mRepo.listAllSprintName();
+                    
+                    return ResponseEntity.ok(milestones);
+                } else {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        }
 }
