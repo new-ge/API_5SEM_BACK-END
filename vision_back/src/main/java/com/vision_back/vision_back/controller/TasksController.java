@@ -266,7 +266,7 @@ public class TasksController {
                                  .body(Collections.emptyList());
         }
     }
-    
+
     @Operation(summary = "Retorna as milestones (sprints) disponíveis para o operador", description = "Retorna os nomes das sprints que o operador pode acessar.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lista de sprints retornada com sucesso"),
@@ -301,37 +301,31 @@ public class TasksController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); 
         }
     }
-    @Operation(summary = "Obtém as sprints de todos os operadores e gestores", description = "Retorna as informações de todas as sprints de todos os operadores e gestores.")
+    @Operation( summary = "Obtém as sprints de todos os operadores e gestores", description = "Retorna as informações de todas as sprints de todos os operadores e gestores.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Informações de sprints retornadas com sucesso"),
         @ApiResponse(responseCode = "500", description = "Erro ao processar a requisição")
     })
+    
     @GetMapping("/sprints-for-admin")
     public ResponseEntity<List<MilestoneDto>> getSprintsForAdmin(
-        @RequestParam(required = false) String milestone,
-        @RequestParam(required = false) String project,
-        @RequestParam(required = false) String user) {
+            @RequestParam(required = false) String milestone,
+            @RequestParam(required = false) String project,
+            @RequestParam(required = false) String user) {
 
         List<String> accessList = uRepo.accessControl();
         List<MilestoneDto> milestones;
 
         try {
             if (accessList.contains("ADMIN")) {
-                milestones = mRepo.listAllSprintName()
-                    .stream()
-                    .map(milestoneName -> new MilestoneDto(milestoneName)) 
-                    .distinct() 
-                    .collect(Collectors.toList());
+                milestones = taskRepo.countTaskscreatedAdmin(); 
             } else if (accessList.contains("STAKEHOLDER")) {
-                milestones = mRepo.countCardsPerSprintManager(milestone, project, user).stream()
-                    .map(m -> new MilestoneDto(m.getMilestoneName())) 
-                    .distinct()
-                    .collect(Collectors.toList());
+                milestones = mRepo.countCardsPerSprintManager(milestone, project, user);
+            } else if (accessList.contains("UX") || accessList.contains("BACK") ||
+                    accessList.contains("FRONT") || accessList.contains("DESIGN")) {
+                milestones = mRepo.countCardsPerSprintOperator(milestone, project, user);
             } else {
-                milestones = mRepo.countCardsPerSprintOperator(milestone, project, user).stream()
-                    .map(m -> new MilestoneDto(m.getMilestoneName())) 
-                    .distinct()
-                    .collect(Collectors.toList());
+                milestones = new ArrayList<>(); 
             }
 
             return ResponseEntity.ok(milestones);
