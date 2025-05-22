@@ -199,7 +199,7 @@ public class TasksController {
                   accessList.contains("DESIGN")) {
             statsList = tagRepo.countTasksByTagOperator(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
         }else{
-            statsList = tagRepo.countTasksByTagAdmin();
+            statsList = tagRepo.countTasksByTagAdmin(milestone, project, user);
         }
     
         return ResponseEntity.ok(statsList);
