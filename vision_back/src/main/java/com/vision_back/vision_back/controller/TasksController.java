@@ -26,6 +26,7 @@ import com.vision_back.vision_back.repository.UserRepository;
 import com.vision_back.vision_back.repository.UserTaskRepository;
 import com.vision_back.vision_back.service.ProjectService;
 import com.vision_back.vision_back.service.TaskService;
+import com.vision_back.vision_back.service.UserProjectHelperService;
 import com.vision_back.vision_back.service.UserService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -61,6 +62,9 @@ public class TasksController {
     private TaskRepository taskRepo;
 
     @Autowired
+    private UserProjectHelperService userProjectService;
+
+    @Autowired
     private UserTaskRepository userTaskRepo;
 
     @Autowired
@@ -84,12 +88,12 @@ public class TasksController {
         List<StatsDto> statsList;  
     
         if (accessList.contains("STAKEHOLDER")) {
-            statsList = sRepo.countTasksByStatusManager(milestone, project, user);
+            statsList = sRepo.countTasksByStatusManager(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), user);
         } else if(accessList.contains("UX") ||
                   accessList.contains("BACK") ||
                   accessList.contains("FRONT") ||
                   accessList.contains("DESIGN")){
-            statsList = sRepo.countTasksByStatusOperator(milestone, project, user);
+            statsList = sRepo.countTasksByStatusOperator(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
         }else{
             statsList = sRepo.countTasksByStatusAdmin();
         }
@@ -111,12 +115,12 @@ public class TasksController {
         List<String> accessList = uRepo.accessControl();
         List<MilestoneDto> tasksSprint;
         if (accessList.contains("STAKEHOLDER")) {
-            tasksSprint = mRepo.countCardsPerSprintManager(milestone, project, user);
+            tasksSprint = mRepo.countCardsPerSprintManager(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), user);
         } else if(accessList.contains("UX") ||
                   accessList.contains("BACK") ||
                   accessList.contains("FRONT") ||
                   accessList.contains("DESIGN")){
-            tasksSprint = mRepo.countCardsPerSprintOperator(milestone, project, user);
+            tasksSprint = mRepo.countCardsPerSprintOperator(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
         }else{
            tasksSprint = taskRepo.countTaskscreatedAdmin();
         }
@@ -158,9 +162,14 @@ public class TasksController {
             List<TaskStatusHistoryDto> reworkDetails;
             
             if (accessList.contains("STAKEHOLDER")) {
-                reworkDetails = tshRepo.findTaskStatusHistoryWithReworkFlagManager(milestone, project, user);
+                reworkDetails = tshRepo.findTaskStatusHistoryWithReworkFlagManager(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), user);
+            } else if(accessList.contains("UX") ||
+                  accessList.contains("BACK") ||
+                  accessList.contains("FRONT") ||
+                  accessList.contains("DESIGN")) {
+                reworkDetails = tshRepo.findTaskStatusHistoryWithReworkFlagOperator(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
             } else {
-                reworkDetails = tshRepo.findTaskStatusHistoryWithReworkFlagOperator(milestone, project, user);
+                reworkDetails = tshRepo.findTaskStatusHistoryWithReworkFlagAdmin(milestone, project, user);
             }
             
             return ResponseEntity.ok(reworkDetails);
@@ -183,14 +192,14 @@ public class TasksController {
         List<TagDto> statsList;
     
         if (accessList.contains("STAKEHOLDER")) {
-            statsList = tagRepo.countTasksByTagManager(milestone, project, user);
+            statsList = tagRepo.countTasksByTagManager(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), user);
         } else if(accessList.contains("UX") ||
                   accessList.contains("BACK") ||
                   accessList.contains("FRONT") ||
                   accessList.contains("DESIGN")) {
-            statsList = tagRepo.countTasksByTagOperator(milestone, project, user);
+            statsList = tagRepo.countTasksByTagOperator(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
         }else{
-            statsList = tagRepo.countTasksByTagAdmin();
+            statsList = tagRepo.countTasksByTagAdmin(milestone, project, user);
         }
     
         return ResponseEntity.ok(statsList);
@@ -212,14 +221,14 @@ public class TasksController {
         List<MilestoneDto> tasksSprint;
 
         if (accessList.contains("STAKEHOLDER")) {
-            tasksSprint = mRepo.countCardsClosedPerSprintManager(milestone, project, user);
+            tasksSprint = mRepo.countCardsClosedPerSprintManager(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), user);
         } else if(accessList.contains("UX") ||
                   accessList.contains("BACK") ||
                   accessList.contains("FRONT") ||
                   accessList.contains("DESIGN")){
-            tasksSprint = mRepo.countCardsClosedPerSprintOperator(milestone, project, user);
+            tasksSprint = mRepo.countCardsClosedPerSprintOperator(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
         }else{
-            tasksSprint = mRepo.countCardsClosedPerSprintAdmin();
+            tasksSprint = mRepo.countCardsClosedPerSprintAdmin(milestone, project, user);
         }
         return ResponseEntity.ok(tasksSprint);
     }
@@ -242,14 +251,14 @@ public class TasksController {
             List<UserTaskAverageDTO> result;
 
             if (accessList.contains("STAKEHOLDER")) {
-                result = userTaskRepo.findAverageTimeByFiltersManager(milestone, project, user);
+                result = userTaskRepo.findAverageTimeByFiltersManager(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), user);
             } else if(accessList.contains("UX") ||
                   accessList.contains("BACK") ||
                   accessList.contains("FRONT") ||
                   accessList.contains("DESIGN")){
-                result = userTaskRepo.findAverageTimeByFiltersOperador(milestone, project, user);
+                result = userTaskRepo.findAverageTimeByFiltersOperador(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
             }else{
-                result = userTaskRepo.findAverageTimeByFiltersAdmin();
+                result = userTaskRepo.findAverageTimeByFiltersAdmin(milestone, project, user);
             }
 
             return ResponseEntity.ok(result);

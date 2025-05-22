@@ -97,9 +97,17 @@ public interface UserTaskRepository extends JpaRepository<UserTaskEntity,Integer
         JOIN usr u ON u.usr_code = ut.usr_code
         JOIN milestone m ON m.milestone_code = ut.milestone_code
         JOIN project p ON p.project_code = ut.project_code
+        WHERE (:milestone IS NULL OR m.milestone_name = :milestone)
+        AND (:project IS NULL OR p.project_name = :project)
+        AND (:user IS NULL OR u.usr_name = :user)
+        AND ut.end_date IS NOT NULL
         GROUP BY m.milestone_name, p.project_name
         """, nativeQuery = true)
-        List<UserTaskAverageDTO> findAverageTimeByFiltersAdmin();
+        List<UserTaskAverageDTO> findAverageTimeByFiltersAdmin(
+            @Param("milestone") String milestone,
+            @Param("project") String project,
+            @Param("user") String user
+        );
 
 }
 
