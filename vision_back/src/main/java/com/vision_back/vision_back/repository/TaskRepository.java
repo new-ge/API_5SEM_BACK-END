@@ -59,7 +59,7 @@ public interface TaskRepository extends JpaRepository<TaskEntity,Integer> {
             "join milestone m on m.milestone_code = ut.milestone_code \r\n" +
             "JOIN usr u ON u.usr_code = ut.usr_code \r\n" +
             "join project p on p.project_code = ut.project_code\r\n" +
-            " where ut.start_date is not null \r\n" +
+            "where ut.start_date is not null \r\n" +
             "group by u.usr_name, p.project_name, m.milestone_name", nativeQuery = true)
     List<MilestoneDto> countTaskscreatedAdmin();
 }
