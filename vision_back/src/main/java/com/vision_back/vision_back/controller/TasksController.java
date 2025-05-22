@@ -116,12 +116,12 @@ public class TasksController {
         List<MilestoneDto> tasksSprint;
         if (accessList.contains("STAKEHOLDER")) {
             tasksSprint = mRepo.countCardsPerSprintManager(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), user);
-        } else if(accessList.contains("UX") ||
+        } else if (accessList.contains("UX") ||
                   accessList.contains("BACK") ||
                   accessList.contains("FRONT") ||
                   accessList.contains("DESIGN")){
             tasksSprint = mRepo.countCardsPerSprintOperator(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
-        }else{
+        } else {
            tasksSprint = taskRepo.countTaskscreatedAdmin();
         }
 
