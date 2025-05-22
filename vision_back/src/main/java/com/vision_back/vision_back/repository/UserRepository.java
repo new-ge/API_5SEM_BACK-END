@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository;
 
 import com.vision_back.vision_back.entity.RoleEntity;
 import com.vision_back.vision_back.entity.UserEntity;
-import com.vision_back.vision_back.entity.dto.UserDto;
 
 import jakarta.transaction.Transactional;
 

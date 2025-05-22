@@ -10,27 +10,17 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
-import com.vision_back.vision_back.entity.UserEntity;
-import com.vision_back.vision_back.repository.UserRepository;
-import com.vision_back.vision_back.repository.UserTaskRepository;
 
 @Service
 public class UserServiceImpl implements UserService {
     
     @Autowired
     private AuthenticationService auth;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private UserTaskRepository userTaskRepository;
 
     @Autowired
     private UserProjectHelperServiceImpl taigaHelper;
