@@ -1,7 +1,9 @@
 package com.vision_back.vision_back.controller;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -282,6 +284,8 @@ public class TasksController {
         try {
             List<String> accessList = uRepo.accessControl();
 
+            System.out.println(accessList);
+
             if (accessList.contains("UX") || 
                 accessList.contains("BACK") || 
                 accessList.contains("FRONT") || 
@@ -319,7 +323,7 @@ public class TasksController {
         List<MilestoneDto> milestones;
 
         try {
-            if (accessList.contains("ADMIN")) {
+            if (accessList.contains("PRODUCT OWNER")) {
                 milestones = taskRepo.countTaskscreatedAdmin(); 
             } else if (accessList.contains("STAKEHOLDER")) {
                 milestones = mRepo.countCardsPerSprintManager(milestone, project, user);
