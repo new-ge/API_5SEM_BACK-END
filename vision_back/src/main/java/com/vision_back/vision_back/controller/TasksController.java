@@ -1,7 +1,9 @@
 package com.vision_back.vision_back.controller;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -266,6 +268,77 @@ public class TasksController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                  .body(Collections.emptyList());
+        }
+    }
+
+    @Operation(summary = "Retorna as milestones (sprints) disponíveis para o operador", description = "Retorna os nomes das sprints que o operador pode acessar.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Lista de sprints retornada com sucesso"),
+        @ApiResponse(responseCode = "500", description = "Erro ao processar a requisição")
+    })
+    @GetMapping("/sprints-for-operator")
+    public ResponseEntity<List<MilestoneDto>> getSprintsForOperator(
+        @RequestParam(required = false) String project,
+        @RequestParam(required = false) String user) {
+            
+        try {
+            List<String> accessList = uRepo.accessControl();
+
+            System.out.println(accessList);
+
+            if (accessList.contains("UX") || 
+                accessList.contains("BACK") || 
+                accessList.contains("FRONT") || 
+                accessList.contains("DESIGN")) {
+
+                List<MilestoneDto> milestones = mRepo
+                    .countCardsPerSprintOperator(null, project, user)
+                    .stream()
+                    .map(milestone -> new MilestoneDto(milestone.getMilestoneName())) 
+                    .distinct() 
+                    .collect(Collectors.toList());
+
+                return ResponseEntity.ok(milestones); 
+            } else {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build(); 
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); 
+        }
+    }
+    @Operation( summary = "Obtém as sprints de todos os operadores e gestores", description = "Retorna as informações de todas as sprints de todos os operadores e gestores.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Informações de sprints retornadas com sucesso"),
+        @ApiResponse(responseCode = "500", description = "Erro ao processar a requisição")
+    })
+    
+    @GetMapping("/sprints-for-admin")
+    public ResponseEntity<List<MilestoneDto>> getSprintsForAdmin(
+            @RequestParam(required = false) String milestone,
+            @RequestParam(required = false) String project,
+            @RequestParam(required = false) String user) {
+
+        List<String> accessList = uRepo.accessControl();
+        List<MilestoneDto> milestones;
+
+        try {
+            if (accessList.contains("PRODUCT OWNER")) {
+                milestones = taskRepo.countTaskscreatedAdmin(); 
+            } else if (accessList.contains("STAKEHOLDER")) {
+                milestones = mRepo.countCardsPerSprintManager(milestone, project, user);
+            } else if (accessList.contains("UX") || accessList.contains("BACK") ||
+                    accessList.contains("FRONT") || accessList.contains("DESIGN")) {
+                milestones = mRepo.countCardsPerSprintOperator(milestone, project, user);
+            } else {
+                milestones = new ArrayList<>(); 
+            }
+
+            return ResponseEntity.ok(milestones);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }
