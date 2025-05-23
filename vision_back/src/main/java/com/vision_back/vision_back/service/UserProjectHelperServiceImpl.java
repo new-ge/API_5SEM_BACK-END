@@ -38,6 +38,23 @@ public class UserProjectHelperServiceImpl implements UserProjectHelperService {
         return new HttpEntity<>(headers);
     }
 
+    public Integer loggedUserId() {
+        ResponseEntity<String> response = restTemplate.exchange(
+            "https://api.taiga.io/api/v1/users/me",
+            HttpMethod.GET,
+            setHeaders(),
+            String.class
+        );
+
+        try {
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            return jsonNode.get("id").asInt();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new IllegalArgumentException("Erro ao processar o Usuário", e);
+        }
+    }
+
     public Integer fetchLoggedUserId() {
         ResponseEntity<String> response = restTemplate.exchange(
             "https://api.taiga.io/api/v1/users/me",
@@ -50,6 +67,23 @@ public class UserProjectHelperServiceImpl implements UserProjectHelperService {
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
             verifyIfIsLogged(jsonNode.get("id").asInt(), 1);
             return jsonNode.get("id").asInt();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new IllegalArgumentException("Erro ao processar o Usuário", e);
+        }
+    }
+
+    public String fetchLoggedUserName() {
+        ResponseEntity<String> response = restTemplate.exchange(
+            "https://api.taiga.io/api/v1/users/me",
+            HttpMethod.GET,
+            setHeaders(),
+            String.class
+        );
+
+        try {
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            return jsonNode.get("username").asText();
         } catch (Exception e) {
             e.printStackTrace();
             throw new IllegalArgumentException("Erro ao processar o Usuário", e);
@@ -86,6 +120,23 @@ public class UserProjectHelperServiceImpl implements UserProjectHelperService {
             throw new IllegalArgumentException("Erro ao processar os usuários", e);
         }
     }
+
+    public String fetchProjectNameByUserId(Integer userId) {
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                "https://api.taiga.io/api/v1/projects?member=" + userId,
+                HttpMethod.GET,
+                setHeaders(),
+                String.class
+            );
+            JsonNode jsonNode = objectMapper.readTree(response.getBody()).get(0);
+            return jsonNode.get("name").asText();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new NullPointerException("Resposta não obtida ou resposta inválida.");
+        }
+    }
+
 
     public Integer fetchProjectIdByUserId(Integer userId) {
         try {

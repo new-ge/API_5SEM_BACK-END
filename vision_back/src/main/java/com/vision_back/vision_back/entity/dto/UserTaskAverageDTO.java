@@ -1,7 +1,6 @@
 package com.vision_back.vision_back.entity.dto;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
