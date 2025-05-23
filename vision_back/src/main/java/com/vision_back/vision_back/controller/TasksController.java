@@ -97,7 +97,7 @@ public class TasksController {
                   accessList.contains("DESIGN")){
             statsList = sRepo.countTasksByStatusOperator(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
         }else{
-            statsList = sRepo.countTasksByStatusAdmin();
+            statsList = sRepo.countTasksByStatusAdmin(milestone, project, user);
         }
     
         return ResponseEntity.ok(statsList);
