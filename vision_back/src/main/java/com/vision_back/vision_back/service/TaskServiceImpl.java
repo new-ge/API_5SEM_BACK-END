@@ -49,12 +49,6 @@ public class TaskServiceImpl implements TaskService {
 
     @Autowired
     private ProjectServiceImpl projectServiceImpl;
-    
-    @Autowired
-    private UserServiceImpl userServiceImpl;
-
-    @Autowired
-    private UserService userService;
 
     @Autowired
     private ProjectRepository projectRepository;
@@ -219,7 +213,7 @@ public class TaskServiceImpl implements TaskService {
             JsonNode tasks = objectMapper.readTree(taskResponse.getBody());
 
             for (JsonNode task : tasks) {
-                Integer taskCode = task.get("id").asInt();
+                task.get("id").asInt();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -378,7 +372,6 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public void processTasks(boolean processHistory) {
         Integer projectCode = projectServiceImpl.getProjectId();
-        Integer userCode = userService.getUserId();
     
         HttpEntity<Void> headersEntity = setHeadersTasks();
     
@@ -389,8 +382,6 @@ public class TaskServiceImpl implements TaskService {
     
         try {
             JsonNode tasks = objectMapper.readTree(sprintResponse.getBody());
-            Set<Integer> processedTaskCodes = new HashSet<>();
-            List<TaskEntity> taskEntities = new ArrayList<>();
     
             for (JsonNode node : tasks) {
                 Integer taskCode = node.get("id").asInt();
@@ -465,7 +456,6 @@ public class TaskServiceImpl implements TaskService {
     public void processTags() {
         HttpEntity<Void> headersEntity = setHeadersTasks();
         Integer projectCode = projectServiceImpl.getProjectId();
-        List<Integer> usersList = userRepository.listAllUserCode();
         List<TagEntity> tagEntities = new ArrayList<>();
     
         String sprintUrl = "https://api.taiga.io/api/v1/milestones?project=" + projectCode;
