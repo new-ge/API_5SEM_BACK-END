@@ -58,8 +58,10 @@ public interface UserTaskRepository extends JpaRepository<UserTaskEntity,Integer
             AND (:project IS NULL OR p.project_name = :project)
             AND u.usr_name = :user
             AND ut.end_date IS NOT NULL
-            GROUP BY m.milestone_name, p.project_name, u.usr_name
-            """, nativeQuery = true)
+            AND u.is_logged_in = 1
+        GROUP BY m.milestone_name, p.project_name, u.usr_name
+        ORDER BY m.milestone_name
+        """, nativeQuery = true)
         List<UserTaskAverageDTO> findAverageTimeByFiltersOperador(
             @Param("milestone") String milestone,
             @Param("project") String project,
@@ -80,8 +82,9 @@ public interface UserTaskRepository extends JpaRepository<UserTaskEntity,Integer
             AND p.project_name = :project
             AND (:user IS NULL OR u.usr_name = :user)
             AND ut.end_date IS NOT NULL
-            GROUP BY m.milestone_name, p.project_name, u.usr_name
-            """, nativeQuery = true)
+        GROUP BY m.milestone_name, p.project_name, u.usr_name
+        ORDER BY m.milestone_name
+        """, nativeQuery = true)
         List<UserTaskAverageDTO> findAverageTimeByFiltersManager(
             @Param("milestone") String milestone,
             @Param("project") String project,
@@ -89,25 +92,25 @@ public interface UserTaskRepository extends JpaRepository<UserTaskEntity,Integer
         );
 
         @Query(value = """
-            SELECT m.milestone_name AS milestoneName,
-                p.project_name AS projectName,
-                u.usr_name AS userName, 
-                AVG(ut.average_time) AS quant
-            FROM usr_task ut
-            JOIN usr u ON u.usr_code = ut.usr_code
-            JOIN milestone m ON m.milestone_code = ut.milestone_code
-            JOIN project p ON p.project_code = ut.project_code
-            WHERE (:milestone IS NULL OR m.milestone_name = :milestone)
-            AND (:project IS NULL OR p.project_name = :project)
-            AND (:user IS NULL OR u.usr_name = :user)
-            AND ut.end_date IS NOT NULL
-            GROUP BY m.milestone_name, p.project_name, u.usr_name
-            """, nativeQuery = true)
+        SELECT m.milestone_name AS milestoneName,
+            p.project_name AS projectName,
+            max(u.usr_name) AS userName, 
+            AVG(ut.average_time) AS quant
+        FROM usr_task ut
+        JOIN usr u ON u.usr_code = ut.usr_code
+        JOIN milestone m ON m.milestone_code = ut.milestone_code
+        JOIN project p ON p.project_code = ut.project_code
+        WHERE (:milestone IS NULL OR m.milestone_name = :milestone)
+        AND (:project IS NULL OR p.project_name = :project)
+        AND (:user IS NULL OR u.usr_name = :user)
+        AND ut.end_date IS NOT NULL
+        GROUP BY m.milestone_name, p.project_name
+        ORDER BY m.milestone_name
+        """, nativeQuery = true)
         List<UserTaskAverageDTO> findAverageTimeByFiltersAdmin(
             @Param("milestone") String milestone,
             @Param("project") String project,
             @Param("user") String user
         );
-
 }
 

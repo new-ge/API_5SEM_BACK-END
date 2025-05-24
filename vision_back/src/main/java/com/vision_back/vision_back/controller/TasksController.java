@@ -25,6 +25,8 @@ import com.vision_back.vision_back.entity.dto.TagDto;
 import com.vision_back.vision_back.entity.dto.TaskStatusHistoryDto;
 import com.vision_back.vision_back.entity.dto.UserTaskAverageDTO;
 import com.vision_back.vision_back.repository.MilestoneRepository;
+import com.vision_back.vision_back.repository.ProjectRepository;
+import com.vision_back.vision_back.repository.RoleRepository;
 import com.vision_back.vision_back.repository.StatusRepository;
 import com.vision_back.vision_back.repository.TagRepository;
 import com.vision_back.vision_back.repository.TaskRepository;
@@ -68,6 +70,15 @@ public class TasksController {
 
     @Autowired
     private TaskRepository taskRepo;
+
+    @Autowired
+    private ProjectRepository pRepo;
+
+    @Autowired
+    private RoleRepository rRepo;
+
+    @Autowired
+    private TaskStatusHistoryRepository taskHistoryRepo;
 
     @Autowired
     private UserProjectHelperService userProjectService;
@@ -273,10 +284,10 @@ public class TasksController {
         } else if (accessList.contains("UX") ||
                   accessList.contains("BACK") ||
                   accessList.contains("FRONT") ||
-                  accessList.contains("DESIGN")){
+                  accessList.contains("DESIGN")) {
             tasksSprint = mRepo.countCardsPerSprintOperator(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
         } else {
-           tasksSprint = taskRepo.countTaskscreatedAdmin(milestone, project, user);
+           tasksSprint = mRepo.countCardsPerSprintAdmin(milestone, project, user);
         }
 
         return ResponseEntity.ok(tasksSprint);
@@ -290,13 +301,15 @@ public class TasksController {
     @GetMapping("/sync-all-process")
     public ResponseEntity<Void> syncAll() {
         try {
-            pServ.processProject();
-            pServ.processRoles();
             uServ.processAllUsers();
-            tServ.processStatus();
-            tServ.processMilestone();
-            tServ.processTasks(false);
-            tServ.baseProcessTaskUser();
+            if (mRepo.count() == 0 || sRepo.count() == 0 || taskRepo.count() == 0 || userTaskRepo.count() == 0 || uRepo.count() == 0 || pRepo.count() == 0 || rRepo.count() == 0 || taskHistoryRepo.count() == 0) {
+                pServ.processProject();
+                pServ.processRoles();
+                tServ.processStatus();
+                tServ.processMilestone();
+                tServ.processTasks(true);
+                tServ.baseProcessTaskUser();
+            }
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -315,7 +328,6 @@ public class TasksController {
             @RequestParam(required = false) String user) {
 
             List<String> accessList = uRepo.accessControl();
-            tServ.processTasks(true);
             
             List<TaskStatusHistoryDto> reworkDetails;
             
@@ -343,11 +355,13 @@ public class TasksController {
             @RequestParam(required = false) String milestone,
             @RequestParam(required = false) String project,
             @RequestParam(required = false) String user) {
-                
-        tServ.processTags();
     
         List<String> accessList = uRepo.accessControl();
         List<TagDto> statsList;
+
+        if (tagRepo.count() == 0) {
+            tServ.processTags();
+        }
     
         if (accessList.contains("STAKEHOLDER")) {
             statsList = tagRepo.countTasksByTagManager(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), user);

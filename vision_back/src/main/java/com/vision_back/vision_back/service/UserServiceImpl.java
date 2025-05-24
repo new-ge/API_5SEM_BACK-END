@@ -15,12 +15,16 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
+import com.vision_back.vision_back.repository.UserRepository;
 
 @Service
 public class UserServiceImpl implements UserService {
     
     @Autowired
     private AuthenticationService auth;
+
+    @Autowired
+    private UserRepository uRepo; 
 
     @Autowired
     private UserProjectHelperServiceImpl taigaHelper;
@@ -58,8 +62,10 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public void processAllUsers() {
-        Integer projectId = taigaHelper.fetchProjectIdByUserId(taigaHelper.fetchLoggedUserId());
-        taigaHelper.processUsersByProjectId(projectId);
+        if (uRepo.count() == 0) {
+            Integer projectId = taigaHelper.fetchProjectIdByUserId(taigaHelper.fetchLoggedUserId());
+            taigaHelper.processUsersByProjectId(projectId);
+        }
         taigaHelper.fetchLoggedUserId();
     }
 

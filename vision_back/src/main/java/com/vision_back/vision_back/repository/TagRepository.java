@@ -28,7 +28,8 @@ public interface TagRepository extends JpaRepository<TagEntity,Integer>{
                         "AND (:milestone IS NULL OR m.milestone_name = :milestone) \r\n" +
                         "AND (:project IS NULL OR p.project_name = :project) \r\n" + 
                         "AND (:user IS NULL OR u.usr_name = :user) \r\n" + 
-                        "group by u.usr_name, m.milestone_name, p.project_name, utag.tag_name", nativeQuery = true)
+                        "group by u.usr_name, m.milestone_name, p.project_name, utag.tag_name \r\n" + 
+                        "order by utag.tag_name", nativeQuery = true)
     List<TagDto> countTasksByTagOperator(@Param("milestone") String milestone,
                                          @Param("project") String project,
                                          @Param("user") String user);
@@ -41,7 +42,8 @@ public interface TagRepository extends JpaRepository<TagEntity,Integer>{
                         "where (:milestone IS NULL OR m.milestone_name = :milestone) \r\n" +
                         "AND (:project IS NULL OR p.project_name = :project) \r\n" + 
                         "AND (:user IS NULL OR u.usr_name = :user) \r\n" + 
-                        "group by u.usr_name, m.milestone_name, p.project_name, utag.tag_name", nativeQuery = true)
+                        "group by u.usr_name, m.milestone_name, p.project_name, utag.tag_name \r\n" + 
+                        "order by utag.tag_name", nativeQuery = true)
     List<TagDto> countTasksByTagManager(@Param("milestone") String milestone,
                                         @Param("project") String project,
                                         @Param("user") String user);
@@ -55,7 +57,8 @@ public interface TagRepository extends JpaRepository<TagEntity,Integer>{
                         "where (:milestone IS NULL OR m.milestone_name = :milestone) \r\n" +
                         "AND (:project IS NULL OR p.project_name = :project) \r\n" + 
                         "AND (:user IS NULL OR u.usr_name = :user) \r\n" + 
-                        "group by u.usr_name, m.milestone_name, p.project_name, utag.tag_name", nativeQuery = true)
+                        "group by u.usr_name, m.milestone_name, p.project_name, utag.tag_name \r\n" + 
+                        "order by utag.tag_name", nativeQuery = true)
     List<TagDto> countTasksByTagAdmin(@Param("milestone") String milestone,
                                         @Param("project") String project,
                                         @Param("user") String user);
