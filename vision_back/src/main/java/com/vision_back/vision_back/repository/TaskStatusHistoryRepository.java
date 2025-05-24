@@ -95,8 +95,7 @@ public interface TaskStatusHistoryRepository extends JpaRepository<TaskStatusHis
             "   JOIN milestone m ON m.milestone_code = tsh.milestone_code \r\n" +
             "   JOIN usr u ON u.usr_code = tsh.usr_code \r\n" +
             "   JOIN project p ON p.project_code = tsh.project_code \r\n" +
-            "   WHERE u.is_logged_in = 1 \r\n" +
-            "   AND (:milestone IS NULL OR m.milestone_name = :milestone) \r\n" +
+            "   WHERE (:milestone IS NULL OR m.milestone_name = :milestone) \r\n" +
             "   AND (:project IS NULL OR p.project_name = :project) \r\n" +
             "   AND (:user IS NULL OR u.usr_name = :user) \r\n" +
             ") \r\n" +
