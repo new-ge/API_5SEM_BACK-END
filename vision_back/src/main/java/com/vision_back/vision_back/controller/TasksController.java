@@ -132,7 +132,7 @@ public class TasksController {
         } else if (accessList.contains("UX") ||
                   accessList.contains("BACK") ||
                   accessList.contains("FRONT") ||
-                  accessList.contains("DESIGN")){
+                  accessList.contains("DESIGN")) {
             tasksSprint = mRepo.countCardsPerSprintOperator(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
         } else {
            tasksSprint = mRepo.countCardsPerSprintAdmin(milestone, project, user);
@@ -144,13 +144,12 @@ public class TasksController {
     @GetMapping("/sync-all-process")
     public ResponseEntity<Void> syncAll() {
         try {
-            if (mRepo.count() == 0 || sRepo.count() == 0 || taskRepo.count() == 0 || userTaskRepo.count() == 0 || tagRepo.count() == 0 || uRepo.count() == 0 || pRepo.count() == 0 || rRepo.count() == 0 || taskHistoryRepo.count() == 0) {
+            uServ.processAllUsers();
+            if (mRepo.count() == 0 || sRepo.count() == 0 || taskRepo.count() == 0 || userTaskRepo.count() == 0 || uRepo.count() == 0 || pRepo.count() == 0 || rRepo.count() == 0 || taskHistoryRepo.count() == 0) {
                 pServ.processProject();
                 pServ.processRoles();
-                uServ.processAllUsers();
                 tServ.processStatus();
                 tServ.processMilestone();
-                tServ.processTags();
                 tServ.processTasks(true);
                 tServ.baseProcessTaskUser();
             }
@@ -203,6 +202,10 @@ public class TasksController {
     
         List<String> accessList = uRepo.accessControl();
         List<TagDto> statsList;
+
+        if (tagRepo.count() == 0) {
+            tServ.processTags();
+        }
     
         if (accessList.contains("STAKEHOLDER")) {
             statsList = tagRepo.countTasksByTagManager(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), user);
