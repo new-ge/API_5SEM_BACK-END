@@ -1,11 +1,11 @@
-name: Java CI with Maven
+name: Build_test_merge
 
 on:
-  push:
-    branches: ["Sprint-1", "Sprint-2", "Sprint-3"]
   pull_request:
-    branches: ["Sprint-1", "Sprint-2", "Sprint-3"]
-
+    branches:       
+      - "main"
+      - "VSN-*"
+      - "Sprint-*"
 jobs:
   build:
     runs-on: ubuntu-latest

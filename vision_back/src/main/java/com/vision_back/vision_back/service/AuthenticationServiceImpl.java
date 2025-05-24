@@ -1,9 +1,7 @@
 package com.vision_back.vision_back.service;
 
 import java.time.Instant;
-import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
