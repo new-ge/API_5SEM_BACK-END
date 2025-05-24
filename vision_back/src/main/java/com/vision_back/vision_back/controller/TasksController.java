@@ -1,10 +1,15 @@
 package com.vision_back.vision_back.controller;
 
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +42,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Tag(name = "tasks", description = "Endpoints relacionados às tarefas")
 @RestController
@@ -85,6 +91,152 @@ public class TasksController {
 
     @Autowired
     private MilestoneRepository mRepo;
+    
+    @Operation(summary = "Exporta um Excel com todos os dados da aplicação", description = "Retorna um Excel com todos os dados, dependendo no nivel de acesso.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Excel retornado com sucesso"),
+            @ApiResponse(responseCode = "500", description = "Erro ao processar o Excel")
+    })
+    @GetMapping("/request-excel")
+    public ResponseEntity<Void> exportToExcel(HttpServletResponse response, 
+                              @RequestParam(required = false) String milestone,
+                              @RequestParam(required = false) String project,
+                              @RequestParam(required = false) String user)  {
+        try {
+            List<String> accessList = uRepo.accessControl();
+            Workbook workbook = new XSSFWorkbook();
+
+            List<StatsDto> statsList;
+            List<MilestoneDto> tasksSprint;
+            List<TaskStatusHistoryDto> reworkDetails;
+            List<TagDto> tagList;
+            List<MilestoneDto> tasksSprintClosed;
+
+            if (accessList.contains("STAKEHOLDER")) {
+                statsList = sRepo.countTasksByStatusManager(milestone, project, user);
+                tasksSprint = mRepo.countCardsPerSprintManager(milestone, project, user);
+                reworkDetails = tshRepo.findTaskStatusHistoryWithReworkFlagManager(milestone, project, user);
+                tagList = tagRepo.countTasksByTagManager(milestone, project, user);
+                tasksSprintClosed = mRepo.countCardsClosedPerSprintManager(milestone, project, user);
+            } else if(accessList.contains("UX") ||
+                      accessList.contains("BACK") ||
+                      accessList.contains("FRONT") ||
+                      accessList.contains("DESIGN")) {
+                statsList = sRepo.countTasksByStatusOperator(milestone, project, user);
+                tasksSprint = mRepo.countCardsPerSprintOperator(milestone, project, user);
+                reworkDetails = tshRepo.findTaskStatusHistoryWithReworkFlagOperator(milestone, project, user);
+                tagList = tagRepo.countTasksByTagOperator(milestone, project, user);
+                tasksSprintClosed = mRepo.countCardsClosedPerSprintOperator(milestone, project, user);
+            } else {
+                statsList = sRepo.countTasksByStatusAdmin(milestone, project, user);
+                tasksSprint = mRepo.countCardsPerSprintAdmin(milestone, project, user);
+                reworkDetails = tshRepo.findTaskStatusHistoryWithReworkFlagAdmin(milestone, project, user);
+                tagList = tagRepo.countTasksByTagAdmin(milestone, project, user);
+                tasksSprintClosed = mRepo.countCardsClosedPerSprintAdmin(milestone, project, user);
+            }
+
+            Sheet statusSheet = workbook.createSheet("Tarefas por Status");
+
+            Row headerStatusRow = statusSheet.createRow(0);
+            headerStatusRow.createCell(0).setCellValue("Projeto");
+            headerStatusRow.createCell(1).setCellValue("Operador");
+            headerStatusRow.createCell(2).setCellValue("Sprint");
+            headerStatusRow.createCell(3).setCellValue("Status");
+            headerStatusRow.createCell(4).setCellValue("Qtd Tarefas");
+
+            int rowIdxStatus = 1;
+            for (StatsDto stats : statsList) {
+                Row row = statusSheet.createRow(rowIdxStatus++);
+                row.createCell(0).setCellValue(stats.getProjectName());
+                row.createCell(1).setCellValue(stats.getUserName());
+                row.createCell(2).setCellValue(stats.getMilestoneName());
+                row.createCell(3).setCellValue(stats.getStatusName());
+                row.createCell(4).setCellValue(stats.getQuant());
+            }
+
+            Sheet createdCardsSheet = workbook.createSheet("Tarefas Criadas");
+
+            Row headerCreatedCardsRow = createdCardsSheet.createRow(0);
+            headerCreatedCardsRow.createCell(0).setCellValue("Projeto");
+            headerCreatedCardsRow.createCell(1).setCellValue("Operador");
+            headerCreatedCardsRow.createCell(2).setCellValue("Sprint");
+            headerCreatedCardsRow.createCell(3).setCellValue("Qtd Tarefas Criadas");
+
+            int rowIdxCreatedCards = 1;
+            for (MilestoneDto milestoneDto : tasksSprint) {
+                Row row = createdCardsSheet.createRow(rowIdxCreatedCards++);
+                row.createCell(0).setCellValue(milestoneDto.getProjectName());
+                row.createCell(1).setCellValue(milestoneDto.getUserName());
+                row.createCell(2).setCellValue(milestoneDto.getMilestoneName());
+                row.createCell(3).setCellValue(milestoneDto.getQuant());
+            }
+
+            Sheet reworkSheet = workbook.createSheet("Retrabalhos");
+
+            Row headerReworkSheet = reworkSheet.createRow(0);
+            headerReworkSheet.createCell(0).setCellValue("Projeto");
+            headerReworkSheet.createCell(1).setCellValue("Operador");
+            headerReworkSheet.createCell(2).setCellValue("Sprint");
+            headerReworkSheet.createCell(3).setCellValue("Qtd Retrabalhos");
+
+            int rowIdxRework = 1;
+            for (TaskStatusHistoryDto rework : reworkDetails) {
+                Row row = reworkSheet.createRow(rowIdxRework++);
+                row.createCell(0).setCellValue(rework.getProjectName());
+                row.createCell(1).setCellValue(rework.getUserName());
+                row.createCell(2).setCellValue(rework.getMilestoneName());
+                row.createCell(3).setCellValue(rework.getRework());
+            }
+
+            Sheet tagSheet = workbook.createSheet("Tarefas por Tag");
+
+            Row headerTagSheet = tagSheet.createRow(0);
+            headerTagSheet.createCell(0).setCellValue("Projeto");
+            headerTagSheet.createCell(1).setCellValue("Operador");
+            headerTagSheet.createCell(2).setCellValue("Sprint");
+            headerTagSheet.createCell(3).setCellValue("Tag");
+            headerTagSheet.createCell(4).setCellValue("Qtd Tarefas por Tag");
+
+            int rowIdxTag = 1;
+            for (TagDto tag : tagList) {
+                Row row = tagSheet.createRow(rowIdxTag++);
+                row.createCell(0).setCellValue(tag.getProjectName());
+                row.createCell(1).setCellValue(tag.getUserName());
+                row.createCell(2).setCellValue(tag.getMilestoneName());
+                row.createCell(3).setCellValue(tag.getTagName());
+                row.createCell(4).setCellValue(tag.getQuant());
+            }
+
+            Sheet tasksClosedSheet = workbook.createSheet("Tarefas Finalizadas");
+
+            Row headerTasksClosedSheet = tasksClosedSheet.createRow(0);
+            headerTasksClosedSheet.createCell(0).setCellValue("Projeto");
+            headerTasksClosedSheet.createCell(1).setCellValue("Operador");
+            headerTasksClosedSheet.createCell(2).setCellValue("Sprint");
+            headerTasksClosedSheet.createCell(3).setCellValue("Qtd Tarefas Finalizadas");
+
+            int rowIdxTaskClosed = 1;
+            for (MilestoneDto sprintClosed : tasksSprintClosed) {
+                Row row = tasksClosedSheet.createRow(rowIdxTaskClosed++);
+                row.createCell(0).setCellValue(sprintClosed.getProjectName());
+                row.createCell(1).setCellValue(sprintClosed.getUserName());
+                row.createCell(2).setCellValue(sprintClosed.getMilestoneName());
+                row.createCell(3).setCellValue(sprintClosed.getQuant());
+            }
+
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setHeader("Content-Disposition", "attachment");
+
+            OutputStream outputStream = response.getOutputStream();
+            workbook.write(outputStream);
+            workbook.close();
+            outputStream.close();
+
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 
     @Operation(summary = "Conta as tarefas por status do usuário", description = "Conta o número de tarefas por status, baseado no ID do projeto e do usuário.")
     @ApiResponses(value = {
@@ -140,12 +292,12 @@ public class TasksController {
 
         return ResponseEntity.ok(tasksSprint);
     }
+
     @Operation(summary = "Sincroniza todos os dados do sistema", description = "Retorna a sincronização dos dados de projetos, usuários, sprints, status e tarefas.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Sincronização realizada com sucesso"),
             @ApiResponse(responseCode = "500", description = "Erro ao processar a requisição") 
-        })
-
+    })
     @GetMapping("/sync-all-process")
     public ResponseEntity<Void> syncAll() {
         try {
@@ -160,7 +312,6 @@ public class TasksController {
             }
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -254,7 +405,6 @@ public class TasksController {
         return ResponseEntity.ok(tasksSprint);
     }
 
-    
     @Operation(summary = "Tempo médio de execução dos cards por usuário")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Tempo médio calculado com sucesso"),
@@ -302,8 +452,6 @@ public class TasksController {
             
         try {
             List<String> accessList = uRepo.accessControl();
-
-            System.out.println(accessList);
 
             if (accessList.contains("UX") || 
                 accessList.contains("BACK") || 
