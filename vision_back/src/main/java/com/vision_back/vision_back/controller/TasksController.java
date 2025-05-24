@@ -124,7 +124,7 @@ public class TasksController {
                   accessList.contains("DESIGN")){
             tasksSprint = mRepo.countCardsPerSprintOperator(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
         } else {
-           tasksSprint = taskRepo.countTaskscreatedAdmin();
+           tasksSprint = taskRepo.countTaskscreatedAdmin(milestone, project, user);
         }
 
         return ResponseEntity.ok(tasksSprint);
@@ -324,7 +324,7 @@ public class TasksController {
 
         try {
             if (accessList.contains("PRODUCT OWNER")) {
-                milestones = taskRepo.countTaskscreatedAdmin(); 
+                milestones = taskRepo.countTaskscreatedAdmin(milestone, project, user); 
             } else if (accessList.contains("STAKEHOLDER")) {
                 milestones = mRepo.countCardsPerSprintManager(milestone, project, user);
             } else if (accessList.contains("UX") || accessList.contains("BACK") ||
