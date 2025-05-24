@@ -140,6 +140,11 @@ public class TasksController {
 
         return ResponseEntity.ok(tasksSprint);
     }
+    @Operation(summary = "Sincroniza todos os dados do sistema", description = "Retorna a sincronização dos dados de projetos, usuários, sprints, status e tarefas.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Sincronização realizada com sucesso"),
+            @ApiResponse(responseCode = "500", description = "Erro ao processar a requisição") 
+        })
 
     @GetMapping("/sync-all-process")
     public ResponseEntity<Void> syncAll() {
