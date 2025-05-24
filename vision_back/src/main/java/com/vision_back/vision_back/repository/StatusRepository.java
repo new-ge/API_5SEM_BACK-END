@@ -60,6 +60,11 @@ public interface StatusRepository extends JpaRepository<StatusEntity,Integer>{
                 "JOIN usr u ON u.usr_code = ut.usr_code \r\n"+
                 "join project p on p.project_code = ut.project_code \r\n"+
                 "join stats s on s.stats_code = ut.stats_code \r\n"+
+                "where (:milestone IS NULL OR m.milestone_name = :milestone) \r\n" +
+                        "AND (:project IS NULL OR p.project_name = :project) \r\n" + 
+                        "AND (:user IS NULL OR u.usr_name = :user) \r\n" +
                 "group by s.stats_name, m.milestone_name, p.project_name", nativeQuery = true)
-    List<StatsDto> countTasksByStatusAdmin();
+    List<StatsDto> countTasksByStatusAdmin(@Param("milestone") String milestone,
+                                             @Param("project") String project,
+                                             @Param("user") String user);
 }
