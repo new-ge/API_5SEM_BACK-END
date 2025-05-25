@@ -34,6 +34,7 @@ public class UserProjectHelperServiceImpl implements UserProjectHelperService {
     private HttpEntity<?> setHeaders() {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(auth.getCachedToken());
+        headers.set("x-disable-pagination", "true"); 
 
         return new HttpEntity<>(headers);
     }
@@ -137,6 +138,26 @@ public class UserProjectHelperServiceImpl implements UserProjectHelperService {
         }
     }
 
+    public List<Integer> fetchProjectCodeList(Integer userId) {
+        List<Integer> projectList = new ArrayList<>();
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                "https://api.taiga.io/api/v1/projects?member=" + userId,
+                HttpMethod.GET,
+                setHeaders(),
+                String.class
+            );
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            for (JsonNode json : jsonNode) {
+                projectList.add(json.get("id").asInt());
+            }
+            return projectList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new NullPointerException("Resposta não obtida ou resposta inválida.");
+        }
+    }
+
 
     public Integer fetchProjectIdByUserId(Integer userId) {
         try {
@@ -147,6 +168,7 @@ public class UserProjectHelperServiceImpl implements UserProjectHelperService {
                 String.class
             );
             JsonNode jsonNode = objectMapper.readTree(response.getBody()).get(0);
+            System.out.println(jsonNode.get("id").asInt());
             return jsonNode.get("id").asInt();
         } catch (Exception e) {
             e.printStackTrace();

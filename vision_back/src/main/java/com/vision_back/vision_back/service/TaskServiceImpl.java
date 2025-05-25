@@ -89,6 +89,7 @@ public class TaskServiceImpl implements TaskService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(auth.getCachedToken());
+        headers.set("x-disable-pagination", "true"); 
 
         return new HttpEntity<>(headers);
     }
@@ -245,7 +246,7 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
-    @Transactional
+       @Transactional
     @Override
     public void baseProcessTaskUser() {
         HttpEntity<Void> headersEntity = setHeadersTasks();
@@ -324,6 +325,33 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
         }
     }
+
+    @Override
+    public List<Integer> processMilestoneList() {
+        HttpEntity<Void> headersEntity = setHeadersTasks();
+
+        Integer projectCode = projectServiceImpl.getProjectId();
+
+        List<Integer> milestoneEntities = new ArrayList<>();
+
+        String sprintUrl = "https://api.taiga.io/api/v1/milestones?project=" + projectCode;
+        ResponseEntity<String> sprintResponse = restTemplate.exchange(sprintUrl, HttpMethod.GET, headersEntity,
+                String.class);
+
+        try {
+            JsonNode sprints = objectMapper.readTree(sprintResponse.getBody());
+
+            for (JsonNode sprint : sprints) {
+                if (!milestoneRepository.existsByMilestoneCode(sprint.get("id").asInt())) {
+                    milestoneEntities.add(sprint.get("id").asInt());
+                }
+            }    
+            return milestoneEntities;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
+        }
+    }
     
     @Transactional
     @Override
@@ -365,6 +393,35 @@ public class TaskServiceImpl implements TaskService {
         } catch (Exception e) {
             e.printStackTrace();
             throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
+        }
+    }
+
+    @Override
+    public List<Integer> processTasksList() {
+        Integer projectCode = projectServiceImpl.getProjectId();
+    
+        HttpEntity<Void> headersEntity = setHeadersTasks();
+
+        List<Integer> tasksList = new ArrayList<>();
+    
+        String tasksUrl = "https://api.taiga.io/api/v1/tasks?"
+                        + "project=" + projectCode;
+    
+        ResponseEntity<String> sprintResponse = restTemplate.exchange(tasksUrl, HttpMethod.GET, headersEntity, String.class);
+    
+        try {
+            JsonNode tasks = objectMapper.readTree(sprintResponse.getBody());
+    
+            for (JsonNode node : tasks) {
+                Integer taskCode = node.get("id").asInt();
+                if (!taskRepository.existsByTaskCode(taskCode)) {
+                    tasksList.add(taskCode);
+                }
+            }
+            return tasksList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new InternalError("Erro ao processar as tarefas" + e);
         }
     }
 
@@ -410,6 +467,33 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
+    @Override
+    public List<Integer> processStatusList() {
+        Integer projectCode = projectServiceImpl.getProjectId();
+
+        HttpEntity<Void> headersEntity = setHeadersTasks();
+        
+        List<Integer> statusList = new ArrayList<>();
+                
+        String tasksUrl = "https://api.taiga.io/api/v1/tasks?project=" + projectCode;
+
+        ResponseEntity<String> response = restTemplate.exchange(tasksUrl, HttpMethod.GET, headersEntity, String.class);
+
+        try {
+            JsonNode tasks = objectMapper.readTree(response.getBody());
+
+            for (JsonNode node : tasks) {
+                if (!statsRepository.existsByStatusCode(node.get("status").asInt())) {
+                    statusList.add(node.get("status").asInt());
+                }
+            }
+            return statusList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new IllegalArgumentException("Erro ao processar os status", e);
+        }
+    }
+
     @Transactional
     @Override
     public void processStatus() {
@@ -448,6 +532,69 @@ public class TaskServiceImpl implements TaskService {
         } catch (Exception e) {
             e.printStackTrace();
             throw new IllegalArgumentException("Erro ao processar tasks por sprint", e);
+        }
+    }
+
+    @Override
+    public List<String> processTagsList() {
+        HttpEntity<Void> headersEntity = setHeadersTasks();
+        Integer projectCode = projectServiceImpl.getProjectId();
+        List<String> tagNameList = new ArrayList<>();
+    
+        ResponseEntity<String> response = restTemplate.exchange(
+                "https://api.taiga.io/api/v1/tasks?project=" + projectCode,
+                HttpMethod.GET,
+                headersEntity,
+                String.class);
+    
+        try {
+                JsonNode rootNode = objectMapper.readTree(response.getBody());
+    
+                for (JsonNode node : rootNode) {
+                    Integer userCode = node.get("assigned_to").asInt();
+                    Integer taskCode = node.get("id").asInt();
+                    Integer taskSprintCode = node.get("milestone").asInt(); 
+     
+                    for (JsonNode tagNode : node.get("tags")) {
+                        for (JsonNode tag : tagNode) {
+                            if (!tag.isNull()) {
+                                String tagName = tag.asText();
+                                if (!tagRepository.existsByTaskCodeAndProjectCodeAndUserCodeAndMilestoneCodeAndTagName(
+                                        EntityRetryUtils.retryUntilFound(
+                                            () -> taskRepository.findByTaskCode(taskCode).orElse(null),
+                                            5,
+                                            200,
+                                            "TaskEntity"
+                                        ), 
+                                        EntityRetryUtils.retryUntilFound(
+                                            () -> projectRepository.findByProjectCode(projectCode).orElse(null),
+                                            5,
+                                            200,
+                                            "ProjectEntity"
+                                        ),
+                                        EntityRetryUtils.retryUntilFound(
+                                            () -> userRepository.findByUserCode(userCode).orElse(null),
+                                            5,
+                                            200,
+                                            "UserEntity"
+                                        ), 
+                                        EntityRetryUtils.retryUntilFound(
+                                            () -> milestoneRepository.findByMilestoneCode(taskSprintCode).orElse(null),
+                                            5,
+                                            200,
+                                            "MilestoneEntity"
+                                        ),
+                                        tagName)) {
+                                        tagNameList.add(tagName);
+                                }
+                            }
+                        }
+                    }
+                }
+            return tagNameList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new IllegalArgumentException("Erro ao processar as User Stories", e);
         }
     }
 
