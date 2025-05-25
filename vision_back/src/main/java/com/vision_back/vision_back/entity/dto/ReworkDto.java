@@ -9,11 +9,10 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-
-public class TaskStatusHistoryDto {
-    private String userName;
+public class ReworkDto {
     private String projectName;
     private String milestoneName;
-    private Long rework;
-    private Long finished;
+    private String fromStatus;
+    private String toStatus;
+    private Long quant;
 }

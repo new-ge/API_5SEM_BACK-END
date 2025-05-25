@@ -11,20 +11,10 @@ import lombok.Setter;
 @AllArgsConstructor
 
 public class StatsDto {
-    private Integer statusId;
+    private String userName;
+    private String projectName;
+    private String milestoneName;
     private String statusName;
     private Long quant;
-
-    public StatsDto(String statusName, Long quant) {
-        this.statusName = statusName;
-        this.quant = quant;
-    }
-
-    @Override
-    public String toString() {
-        return "StatsDto{" +
-            "statusName='" + statusName + '\'' +
-            ", count=" + quant +
-            '}';
-    }
 }
+

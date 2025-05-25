@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.vision_back.vision_back.entity.RoleEntity;
 import com.vision_back.vision_back.entity.UserEntity;
 
 import jakarta.transaction.Transactional;
@@ -17,11 +18,14 @@ import jakarta.transaction.Transactional;
 public interface UserRepository extends JpaRepository<UserEntity,Integer>{
     Optional<UserEntity> findByUserCode(Integer userCode);
 
-    Optional<UserEntity> findByUserCodeAndUserNameAndUserRoleAndUserEmail(
-        Integer userCode, String userName, String[] userRole, String userEmail
-    );
+    @Query(value = "SELECT usr_code from usr", nativeQuery = true)
+    List<Integer> listAllUserCode();
 
-    boolean existsByUserCodeAndUserNameAndUserRoleAndUserEmail(Integer userCode, String userName, String[] userRole, String userEmail);
+    Optional<RoleEntity> findFirstByUserCodeIn(List<Integer> userCode);
+
+    Optional<UserEntity> findByUserCodeAndUserNameAndUserRole(
+        Integer userCode, String userName, String[] userRole
+    );
 
     boolean existsByUserCode(Integer userCode);
 
@@ -37,4 +41,6 @@ public interface UserRepository extends JpaRepository<UserEntity,Integer>{
 
     @Query(value = "SELECT usr_role from usr WHERE is_logged_in = 1", nativeQuery = true)
     List<String> accessControl();
+
+    boolean existsByUserCodeAndUserNameAndUserRole(Integer userId, String username, String[] roles);
 }

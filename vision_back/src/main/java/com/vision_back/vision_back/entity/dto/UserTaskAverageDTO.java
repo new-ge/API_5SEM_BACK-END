@@ -1,5 +1,7 @@
 package com.vision_back.vision_back.entity.dto;
 
+import java.math.BigDecimal;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,10 +12,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 
-public class TaskStatusHistoryDto {
-    private String userName;
-    private String projectName;
+
+public class UserTaskAverageDTO {
     private String milestoneName;
-    private Long rework;
-    private Long finished;
+    private String projectName;
+    private String userName;
+    private BigDecimal quant;
 }

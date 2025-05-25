@@ -12,13 +12,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vision_back.vision_back.VisionBackApplication;
-import com.vision_back.vision_back.configuration.TokenConfiguration;
+import com.vision_back.vision_back.component.EntityRetryUtils;
 import com.vision_back.vision_back.entity.ProjectEntity;
 import com.vision_back.vision_back.entity.RoleEntity;
 import com.vision_back.vision_back.repository.ProjectRepository;
@@ -33,7 +33,7 @@ public class ProjectServiceImpl implements ProjectService {
     HttpEntity<Void> headersEntity;
 
     @Autowired
-    private UserServiceImpl userServiceImpl;
+    private UserService userService;
 
     @Autowired
     private RoleRepository roleRepository; 
@@ -42,12 +42,16 @@ public class ProjectServiceImpl implements ProjectService {
     private ProjectRepository projectRepository; 
 
     @Autowired
-    private TokenConfiguration tokenDto;
+    private AuthenticationService auth;
+
+    @Autowired
+    private UserProjectHelperServiceImpl taigaHelper;
 
     @Override
     public HttpEntity<Void> setHeadersProject() {
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(tokenDto.getAuthToken());
+        headers.setBearerAuth(auth.getCachedToken());
+        headers.set("x-disable-pagination", "true"); 
             
         return headersEntity = new HttpEntity<>(headers);
     }
@@ -62,23 +66,112 @@ public class ProjectServiceImpl implements ProjectService {
             JsonNode getProjectId = jsonNode.get("id");
             return new ObjectMapper().writeValueAsString(getProjectId).replace("\"", "");
         } catch (Exception e) {
+            e.printStackTrace();
             throw new NullPointerException("Resposta não obtida ou resposta inválida.");
         }
     }
 
     @Override
-    public Integer getProjectId() {
-        Integer memberId = userServiceImpl.getUserId();
+    public List<Integer> processRolesList() {
+        Integer projectCode = getProjectId();
+        List<Integer> roleEntites = new ArrayList<>();
+
+        setHeadersProject();
+        
+        try {
+            ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects/"+projectCode, HttpMethod.GET, headersEntity, String.class);
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+
+            for (JsonNode members : jsonNode.get("members")) {
+                if (!roleRepository.existsByRoleCode(members.get("role").asInt())) {
+                    roleEntites.add(members.get("role").asInt());
+                } 
+            }    
+            return roleEntites;        
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    @Transactional
+    @Override
+    public void processRoles() {
+        Integer projectCode = getProjectId();
+        Integer memberId = userService.getUserId();
+        List<RoleEntity> roleEntites = new ArrayList<>();
+
+        setHeadersProject();
+        
+        try {
+            ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects/"+projectCode, HttpMethod.GET, headersEntity, String.class);
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            ProjectEntity projectEntity = EntityRetryUtils.retryUntilFound(
+                () -> projectRepository.findByProjectCode(projectCode).orElse(null),
+                5,
+                200,
+                "ProjectEntity"
+            );
+
+            for (JsonNode members : jsonNode.get("members")) {
+                if (members.get("id").asInt() == memberId) {
+                    if (!roleRepository.existsByRoleCode(members.get("role").asInt())) {
+                        roleEntites.add(new RoleEntity(members.get("role").asInt(), members.get("role_name").asText(), projectEntity));
+                    }
+                } 
+            }            
+            roleRepository.saveAll(roleEntites);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    @Override
+    public List<Integer> processProjectList() {
+        Integer member = taigaHelper.loggedUserId();
+        List<Integer> projectEntites = new ArrayList<>();
+        setHeadersProject();
+        
+        try {
+            ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects?member="+member, HttpMethod.GET, headersEntity, String.class);
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            for (JsonNode json : jsonNode) {
+                if (!projectRepository.existsByProjectCode(json.get("id").asInt())) {
+                    projectEntites.add(json.get("id").asInt());
+                }
+            }
+            return projectEntites;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    @Transactional
+    @Override
+    public void processProject() {
+        Integer memberId = taigaHelper.loggedUserId();
+        List<ProjectEntity> projectEntites = new ArrayList<>();
         setHeadersProject();
         
         try {
             ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects?member="+memberId, HttpMethod.GET, headersEntity, String.class);
-            JsonNode jsonNode = objectMapper.readTree(response.getBody()).get(0);
-            saveOnDatabaseProject(jsonNode.get("id").asInt(), jsonNode.get("name").asText());
-            return jsonNode.get("id").asInt();
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            for (JsonNode json : jsonNode) {
+                if (!projectRepository.existsByProjectCode(json.get("id").asInt())) {
+                    projectEntites.add(new ProjectEntity(json.get("id").asInt(), json.get("name").asText()));
+                }
+            }
+            projectRepository.saveAll(projectEntites);
         } catch (Exception e) {
-            throw new NullPointerException("Resposta não obtida ou resposta inválida.");
+            e.printStackTrace();
         }
+    }
+
+    @Override
+    public Integer getProjectId() {
+        Integer memberId = taigaHelper.loggedUserId();
+        return taigaHelper.fetchProjectIdByUserId(memberId);
     }
 
     @Override
@@ -86,9 +179,7 @@ public class ProjectServiceImpl implements ProjectService {
         setHeadersProject();
 
         String url = "https://api.taiga.io/api/v1/projects?member=" + userCode;
-
-        System.out.println(" URL da API Taiga:" + url);
-
+        
         try {
             ResponseEntity<String> response = restTemplate.exchange(
                 url, 
@@ -128,7 +219,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     public Integer getSpecificProjectUserRoleId() {
         Integer projectCode = getProjectId();
-        Integer memberId = userServiceImpl.getUserId();
+        Integer memberId = userService.getUserId();
         Integer roleCode = null;
 
         setHeadersProject();
@@ -136,7 +227,12 @@ public class ProjectServiceImpl implements ProjectService {
         try {
             ResponseEntity<String> response = restTemplate.exchange("https://api.taiga.io/api/v1/projects/"+projectCode, HttpMethod.GET, headersEntity, String.class);
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
-            ProjectEntity projectEntity = projectRepository.findByProjectCode(projectCode).orElseThrow(() -> new IllegalArgumentException("Projeto não encontrado"));
+            ProjectEntity projectEntity = EntityRetryUtils.retryUntilFound(
+                () -> projectRepository.findByProjectCode(projectCode).orElse(null),
+                5,
+                200,
+                "ProjectEntity"
+            );
 
             for (JsonNode members : jsonNode.get("members")) {
                 if (members.get("id").asInt() == memberId) {
@@ -149,6 +245,7 @@ public class ProjectServiceImpl implements ProjectService {
         return roleCode;
 
         } catch (Exception e) {
+            e.printStackTrace();
             throw new NullPointerException("Resposta não obtida ou resposta inválida.");
         }
     }
