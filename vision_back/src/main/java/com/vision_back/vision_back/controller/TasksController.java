@@ -11,6 +11,8 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -18,7 +20,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vision_back.vision_back.component.SyncUtils;
 import com.vision_back.vision_back.entity.dto.MilestoneDto;
 import com.vision_back.vision_back.entity.dto.StatsDto;
 import com.vision_back.vision_back.entity.dto.TagDto;
@@ -33,11 +38,7 @@ import com.vision_back.vision_back.repository.TaskRepository;
 import com.vision_back.vision_back.repository.TaskStatusHistoryRepository;
 import com.vision_back.vision_back.repository.UserRepository;
 import com.vision_back.vision_back.repository.UserTaskRepository;
-import com.vision_back.vision_back.service.ProjectService;
-import com.vision_back.vision_back.service.TaskService;
-import com.vision_back.vision_back.service.UserProjectHelperService;
-import com.vision_back.vision_back.service.UserService;
-
+import com.vision_back.vision_back.service.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -49,6 +50,8 @@ import jakarta.servlet.http.HttpServletResponse;
 @CrossOrigin
 @RequestMapping("/tasks")
 public class TasksController {
+
+    private final TaskServiceImpl taskServiceImpl;
     
     @Autowired
     private ProjectService pServ;
@@ -78,9 +81,6 @@ public class TasksController {
     private RoleRepository rRepo;
 
     @Autowired
-    private TaskStatusHistoryRepository taskHistoryRepo;
-
-    @Autowired
     private UserProjectHelperService userProjectService;
 
     @Autowired
@@ -90,7 +90,16 @@ public class TasksController {
     private TaskStatusHistoryRepository tshRepo;
 
     @Autowired
-    private MilestoneRepository mRepo;
+    private MilestoneRepository mRepo;  
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    HttpHeaders headers = new HttpHeaders();
+    RestTemplate restTemplate = new RestTemplate();
+    HttpEntity<Void> headersEntity;
+
+    TasksController(TaskServiceImpl taskServiceImpl) {
+        this.taskServiceImpl = taskServiceImpl;
+    }
     
     @Operation(summary = "Exporta um Excel com todos os dados da aplicação", description = "Retorna um Excel com todos os dados, dependendo no nivel de acesso.")
     @ApiResponses(value = {
@@ -112,16 +121,16 @@ public class TasksController {
             List<TagDto> tagList;
             List<MilestoneDto> tasksSprintClosed;
 
-            if (accessList.contains("STAKEHOLDER")) {
+            if (accessList.contains("Stakeholder")) {
                 statsList = sRepo.countTasksByStatusManager(milestone, project, user);
                 tasksSprint = mRepo.countCardsPerSprintManager(milestone, project, user);
                 reworkDetails = tshRepo.findTaskStatusHistoryWithReworkFlagManager(milestone, project, user);
                 tagList = tagRepo.countTasksByTagManager(milestone, project, user);
                 tasksSprintClosed = mRepo.countCardsClosedPerSprintManager(milestone, project, user);
             } else if(accessList.contains("UX") ||
-                      accessList.contains("BACK") ||
-                      accessList.contains("FRONT") ||
-                      accessList.contains("DESIGN")) {
+                      accessList.contains("Back") ||
+                      accessList.contains("Front") ||
+                      accessList.contains("Design")) {
                 statsList = sRepo.countTasksByStatusOperator(milestone, project, user);
                 tasksSprint = mRepo.countCardsPerSprintOperator(milestone, project, user);
                 reworkDetails = tshRepo.findTaskStatusHistoryWithReworkFlagOperator(milestone, project, user);
@@ -252,14 +261,14 @@ public class TasksController {
         List<String> accessList = uRepo.accessControl();
         List<StatsDto> statsList;  
     
-        if (accessList.contains("STAKEHOLDER")) {
+        if (accessList.contains("Stakeholder")) {
             statsList = sRepo.countTasksByStatusManager(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), user);
-        } else if(accessList.contains("UX") ||
-                  accessList.contains("BACK") ||
-                  accessList.contains("FRONT") ||
-                  accessList.contains("DESIGN")){
+            } else if(accessList.contains("UX") ||
+                accessList.contains("Back") ||
+                accessList.contains("Front") ||
+                accessList.contains("Design")){
             statsList = sRepo.countTasksByStatusOperator(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
-        }else{
+        } else {
             statsList = sRepo.countTasksByStatusAdmin(milestone, project, user);
         }
     
@@ -279,12 +288,12 @@ public class TasksController {
 
         List<String> accessList = uRepo.accessControl();
         List<MilestoneDto> tasksSprint;
-        if (accessList.contains("STAKEHOLDER")) {
+        if (accessList.contains("Stakeholder")) {
             tasksSprint = mRepo.countCardsPerSprintManager(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), user);
-        } else if (accessList.contains("UX") ||
-                  accessList.contains("BACK") ||
-                  accessList.contains("FRONT") ||
-                  accessList.contains("DESIGN")) {
+        } else if(accessList.contains("UX") ||
+            accessList.contains("Back") ||
+            accessList.contains("Front") ||
+            accessList.contains("Design")){
             tasksSprint = mRepo.countCardsPerSprintOperator(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
         } else {
            tasksSprint = mRepo.countCardsPerSprintAdmin(milestone, project, user);
@@ -302,14 +311,38 @@ public class TasksController {
     public ResponseEntity<Void> syncAll() {
         try {
             uServ.processAllUsers();
-            if (mRepo.count() == 0 || sRepo.count() == 0 || taskRepo.count() == 0 || userTaskRepo.count() == 0 || uRepo.count() == 0 || pRepo.count() == 0 || rRepo.count() == 0 || taskHistoryRepo.count() == 0) {
-                pServ.processProject();
-                pServ.processRoles();
-                tServ.processStatus();
-                tServ.processMilestone();
-                tServ.processTasks(true);
-                tServ.baseProcessTaskUser();
-            }
+
+            SyncUtils.processIfAnyMissing(
+                pServ.processProjectList(),
+                code -> pRepo.existsByProjectCode(code),
+                pServ::processProject
+            );
+            
+            SyncUtils.processIfAnyMissing(
+                pServ.processRolesList(),
+                code -> rRepo.existsByRoleCode(code),
+                pServ::processRoles
+            );
+            
+            SyncUtils.processIfAnyMissing(
+                tServ.processStatusList(),
+                code -> sRepo.existsByStatusCode(code),
+                tServ::processStatus
+            );
+            
+            SyncUtils.processIfAnyMissing(
+                tServ.processMilestoneList(),
+                code -> mRepo.existsByMilestoneCode(code),
+                tServ::processMilestone
+            );
+
+            SyncUtils.processIfAnyMissing(
+                tServ.processTasksList(),
+                code -> taskRepo.existsByTaskCode(code),
+                () -> tServ.processTasks(true)
+            );
+
+            tServ.baseProcessTaskUser();
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -328,15 +361,14 @@ public class TasksController {
             @RequestParam(required = false) String user) {
 
             List<String> accessList = uRepo.accessControl();
-            
             List<TaskStatusHistoryDto> reworkDetails;
             
-            if (accessList.contains("STAKEHOLDER")) {
+            if (accessList.contains("Stakeholder")) {
                 reworkDetails = tshRepo.findTaskStatusHistoryWithReworkFlagManager(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), user);
             } else if(accessList.contains("UX") ||
-                  accessList.contains("BACK") ||
-                  accessList.contains("FRONT") ||
-                  accessList.contains("DESIGN")) {
+                accessList.contains("Back") ||
+                accessList.contains("Front") ||
+                accessList.contains("Design")){
                 reworkDetails = tshRepo.findTaskStatusHistoryWithReworkFlagOperator(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
             } else {
                 reworkDetails = tshRepo.findTaskStatusHistoryWithReworkFlagAdmin(milestone, project, user);
@@ -359,16 +391,14 @@ public class TasksController {
         List<String> accessList = uRepo.accessControl();
         List<TagDto> statsList;
 
-        if (tagRepo.count() == 0) {
-            tServ.processTags();
-        }
+        tServ.processTags();
     
-        if (accessList.contains("STAKEHOLDER")) {
+        if (accessList.contains("Stakeholder")) {
             statsList = tagRepo.countTasksByTagManager(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), user);
         } else if(accessList.contains("UX") ||
-                  accessList.contains("BACK") ||
-                  accessList.contains("FRONT") ||
-                  accessList.contains("DESIGN")) {
+                  accessList.contains("Back") ||
+                  accessList.contains("Front") ||
+                  accessList.contains("Design")){
             statsList = tagRepo.countTasksByTagOperator(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
         }else{
             statsList = tagRepo.countTasksByTagAdmin(milestone, project, user);
@@ -392,12 +422,12 @@ public class TasksController {
         List<String> accessList = uRepo.accessControl();
         List<MilestoneDto> tasksSprint;
 
-        if (accessList.contains("STAKEHOLDER")) {
+        if (accessList.contains("Stakeholder")) {
             tasksSprint = mRepo.countCardsClosedPerSprintManager(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), user);
         } else if(accessList.contains("UX") ||
-                  accessList.contains("BACK") ||
-                  accessList.contains("FRONT") ||
-                  accessList.contains("DESIGN")){
+                  accessList.contains("Back") ||
+                  accessList.contains("Front") ||
+                  accessList.contains("Design")){
             tasksSprint = mRepo.countCardsClosedPerSprintOperator(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
         }else{
             tasksSprint = mRepo.countCardsClosedPerSprintAdmin(milestone, project, user);
@@ -421,12 +451,12 @@ public class TasksController {
             List<String> accessList = uRepo.accessControl();
             List<UserTaskAverageDTO> result;
 
-            if (accessList.contains("STAKEHOLDER")) {
+            if (accessList.contains("Stakeholder")) {
                 result = userTaskRepo.findAverageTimeByFiltersManager(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), user);
             } else if(accessList.contains("UX") ||
-                  accessList.contains("BACK") ||
-                  accessList.contains("FRONT") ||
-                  accessList.contains("DESIGN")){
+                accessList.contains("Back") ||
+                accessList.contains("Front") ||
+                accessList.contains("Design")){
                 result = userTaskRepo.findAverageTimeByFiltersOperador(milestone, userProjectService.fetchProjectNameByUserId(userProjectService.loggedUserId()), userProjectService.fetchLoggedUserName());
             }else{
                 result = userTaskRepo.findAverageTimeByFiltersAdmin(milestone, project, user);
@@ -453,10 +483,10 @@ public class TasksController {
         try {
             List<String> accessList = uRepo.accessControl();
 
-            if (accessList.contains("UX") || 
-                accessList.contains("BACK") || 
-                accessList.contains("FRONT") || 
-                accessList.contains("DESIGN")) {
+            if(accessList.contains("UX") ||
+                accessList.contains("Back") ||
+                accessList.contains("Front") ||
+                accessList.contains("Design")) {
 
                 List<MilestoneDto> milestones = mRepo
                     .countCardsPerSprintOperator(null, project, user)
@@ -492,10 +522,12 @@ public class TasksController {
         try {
             if (accessList.contains("PRODUCT OWNER")) {
                 milestones = taskRepo.countTaskscreatedAdmin(milestone, project, user); 
-            } else if (accessList.contains("STAKEHOLDER")) {
+            } else if (accessList.contains("Stakeholder")) {
                 milestones = mRepo.countCardsPerSprintManager(milestone, project, user);
-            } else if (accessList.contains("UX") || accessList.contains("BACK") ||
-                    accessList.contains("FRONT") || accessList.contains("DESIGN")) {
+            } else if(accessList.contains("UX") ||
+                accessList.contains("Back") ||
+                accessList.contains("Front") ||
+                accessList.contains("Design")) {
                 milestones = mRepo.countCardsPerSprintOperator(milestone, project, user);
             } else {
                 milestones = new ArrayList<>(); 

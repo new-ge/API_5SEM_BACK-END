@@ -39,6 +39,7 @@ public class UserServiceImpl implements UserService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(auth.getCachedToken());
+        headers.set("x-disable-pagination", "true"); 
             
         return new HttpEntity<>(headers);
     }
@@ -62,11 +63,10 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public void processAllUsers() {
-        if (uRepo.count() == 0) {
+        if (!uRepo.existsByUserCode(taigaHelper.loggedUserId())) {
             Integer projectId = taigaHelper.fetchProjectIdByUserId(taigaHelper.fetchLoggedUserId());
             taigaHelper.processUsersByProjectId(projectId);
         }
-        taigaHelper.fetchLoggedUserId();
     }
 
     @Override

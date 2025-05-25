@@ -1,5 +1,6 @@
 package com.vision_back.vision_back.service;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.http.HttpEntity;
@@ -20,12 +21,20 @@ public interface TaskService {
     public void processRework();
 
     public void processMilestone();
+    
+    public List<Integer> processMilestoneList();
 
     public void processTasks(boolean processHistory);
 
+    public List<Integer> processTasksList();
+
     public void processStatus();
 
+    public List<Integer> processStatusList();
+
     public void processTags();
+
+    public List<String> processTagsList();
     
     public Set<Integer> getMilestoneCodes();
 
