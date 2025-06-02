@@ -1,25 +1,25 @@
 services:
-  postgresql:
-    image: postgres:17.4-alpine3.21
-    container_name: vision-back-postgres
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_DATABASE}
-      PGDATA: /data/postgres
-    ports:
-      - '5433:5432'
-    volumes:
-      - postgresql:/var/lib/postgresql
-      - ./vision_back/src/main/java/com/vision_back/vision_back/resources:/docker-entrypoint-initdb.d
-    networks:
-      - qtsw-network
+  # postgresql:
+  #   image: postgres:17.4-alpine3.21
+  #   container_name: vision-back-postgres
+  #   environment:
+  #     POSTGRES_USER: ${DB_USER}
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD}
+  #     POSTGRES_DB: ${DB_DATABASE}
+  #     PGDATA: /data/postgres
+  #   ports:
+  #     - '5433:5432'
+  #   volumes:
+  #     - postgresql:/var/lib/postgresql
+  #     - ./vision_back/src/main/java/com/vision_back/vision_back/resources:/docker-entrypoint-initdb.d
+  #   networks:
+  #     - qtsw-network
       
   sonarqube:
     image: sonarqube:community
     container_name: vision-back-sonarqube
-    depends_on:
-      - postgresql
+    # depends_on:
+    #   - postgresql
     environment:
       SONAR_JDBC_URL: ${SONAR_URL}
       SONAR_JDBC_USERNAME: ${SONAR_USER}

@@ -9,17 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:17.4
-        ports:
-          - 5433:5432
-        env:
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-
     steps:
     - uses: actions/checkout@v4
     - name: Set up JDK 21
@@ -36,9 +25,9 @@ jobs:
       working-directory: vision_back
       run: mvn -B clean package --file pom.xml
       env:
-        DB_URL: ${{ secrets.POSTGRES_URL }}
-        DB_USERNAME: ${{ secrets.POSTGRES_USER }}
-        DB_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        DB_URL: ${{ secrets.DB_URL_AZURE }}
+        DB_USERNAME: ${{ secrets.DB_USER_AZURE }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD_AZURE }}
         SONAR_JDBC_URL: ${{ secrets.SONAR_JDBC_URL }}
         SONAR_JDBC_USERNAME: ${{ secrets.SONAR_JDBC_USERNAME }}
         SONAR_JDBC_PASSWORD: ${{ secrets.SONAR_JDBC_PASSWORD }}
