@@ -32,6 +32,12 @@ jobs:
         SONAR_JDBC_USERNAME: ${{ secrets.SONAR_JDBC_USERNAME }}
         SONAR_JDBC_PASSWORD: ${{ secrets.SONAR_JDBC_PASSWORD }}
 
+    - name: Upload WAR artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: java-app
+        path: vision_back/target/*.war
+
   deploy:
     runs-on: ubuntu-latest
     needs: build
@@ -47,10 +53,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: java-app
-          path: vision_back/target/*.war
-
-      - name: Change directory to vision_back
-        run: cd vision_back
       
       - name: Login to Azure
         uses: azure/login@v2
@@ -68,7 +70,7 @@ jobs:
           package: '*.war'
 
   merge:
-    needs: build
+    needs: [build, deploy]
     runs-on: ubuntu-latest
     permissions:
       contents: write
