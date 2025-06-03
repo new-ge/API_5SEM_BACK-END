@@ -17,8 +17,12 @@ public interface ProjectService {
 
     public void processProject();
 
+    public List<Integer> processProjectList();
+
     public void processRoles();
 
+    public List<Integer> processRolesList();
+    
     public List<TreeMap<String, Object>> listAllProjectsByUser(Integer userCode);
     
     public void saveOnDatabaseProject(Integer projectCode, String projectName);
