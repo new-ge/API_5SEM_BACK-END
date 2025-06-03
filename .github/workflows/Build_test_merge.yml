@@ -47,6 +47,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: java-app
+          path: vision_back/target/*.war
 
       - name: Change directory to vision_back
         run: cd vision_back
