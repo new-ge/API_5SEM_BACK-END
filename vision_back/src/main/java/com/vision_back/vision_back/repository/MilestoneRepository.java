@@ -81,6 +81,38 @@ public interface MilestoneRepository extends JpaRepository<MilestoneEntity,Integ
                                                          @Param("project") String project,
                                                          @Param("user") String user);
 
+     @Query(value = """
+                    select u.usr_name, p.project_name, m.milestone_name, SUM(ut.quant)
+                    from usr_task ut
+                    join milestone m on m.milestone_code = ut.milestone_code
+                    join usr u ON u.usr_code = ut.usr_code 
+                    join project p on p.project_code = ut.project_code
+                    WHERE (:milestone IS NULL OR m.milestone_name = :milestone)
+                    AND (:project IS NULL OR p.project_name = :project)
+                    AND (:user IS NULL OR u.usr_name = :user)
+                    group by u.usr_name, m.milestone_name, p.project_name
+                    order by m.milestone_name asc
+                    """, nativeQuery = true)
+     List<MilestoneDto> countCardsPerSprintAdmin(@Param("milestone") String milestone,
+                                                   @Param("project") String project,
+                                                   @Param("user") String user);                                                    
+
+     @Query(value = """
+               select max(u.usr_name) as "usr_name", p.project_name, m.milestone_name, SUM(ut.quant) as "sum_closed"
+               from usr_task ut
+               join milestone m on m.milestone_code = ut.milestone_code
+               JOIN usr u ON u.usr_code = ut.usr_code
+               join project p on p.project_code = ut.project_code
+               WHERE (:milestone IS NULL OR m.milestone_name = :milestone)
+               AND (:project IS NULL OR p.project_name = :project)
+               AND (:user IS NULL OR u.usr_name = :user)
+               AND ut.end_date is not null
+               group by u.usr_name, p.project_name, m.milestone_name
+               order by m.milestone_name asc """, nativeQuery = true)
+     List<MilestoneDto> countCardsClosedPerSprintAdmin(@Param("milestone") String milestone,
+                                                       @Param("project") String project,
+                                                       @Param("user") String user);
+
      @Query(value = "select milestone_name from milestone", nativeQuery = true)
      List<String> listAllSprintName();
 
@@ -92,8 +124,9 @@ public interface MilestoneRepository extends JpaRepository<MilestoneEntity,Integ
                     "from usr_task ut \r\n" + 
                     "join milestone m on m.milestone_code = ut.milestone_code \r\n" + 
                     "JOIN usr u ON u.usr_code = ut.usr_code \r\n" + 
-                    "join project p on p.project_code = ut.project_code  \r\n" + 
-                    "group by u.usr_name, p.project_name, m.milestone_name", nativeQuery = true)
+                    "join project p on p.project_code = ut.project_code \r\n" + 
+                    "group by u.usr_name, p.project_name, m.milestone_name  \r\n" +
+                    "order by m.milestone_name asc", nativeQuery = true)
      List<MilestoneDto> averageTaskTimePerSprintManager(); 
 
      @Query(value="select u.usr_name, p.project_name, m.milestone_name, sum(ut.average_time) \r\n" + 
@@ -102,21 +135,12 @@ public interface MilestoneRepository extends JpaRepository<MilestoneEntity,Integ
                     "JOIN usr u ON u.usr_code = ut.usr_code \r\n" + 
                     "join project p on p.project_code = ut.project_code  \r\n" +
                     "and u.is_logged_in = 1 \r\n" + 
-                    "group by u.usr_name, p.project_name, m.milestone_name", nativeQuery = true)
+                    "group by u.usr_name, p.project_name, m.milestone_name \r\n" + 
+                    "order by m.milestone_name asc", nativeQuery = true)
      List<MilestoneDto> averageTaskTimePerSprintOperator();
 
      boolean existsByMilestoneCode(Integer milestoneCode);
 
      @Query(value="SELECT m.milestone_code FROM milestone m", nativeQuery = true)
      List<Integer> findAllMilestoneCode();
-
-     @Query(value = """
-               select max(u.usr_name) as "usr_name", p.project_name, m.milestone_name, SUM(ut.quant) as "sum_closed"
-               from usr_task ut
-               join milestone m on m.milestone_code = ut.milestone_code
-               JOIN usr u ON u.usr_code = ut.usr_code
-               join project p on p.project_code = ut.project_code
-               where ut.end_date is not null
-               group by u.usr_name, p.project_name, m.milestone_name""", nativeQuery = true)
-     List<MilestoneDto> countCardsClosedPerSprintAdmin();
 }

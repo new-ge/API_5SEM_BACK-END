@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Tag(name = "Users", description = "Endpoints relacionados aos usuários")
@@ -29,6 +28,11 @@ public class UserController {
     @Autowired
     private UserServiceImpl userService;
 
+    @Operation(summary = "Processa o login com base no username e a senha.", description = "Processa o username e a senha e verifica se há um login válido para entrar na aplicação")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuário existe."),
+            @ApiResponse(responseCode = "500", description = "Não há um usuário existente.")
+    })
     @PostMapping("/login")
     public ResponseEntity<?> authenticationControl(@RequestParam String username, @RequestParam String password) {
         try {
@@ -46,5 +50,4 @@ public class UserController {
 
         }
     }
-
 }
