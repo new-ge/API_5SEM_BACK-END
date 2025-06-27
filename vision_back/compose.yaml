@@ -15,23 +15,23 @@ services:
   #   networks:
   #     - qtsw-network
       
-  sonarqube:
-    image: sonarqube:community
-    container_name: vision-back-sonarqube
-    # depends_on:
-    #   - postgresql
-    environment:
-      SONAR_JDBC_URL: ${SONAR_URL}
-      SONAR_JDBC_USERNAME: ${SONAR_USER}
-      SONAR_JDBC_PASSWORD: ${SONAR_PASSWORD}
-    volumes:
-      - sonarqube_data:/opt/sonarqube/data
-      - sonarqube_extensions:/opt/sonarqube/extensions
-      - sonarqube_logs:/opt/sonarqube/logs
-    ports:
-      - "9001:9000"
-    networks:
-      - qtsw-network
+  # sonarqube:
+  #   image: sonarqube:community
+  #   container_name: vision-back-sonarqube
+  #   # depends_on:
+  #   #   - postgresql
+  #   environment:
+      # SONAR_JDBC_URL: ${SONAR_URL}
+      # SONAR_JDBC_USERNAME: ${SONAR_USER}
+      # SONAR_JDBC_PASSWORD: ${SONAR_PASSWORD}
+  #   volumes:
+  #     - sonarqube_data:/opt/sonarqube/data
+  #     - sonarqube_extensions:/opt/sonarqube/extensions
+  #     - sonarqube_logs:/opt/sonarqube/logs
+  #   ports:
+  #     - "9001:9000"
+  #   networks:
+  #     - qtsw-network
 
 volumes:
   postgresql:
